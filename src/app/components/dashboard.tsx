@@ -44,7 +44,7 @@ export default function LampoDashboard() {
       >
         <div style={{ display: menuOpen ? 'flex' : 'block', alignItems: "center", gap: "1rem", paddingLeft: menuOpen ? "1rem" : 0, width: "100%", marginBottom: "1rem" }} onClick={() => setMenuOpen(!menuOpen)}>
           <img
-            src={'/pets/camus.png'}
+            src={'https://excellent-exeqtion.github.io/lampo.pet-web/pets/camus.png'}
             alt="profile"
             style={{ borderRadius: "9999px", cursor: "pointer", width: "80px", height: "80px" }}
           />
@@ -81,8 +81,8 @@ export default function LampoDashboard() {
                 <FaShareAlt size={70} /> Comparte Lampo con tu médico veterinario
               </button>
               <div style={{ display: "flex", justifyContent: "space-around", marginTop: "1rem" }}>
-                <img src="/others/google-play-badge-logo.svg" alt="Google Play" style={{ height: "6rem" }} />
-                <img src="/others/download-on-the-app-store-apple-logo.svg" alt="App Store" style={{ height: "6rem" }} />
+                <img src="https://excellent-exeqtion.github.io/lampo.pet-web/others/google-play-badge-logo.svg" alt="Google Play" style={{ height: "6rem" }} />
+                <img src="https://excellent-exeqtion.github.io/lampo.pet-web/others/download-on-the-app-store-apple-logo.svg" alt="App Store" style={{ height: "6rem" }} />
               </div>
             </div>
           </nav>

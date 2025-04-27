@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import "@picocss/pico";
 import { FaHome, FaUser, FaSyringe, FaCut, FaPills, FaCloudSun, FaFlask, FaRocket, FaCog, FaShareAlt } from "react-icons/fa";
+import BasicDataModule, { BasicData, ContactData } from "./basic-data";
 
 export default function LampoDashboard() {
   const [menuOpen, setMenuOpen] = useState(true);
@@ -20,6 +21,34 @@ export default function LampoDashboard() {
 
   const mascotas = ["Camus", "Toby", "Luna"];
   const [selectedPet, setSelectedPet] = useState(mascotas[0]);
+  const basicData: BasicData = {
+    petType: "Gato",
+    gender: "Macho",
+    weight: "5.5 KG",
+    breed: "Mestizo",
+    allergies: "No",
+    weightCondition: "Normal",
+    size: "Mediano",
+    livesWithOthers: "No",
+    mainFood: "Taste the wild",
+  };
+
+  const contact: ContactData = {
+    contactName: "Andrés Aulestia",
+    phone: "+57 3146061490",
+    address: "Cra. 74 #152b-70 Torre 3 Apto. 1704",
+    city: "Bogotá",
+    country: "Colombia",
+    email: "a.aulestia@exe.com.co",
+    lastVaccine: "Parvigen",
+    lastVaccineDate: "2024-07-25",
+    castrated: "Sí",
+    castrationDate: "2023-12-02",
+    antiFleas: "Sí",
+    antiFleasDate: "2023-12-15",
+    usesMedicine: "No",
+    specialCondition: "No"
+  };
 
   return (
     <div
@@ -27,7 +56,9 @@ export default function LampoDashboard() {
       style={{
         gridTemplateColumns: menuOpen ? "250px 1fr" : "100px 1fr",
         minHeight: "100vh",
-        transition: "grid-template-columns 0.3s ease"
+        transition: "grid-template-columns 0.3s ease",
+        backgroundColor: "#F9FAFB",
+        fontFamily: "'Inter', sans-serif"
       }}
     >
       {/* Sidebar */}
@@ -39,17 +70,20 @@ export default function LampoDashboard() {
           flexDirection: "column",
           alignItems: menuOpen ? "flex-start" : "center",
           paddingTop: "1rem",
-          fontSize: "0.9rem"
+          fontSize: "0.9rem",
+          backgroundColor: "#ffffff",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)"
         }}
       >
-        <div style={{ display: menuOpen ? 'flex' : 'block', alignItems: "center", gap: "1rem", paddingLeft: menuOpen ? "1rem" : 0, width: "100%", marginBottom: "1rem" }} onClick={() => setMenuOpen(!menuOpen)}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", paddingLeft: menuOpen ? "1rem" : 0, width: "100%", marginBottom: "1rem" }}>
           <img
-            src={'https://excellent-exeqtion.github.io/lampo.pet-web/pets/camus.png'}
+            src={'/pets/camus.png'}
             alt="profile"
-            style={{ borderRadius: "9999px", cursor: "pointer", width: "80px", height: "80px" }}
+            style={{ borderRadius: "9999px", cursor: "pointer", width: "80px", height: "80px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+            onClick={() => setMenuOpen(!menuOpen)}
           />
-          {(
-            <select value={selectedPet} onChange={e => setSelectedPet(e.target.value)} style={{border: 'none', paddingLeft: '0'}} className="pet-dropdown">
+          {menuOpen && (
+            <select value={selectedPet} onChange={e => setSelectedPet(e.target.value)} style={{ border: 'none', paddingLeft: '0' }} className="pet-dropdown">
               {mascotas.map((nombre, idx) => (
                 <option key={idx} value={nombre}>{nombre}</option>
               ))}
@@ -62,7 +96,7 @@ export default function LampoDashboard() {
             <ul>
               {menuItems.map(({ label, icon }) => (
                 <li key={label}>
-                  <a href="#" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <a href="#" style={{ display: "flex", alignItems: "center", gap: "0.5rem", transition: "background 0.3s", padding: "0.5rem", borderRadius: "0.5rem" }}>
                     {icon} {label}
                   </a>
                 </li>
@@ -73,17 +107,13 @@ export default function LampoDashboard() {
               <p><strong>Código único de tu mascota</strong></p>
               <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
                 {"A001".split("").map((char, idx) => (
-                  <span key={idx} style={{ padding: "0.5rem", border: "1px solid #ccc", borderRadius: "0.25rem", color: "#007BFF", fontWeight: "bold" }}>{char}</span>
+                  <span key={idx} style={{ padding: "0.5rem", backgroundColor: "#93C5FD", borderRadius: "0.5rem", color: "#1E3A8A", fontWeight: "bold" }}>{char}</span>
                 ))}
               </div>
-              <p style={{ fontSize: "0.8rem" }}>Este código es único para cada mascota. Compártelo con tu médico veterinario para brindarle acceso al historial.</p>
-              <button style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
-                <FaShareAlt size={70} /> Comparte Lampo con tu médico veterinario
+              <p style={{ fontSize: "0.75rem", color: "#6B7280" }}>Este código es único para cada mascota. Compártelo con tu médico veterinario para brindarle acceso al historial.</p>
+              <button style={{ width: "100%", backgroundColor: "#10B981", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", borderRadius: "0.5rem", padding: "0.75rem", transition: "background 0.3s" }}>
+                <FaShareAlt size={20} /> Comparte Lampo
               </button>
-              <div style={{ display: "flex", justifyContent: "space-around", marginTop: "1rem" }}>
-                <img src="https://excellent-exeqtion.github.io/lampo.pet-web/others/google-play-badge-logo.svg" alt="Google Play" style={{ height: "6rem" }} />
-                <img src="https://excellent-exeqtion.github.io/lampo.pet-web/others/download-on-the-app-store-apple-logo.svg" alt="App Store" style={{ height: "6rem" }} />
-              </div>
             </div>
           </nav>
         )}
@@ -91,47 +121,55 @@ export default function LampoDashboard() {
 
       {/* Main Content */}
       <main style={{ padding: "2rem", fontSize: "0.9rem" }}>
-        <h2>Próximos eventos programados</h2>
-        <section style={{ maxWidth: "320px", marginBottom: "2rem" }}>
-          <input type="date" value="2025-01-01" />
-        </section>
+        <BasicDataModule data={basicData} contact={contact} />
 
-        <section>
-          <h3>Datos de contacto</h3>
-          <div
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "flex-end", marginTop: "2rem" }}>
+          <section
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(120px, auto))",
-              gap: "0.5rem",
-              alignItems: "center",
-              marginBottom: "1rem",
-              fontSize: "0.8rem"
+              width: "260px",
+              fontSize: "0.75rem",
+              backgroundColor: "#d0d8e8",
+              borderRadius: "1rem",
+              padding: "0.75rem",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+              transition: "all 0.3s ease"
             }}
           >
-            <select>
-              <option>Last 12 months</option>
-              <option>Last 6 months</option>
-            </select>
-            <input type="date" defaultValue="2020-08-01" />
-            <span style={{ textAlign: "center" }}>a</span>
-            <input type="date" defaultValue="2020-07-07" />
-            <select>
-              <option>Previous period</option>
-            </select>
-            <select>
-              <option>Monthly</option>
-            </select>
-            <button>Edit charts</button>
-          </div>
-        </section>
+            <h2 style={{ margin: 0, fontSize: "1rem", marginBottom: "0.5rem" }}>Queremos leerte</h2>
+            <p style={{ margin: 0, marginBottom: "0.75rem" }}>Cuéntanos tu experiencia con Lampo o sobre tu mascota.</p>
+            <textarea
+              style={{
+                width: "100%",
+                minHeight: "4rem",
+                padding: "0.5rem",
+                borderRadius: "0.5rem",
+                border: "1px solid #ccc",
+                marginBottom: "0.75rem",
+                fontSize: "0.8rem"
+              }}
+            />
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button style={{ flex: 1 }}>Enviar cuenta</button>
+              <button style={{ flex: 1 }}>Anónimo</button>
+            </div>
+          </section>
 
-        <aside style={{ position: "fixed", bottom: "2.5rem", right: "2rem", width: "320px", height: "200px", fontSize: "0.8rem" }}>
-          <article style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <section
+            style={{
+              width: "260px",
+              fontSize: "0.75rem",
+              backgroundColor: "#ffffff",
+              borderRadius: "1rem",
+              padding: "0.75rem",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+              transition: "all 0.3s ease"
+            }}
+          >
             <h4 style={{ marginBottom: "0.5rem" }}>Soy médico veterinario</h4>
-            <p style={{ flexGrow: 1, marginBottom: "0.5rem" }}>Aquí puedes revisar el historial completo, modificarlo y agregar entradas a la historia de la mascota</p>
-            <button style={{ width: "100%" }}>IR</button>
-          </article>
-        </aside>
+            <p style={{ marginBottom: "0.5rem" }}>Aquí puedes revisar y actualizar la historia clínica de tu mascota.</p>
+            <button style={{ width: "100%", color: "#ffffff", borderRadius: "0.5rem" }}>IR</button>
+          </section>
+        </div>
       </main>
     </div>
   );

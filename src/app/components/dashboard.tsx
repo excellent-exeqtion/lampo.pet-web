@@ -111,8 +111,8 @@ export default function LampoDashboard() {
             <select
               value={selectedPet}
               onChange={(e) => setSelectedPet(e.target.value)}
+              style={{ border: 'none', paddingLeft: '0' }}
               className="pet-dropdown"
-              style={{ width: "100%" }}
             >
               {mascotas.map((m) => (
                 <option key={m} value={m}>
@@ -149,7 +149,7 @@ export default function LampoDashboard() {
             justifyContent: "space-between",
             padding: "0.5rem 1rem",
             boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-            zIndex: 1000,
+            zIndex: 1000
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -165,7 +165,7 @@ export default function LampoDashboard() {
             style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer" }}
             aria-label="Menu"
           >
-            {menuOpen ? <FaTimes /> : <FaBars />}
+            {menuOpen ? <FaTimes fill="black"/> : <FaBars fill="black"/>}
           </button>
         </header>
       )}
@@ -203,16 +203,17 @@ export default function LampoDashboard() {
           position: "fixed",
           right: "1rem",
           bottom: "1rem",
-          backgroundColor: "#10B981",
-          border: "none",
+          backgroundColor: "#ffffff",
+          border: "1px solid rgb(1, 114, 173)",
           borderRadius: "50%",
           padding: "0.75rem",
-          color: "#ffffff",
+          color: "rgb(1, 114, 173)",
           fontSize: "1.25rem",
           cursor: "pointer",
           zIndex: 1500,
         }}
         aria-label="Feedback"
+        title="Enviar feedback"
       >
         <FaCommentDots />
       </button>
@@ -223,17 +224,18 @@ export default function LampoDashboard() {
         style={{
           position: "fixed",
           right: "1rem",
-          bottom: "4rem",
+          bottom: "5.5rem",
           backgroundColor: "#ffffff",
-          border: "1px solid #ccc",
+          border: "1px solid rgb(1, 114, 173)",
           borderRadius: "50%",
           padding: "0.75rem",
-          color: "#333333",
+          color: "rgb(1, 114, 173)",
           fontSize: "1.25rem",
           cursor: "pointer",
           zIndex: 1500,
         }}
         aria-label="Veterinario"
+        title="Soy médico veterinario"
       >
         <FaUserMd />
       </button>
@@ -244,17 +246,18 @@ export default function LampoDashboard() {
         style={{
           position: "fixed",
           right: "1rem",
-          bottom: "7rem",
+          bottom: "10rem",
           backgroundColor: "#ffffff",
-          border: "1px solid #ccc",
+          border: "1px solid rgb(1, 114, 173)",
           borderRadius: "50%",
           padding: "0.75rem",
-          color: "#007BFF",
+          color: "rgb(1, 114, 173)",
           fontSize: "1.25rem",
           cursor: "pointer",
           zIndex: 1500,
         }}
-        aria-label="Código"
+        aria-label="Código único"
+        title="Código único de tu mascota"
       >
         <FaShareAlt />
       </button>
@@ -263,7 +266,7 @@ export default function LampoDashboard() {
       {showFeedbackModal && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", padding: "2rem", width: "90%", maxWidth: "400px", position: "relative" }}>
-            <button onClick={() => setShowFeedbackModal(false)} style={{ position: "absolute", top: "0.5rem", right: "0.5rem", background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer" }}>
+            <button onClick={() => setShowFeedbackModal(false)} style={{ position: "absolute", top: "0.5rem", right: "0.5rem", background: "none", border: "none", fontSize: "1rem", color: "#000", cursor: "pointer" }}>
               <FaTimes />
             </button>
             <h2>Queremos leerte</h2>
@@ -278,9 +281,9 @@ export default function LampoDashboard() {
       )}
 
       {showVetModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
-          <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", padding: "2rem", width: "90%", maxWidth: "400px", position: "relative" }}>
-            <button onClick={() => setShowVetModal(false)} style={{ position: "absolute", top: "0.5rem", right: "0.5rem", background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer" }}>
+        <div style={{position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000}}>
+          <div style={{backgroundColor: "#ffffff", borderRadius: "1rem", padding: "2rem", width: "90%", maxWidth: "400px", position: "relative"}}>
+            <button onClick={() => setShowVetModal(false)} style={{position: "absolute", top: "0.5rem", right: "0.5rem", background: "none", border: "none", fontSize: "1rem", color: "#000", cursor: "pointer"}}>
               <FaTimes />
             </button>
             <article style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
@@ -293,16 +296,16 @@ export default function LampoDashboard() {
       )}
 
       {showCodeModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
-          <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", padding: "2rem", width: "90%", maxWidth: "400px", position: "relative" }}>
-            <button onClick={() => setShowCodeModal(false)} style={{ position: "absolute", top: "0.5rem", right: "0.5rem", background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer" }}>
+        <div style={{position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000}}>
+          <div style={{backgroundColor: "#ffffff", borderRadius: "1rem", padding: "2rem", width: "90%", maxWidth: "400px", position: "relative"}}>
+            <button onClick={() => setShowCodeModal(false)} style={{position: "absolute", top: "0.5rem", right: "0.5rem", background: "none", border: "none", fontSize: "1rem", color: "#000", cursor: "pointer"}}>
               <FaTimes />
             </button>
             <div>
               <p><strong>Código único de tu mascota</strong></p>
-              <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              <div style={{display: "flex", gap: "0.5rem", marginBottom: "0.5rem"}}>
                 {"A001".split("").map((char, idx) => (
-                  <span key={idx} style={{ padding: "0.5rem", border: "1px solid #ccc", borderRadius: "0.25rem", color: "#007BFF", fontWeight: "bold" }}>
+                  <span key={idx} style={{padding: "0.5rem", border: "1px solid #ccc", borderRadius: "0.25rem", color: "#007BFF", fontWeight: "bold"}}>
                     {char}
                   </span>
                 ))}
@@ -317,7 +320,7 @@ export default function LampoDashboard() {
       )}
 
       {/* Main Content */}
-      <main style={{ padding: isMobile ? "4rem 1rem 2rem" : "2rem", fontSize: "0.9rem" }}>
+      <main style={{ padding: isMobile ? "4rem 1rem 2rem" : "2rem", fontSize: "0.9rem", marginTop: isMobile ? "3.5rem" : "0" }}>
         {/* Datos básicos en tres columnas */}
         <section style={{ marginBottom: "2rem" }}>
           <h3>Datos básicos</h3>

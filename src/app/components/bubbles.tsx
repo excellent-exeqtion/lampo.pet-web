@@ -1,12 +1,12 @@
 "use client";
-import React from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import {
     FaShareAlt,
     FaCommentDots,
     FaUserMd
 } from "react-icons/fa";
 
-export default function BubblesModule({ setShowFeedbackModal, setShowVetModal, setShowCodeModal }: { setShowFeedbackModal: any, setShowVetModal: any, setShowCodeModal: any }) {
+export default function BubblesModule({ setShowFeedbackModal, setShowVetModal, setShowCodeModal }: { setShowFeedbackModal: Dispatch<SetStateAction<boolean>>, setShowVetModal: Dispatch<SetStateAction<boolean>>, setShowCodeModal: Dispatch<SetStateAction<boolean>> }) {
     return (
         <div style={{ position: "fixed", right: "1rem", top: "auto", bottom: "1rem", display: "flex", flexDirection: "column", gap: "1rem", zIndex: 1500 }}>
             {/* Feedback Bubble */}

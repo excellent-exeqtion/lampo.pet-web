@@ -25,6 +25,8 @@ export default function LampoDashboard() {
   const [showVetModal, setShowVetModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
 
+
+  
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 767);
     handleResize();
@@ -54,7 +56,7 @@ export default function LampoDashboard() {
         }}
       >
         {/* Sidebar Desktop */}
-        <SidebarModule setShowFeedbackModal={setShowFeedbackModal} setShowVetModal={setShowVetModal} setShowCodeModal={setShowCodeModal} isMobile={isMobile} selectedPet={selectedPet} setSelectedPet={setSelectedPet} mascotas={mascotas} menuItems={menuItems} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+        <SidebarModule isMobile={isMobile} selectedPet={selectedPet} setSelectedPet={setSelectedPet} mascotas={mascotas} menuItems={menuItems} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
         {/* Floating Bubbles */}
         <BubblesModule setShowCodeModal={setShowCodeModal} setShowVetModal={setShowVetModal} setShowFeedbackModal={setShowFeedbackModal} />
@@ -71,7 +73,6 @@ export default function LampoDashboard() {
         {showCodeModal && (
           <PetCodeModule setShowCodeModal={setShowCodeModal} />
         )}
-
 
         <BasicDataModule isMobile={isMobile} basicDataItems={basicDataItems} contactItems={contactItems} />
       </div>

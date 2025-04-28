@@ -1,14 +1,11 @@
 "use client";
-import React, { JSX } from "react";
+import React, { Dispatch, SetStateAction, JSX } from "react";
 import {
     FaBars,
     FaTimes
 } from "react-icons/fa";
 
 export default function SidebarModule({
-    setShowFeedbackModal,
-    setShowVetModal,
-    setShowCodeModal,
     isMobile,
     selectedPet,
     setSelectedPet,
@@ -17,16 +14,13 @@ export default function SidebarModule({
     menuOpen,
     setMenuOpen
 }: {
-    setShowFeedbackModal: any;
-    setShowVetModal: any;
-    setShowCodeModal: any;
     isMobile: boolean;
     selectedPet: string;
-    setSelectedPet: (pet: string) => void;
+    setSelectedPet: Dispatch<SetStateAction<string>>;
     mascotas: string[];
     menuItems: { label: string; icon: JSX.Element }[];
     menuOpen: boolean;
-    setMenuOpen: (open: boolean) => void;
+    setMenuOpen: Dispatch<SetStateAction<boolean>>;
 }) {
     return (
         <div>
@@ -42,7 +36,7 @@ export default function SidebarModule({
                     }}
                 >
                     <div style={{ padding: "0 1rem 1rem" }}>
-                        <img
+                        <img 
                             src={'/pets/camus.png'}
                             alt="profile"
                             style={{ width: "80px", height: "80px", borderRadius: "50%", marginBottom: "0.5rem" }}

@@ -6,7 +6,7 @@ export interface BasicData {
     value: string;
 }
 
-export default function BasicDataModule({ isMobile, basicDataItems, contactItems }: { isMobile: Boolean, basicDataItems: BasicData[]; contactItems: BasicData[] }) {
+export default function BasicDataModule({ isMobile, basicDataItems, contactItems }: { isMobile: boolean, basicDataItems: BasicData[]; contactItems: BasicData[] }) {
   return (
     <main style={{ padding: isMobile ? "4rem 1rem 2rem" : "2rem", fontSize: "0.9rem", marginTop: isMobile ? "3.5rem" : "0" }}>
       {/* Datos básicos en tres columnas */}

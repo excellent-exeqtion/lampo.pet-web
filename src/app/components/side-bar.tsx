@@ -91,7 +91,7 @@ export default function SidebarModule({
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <img
-                            src={'/pets/camus.png'}
+                            src={'https://excellent-exeqtion.github.io/lampo.pet-web/pets/camus.png'}
                             alt="profile"
                             style={{ width: "40px", height: "40px", borderRadius: "50%" }}
                         />

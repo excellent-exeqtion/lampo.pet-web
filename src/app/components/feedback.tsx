@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import { FaTimes } from "react-icons/fa";
 
 export default function FeedbackModule({ setShowFeedbackModal }: { setShowFeedbackModal: Dispatch<SetStateAction<boolean>> }) {

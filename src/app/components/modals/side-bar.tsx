@@ -4,6 +4,7 @@ import {
     FaBars,
     FaTimes
 } from "react-icons/fa";
+import Link from 'next/link'
 
 export default function SidebarModule({
     isMobile,
@@ -18,7 +19,7 @@ export default function SidebarModule({
     selectedPet: string;
     setSelectedPet: Dispatch<SetStateAction<string>>;
     mascotas: string[];
-    menuItems: { label: string; icon: JSX.Element }[];
+    menuItems: { label: string; icon: JSX.Element, url: string }[];
     menuOpen: boolean;
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
 }) {
@@ -56,11 +57,11 @@ export default function SidebarModule({
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
-                            {menuItems.map(({ label, icon }) => (
+                            {menuItems.map(({ label, icon, url }) => (
                                 <li key={label} style={{ marginBottom: "0.5rem" }}>
-                                    <a href="#" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                    <Link href={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                         {icon} {label}
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -122,11 +123,11 @@ export default function SidebarModule({
                     }}
                 >
                     <ul style={{ listStyle: "none", margin: 0, padding: "0.5rem 1rem" }}>
-                        {menuItems.map(({ label, icon }) => (
+                        {menuItems.map(({ label, icon, url }) => (
                             <li key={label} style={{ marginBottom: "0.5rem" }}>
-                                <a href="#" style={{ display: "flex", alignItems: "center", gap: "0.5rem", whiteSpace: "nowrap" }}>
+                                <Link href={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem", whiteSpace: "nowrap" }}>
                                     {icon} {label}
-                                </a>
+                                </Link>
                             </li>
                         ))}
                     </ul>

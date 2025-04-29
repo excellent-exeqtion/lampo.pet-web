@@ -5,8 +5,11 @@ import {
     FaCommentDots,
     FaUserMd
 } from "react-icons/fa";
+import FeedbackModule from "./feedback";
+import VeterinaryModule from "./veterinary";
+import PetCodeModule from "./pet-code";
 
-export default function BubblesModule({ setShowFeedbackModal, setShowVetModal, setShowCodeModal }: { setShowFeedbackModal: Dispatch<SetStateAction<boolean>>, setShowVetModal: Dispatch<SetStateAction<boolean>>, setShowCodeModal: Dispatch<SetStateAction<boolean>> }) {
+export default function BubblesModule({ setShowFeedbackModal, showFeedbackModal, setShowVetModal, showVetModal, setShowCodeModal, showCodeModal }: { setShowFeedbackModal: Dispatch<SetStateAction<boolean>>, showFeedbackModal: boolean, setShowVetModal: Dispatch<SetStateAction<boolean>>, showVetModal: boolean, setShowCodeModal: Dispatch<SetStateAction<boolean>>, showCodeModal: boolean }) {
     return (
         <div style={{ position: "fixed", right: "1rem", top: "auto", bottom: "1rem", display: "flex", flexDirection: "column", gap: "1rem", zIndex: 1500 }}>
             {/* Feedback Bubble */}
@@ -68,6 +71,21 @@ export default function BubblesModule({ setShowFeedbackModal, setShowVetModal, s
                 </button>
                 <span className="tooltip-text">Código único de tu mascota</span>
             </div>
+
+
+
+            {/* Modals */}
+            {showFeedbackModal && (
+                <FeedbackModule setShowFeedbackModal={setShowFeedbackModal} />
+            )}
+
+            {showVetModal && (
+                <VeterinaryModule setShowVetModal={setShowVetModal} />
+            )}
+
+            {showCodeModal && (
+                <PetCodeModule setShowCodeModal={setShowCodeModal} />
+            )}
         </div>
     );
 }

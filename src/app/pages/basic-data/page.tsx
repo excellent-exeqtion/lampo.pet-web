@@ -1,12 +1,21 @@
 "use client";
 import React from "react";
+import { basicDataMock, contactMock } from "../../data/petdata";
+import { useIsMobile } from "../../layout";
 
 export interface BasicData {
-    label: string;
-    value: string;
+  label: string;
+  value: string;
 }
 
-export default function BasicDataModule({ isMobile, basicDataItems, contactItems }: { isMobile: boolean, basicDataItems: BasicData[]; contactItems: BasicData[] }) {
+export default function BasicDataModule() {
+
+  // Datos básicos y de contacto
+  const basicDataItems = basicDataMock;
+  const contactItems = contactMock;
+
+  const isMobile = useIsMobile();
+
   return (
     <main style={{ padding: isMobile ? "4rem 1rem 2rem" : "2rem", fontSize: "0.9rem", marginTop: isMobile ? "3.5rem" : "0" }}>
       {/* Datos básicos en tres columnas */}

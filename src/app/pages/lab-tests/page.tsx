@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { labTestsMock, LabTestData } from "../../data/petdata";
+import { labTestsMock } from "../../data/petdata";
 import { useIsMobile } from "../../layout";
 import { FaFlask } from "react-icons/fa";
 

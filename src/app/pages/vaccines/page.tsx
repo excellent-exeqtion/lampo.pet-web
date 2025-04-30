@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { vaccinesMock, VaccineData } from "../../data/petdata";
+import { vaccinesMock } from "../../data/petdata";
 import { useIsMobile } from "../../layout";
 import { FaSyringe } from "react-icons/fa";
 

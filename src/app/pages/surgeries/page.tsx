@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { surgeriesMock, SurgeryData } from "../../data/petdata";
+import { surgeriesMock } from "../../data/petdata";
 import { useIsMobile } from "../../layout";
 import { FaCut } from "react-icons/fa";
 

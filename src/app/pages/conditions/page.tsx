@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { conditionsMock, ConditionData } from "../../data/petdata";
+import { conditionsMock } from "../../data/petdata";
 import { useIsMobile } from "../../layout";
 import { FaCloudSun } from "react-icons/fa";
 

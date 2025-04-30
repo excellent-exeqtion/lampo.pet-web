@@ -7,21 +7,30 @@ import { FaPills } from "react-icons/fa";
 export default function MedicinesModule() {
     const items = medicinesMock;
     const isMobile = useIsMobile();
-  
+
     return (
-      <main style={{ padding: isMobile ? "2rem 1rem" : "2rem" }}>
-        <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <FaPills /> Medicinas
-        </h3>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "1rem" }}>
-          {items.map(({ name, dosage, frequency }) => (
-            <div key={name} style={{ backgroundColor: "#fff", padding: "1rem", borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-              <p><strong>Medicamento:</strong> {name}</p>
-              <p><strong>Dosis:</strong> {dosage}</p>
-              <p><strong>Frecuencia:</strong> {frequency}</p>
+        <main style={{ padding: isMobile ? "2rem 1rem" : "2rem" }}>
+            <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <FaPills /> Medicinas
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "1rem" }}>
+                {items.map(({ name, dosage, frequency }) => (
+                    <div key={name} style={{ backgroundColor: "rgb(1, 114, 173)", padding: "0.1rem", borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                        <div style={{ backgroundColor: "#fff", padding: "1rem", margin: '0.5rem', borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                            <p style={{ fontSize: "0.75rem", color: "#6B7280", margin: 0 }}>Medicamento:</p>
+                            <p style={{ fontSize: "1rem", margin: "0.25rem 0 0 0" }}>{name}</p>
+                        </div>
+                        <div style={{ backgroundColor: "#fff", padding: "1rem", margin: '0.5rem', borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                            <p style={{ fontSize: "0.75rem", color: "#6B7280", margin: 0 }}>Dosis:</p>
+                            <p style={{ fontSize: "1rem", margin: "0.25rem 0 0 0" }}>{dosage}</p>
+                        </div>
+                        <div style={{ backgroundColor: "#fff", padding: "1rem", margin: '0.5rem', borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                            <p style={{ fontSize: "0.75rem", color: "#6B7280", margin: 0 }}>Frecuencia:</p>
+                            <p style={{ fontSize: "1rem", margin: "0.25rem 0 0 0" }}>{frequency}</p>
+                        </div>
+                    </div>
+                ))}
             </div>
-          ))}
-        </div>
-      </main>
+        </main>
     );
 }

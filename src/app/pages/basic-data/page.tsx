@@ -2,6 +2,7 @@
 import React from "react";
 import { basicDataMock, contactMock } from "../../data/petdata";
 import { useIsMobile } from "../../layout";
+import { FaUser } from "react-icons/fa";
 
 export interface BasicData {
   label: string;
@@ -20,7 +21,7 @@ export default function BasicDataModule() {
     <main style={{ padding: isMobile ? "4rem 1rem 2rem" : "2rem", fontSize: "0.9rem", marginTop: isMobile ? "3.5rem" : "0" }}>
       {/* Datos básicos en tres columnas */}
       <section style={{ marginBottom: "2rem" }}>
-        <h3>Datos básicos</h3>
+        <h3><FaUser /> Datos básicos</h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
           {basicDataItems.map(({ label, value }) => (
             <div key={label} style={{ backgroundColor: "#ffffff", padding: "1rem", borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
@@ -32,7 +33,7 @@ export default function BasicDataModule() {
       </section>
       {/* Datos de contacto en dos columnas */}
       <section>
-        <h3>Datos de contacto</h3>
+        <h3><FaUser /> Datos de contacto</h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
           {contactItems.map(({ label, value }) => (
             <div key={label} style={{ backgroundColor: "#ffffff", padding: "1rem", borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>

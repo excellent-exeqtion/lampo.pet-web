@@ -55,3 +55,57 @@ export const metadata: Metadata = {
   title: "Lampo",
   description: "Lampo es una herramienta para que ayudará a TU MASCOT en sus proceso clínicos y veterinarios",
 };
+
+
+// Interfaces y mocks para las páginas específicas
+export interface VaccineData {
+  name: string;
+  description?: string;
+  date?: string;
+  batch: string;
+  brand: string;
+}
+export const vaccinesMock: VaccineData[] = [
+  { name: "Rabia", description: "Vacuna contra la rabia", date: "2025-03-15", batch: "RAB12345", brand: "Nobivac" },
+  { name: "Parvovirus", description: "Prevención de parvovirus", date: "2025-02-10", batch: "PARV67890", brand: "Canigen" },
+];
+
+export interface SurgeryData {
+  name: string;
+  date?: string;
+  description?: string;
+}
+export const surgeriesMock: SurgeryData[] = [
+  { name: "Castración", date: "2024-11-20", description: "Castración preventiva" },
+  { name: "Extracción dental", date: "2024-12-05", description: "Tooth extraction" },
+];
+
+export interface MedicineData {
+  name: string;
+  dosage: string;
+  frequency: string;
+}
+export const medicinesMock: MedicineData[] = [
+  { name: "Antibiótico X", dosage: "250mg", frequency: "Cada 12 horas" },
+  { name: "Vitamina C", dosage: "100mg", frequency: "Diaria" },
+];
+
+export interface ConditionData {
+  condition: string;
+  severity: string;
+}
+export const conditionsMock: ConditionData[] = [
+  { condition: "Esterilidad aórtica", severity: "Moderada" },
+  { condition: "Alergia alimentaria", severity: "Leve" },
+];
+
+export interface LabTestData {
+  name: string;
+  type: string;
+  date?: string;
+  result?: string;
+}
+export const labTestsMock: LabTestData[] = [
+  { name: "Hemograma completo", type: "Blood", date: "2025-01-10", result: "Normal" },
+  { name: "Ultrasonido abdominal", type: "Ultrasound", date: "2024-12-22", result: "Sin hallazgos" },
+];

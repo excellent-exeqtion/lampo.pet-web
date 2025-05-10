@@ -75,6 +75,14 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+        env:
+          NODE_ENV: ${{ secrets.NODE_ENV }}
+          MAILTRAP_URL: ${{ secrets.MAILTRAP_URL }}
+          MAILTRAP_TO: ${{ secrets.MAILTRAP_TO }}
+          MAILTRAP_TOKEN: ${{ secrets.MAILTRAP_TOKEN }}
+          MAILTRAP_FROM: ${{ secrets.MAILTRAP_FROM }}
+          MAILTRAP_PROJECT: ${{ secrets.MAILTRAP_PROJECT }}
+          MAILTRAP_SUBJECT: ${{ secrets.MAILTRAP_SUBJECT }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

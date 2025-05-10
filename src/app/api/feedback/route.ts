@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         from: { email: MAILTRAP_FROM },
         to:   [{ email: MAILTRAP_TO }],
-        subject: MAILTRAP_SUBJECT,
+        subject: `${MAILTRAP_SUBJECT}${anonymous? ' Anonymous' : ' From User'}`,
         text: feedback,
         // si quisieras HTML: html: "<p>…</p>"
       }),

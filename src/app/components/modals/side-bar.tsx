@@ -37,7 +37,7 @@ export default function SidebarModule({
                     }}
                 >
                     <div style={{ padding: "0 1rem 1rem" }}>
-                        <img
+                        <Image
                             src={'https://excellent-exeqtion.github.io/lampo.pet-web/pets/camus.png'}
                             alt="profile"
                             style={{ width: "80px", height: "80px", borderRadius: "50%", marginBottom: "0.5rem" }}
@@ -67,8 +67,8 @@ export default function SidebarModule({
                         </ul>
                     </nav>
                     <div style={{ display: "flex", justifyContent: "space-around", marginTop: "1rem" }}>
-                        <img src="https://excellent-exeqtion.github.io/lampo.pet-web/others/google-play-badge-logo.svg" alt="Google Play" style={{ height: "6rem" }} />
-                        <img src="https://excellent-exeqtion.github.io/lampo.pet-web/others/download-on-the-app-store-apple-logo.svg" alt="App Store" style={{ height: "6rem" }} />
+                        <Image src="https://excellent-exeqtion.github.io/lampo.pet-web/others/google-play-badge-logo.svg" alt="Google Play" style={{ height: "6rem" }} />
+                        <Image src="https://excellent-exeqtion.github.io/lampo.pet-web/others/download-on-the-app-store-apple-logo.svg" alt="App Store" style={{ height: "6rem" }} />
                     </div>
                 </aside>
             )}
@@ -91,7 +91,7 @@ export default function SidebarModule({
                     }}
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <img
+                        <Image
                             src={'https://excellent-exeqtion.github.io/lampo.pet-web/pets/camus.png'}
                             alt="profile"
                             style={{ width: "40px", height: "40px", borderRadius: "50%" }}

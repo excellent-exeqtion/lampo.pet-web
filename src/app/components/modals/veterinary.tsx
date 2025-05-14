@@ -39,7 +39,7 @@ export default function VeterinaryModule({ setShowVetModal }: VeterinaryModulePr
         setShowVetModal(false);
         router.push(`/pages/vet/${sanitizedCode}`);
       }
-    } catch (e) {
+    } catch {
       setError("Ocurrió un error inesperado.");
     } finally {
       setLoading(false);

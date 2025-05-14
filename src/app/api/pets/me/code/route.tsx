@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { supabase }    from "lib/supabaseClient";
 import { generateCode } from "lib/codeGenerator";
 
-export async function POST(req: Request) {
+export async function POST() {
 
     console.log(process.env.TESTING_TOKEN)
   // 1. Obtener usuario autenticado (ajusta según tu auth)

@@ -1,6 +1,6 @@
 // app/vet/[code]/page.tsx
 import { supabase } from "lib/supabaseClient";
-import PetEditForm from "forms/pet-edit-form";
+import PetEditForm, { Pet } from "forms/pet-edit-form";
 
 interface Props {
   params: { code: string };
@@ -18,7 +18,7 @@ export default async function VetPage({ params }: Props) {
 
   const now = new Date();
   let isValid = false;
-  let pet: any = null;
+  let pet: Pet | null = null;
   let message = "";
 
   if (codeError || !codeData) {

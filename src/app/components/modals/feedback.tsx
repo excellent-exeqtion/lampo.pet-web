@@ -18,7 +18,7 @@ export default function FeedbackModule({
     setSending(true);
 
     try {
-      const res = await fetch("/api/feedback", {
+      const res = await fetch("https://lampo-pet-web.vercel.app/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ feedback, anonymous }),

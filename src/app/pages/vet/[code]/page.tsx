@@ -3,11 +3,13 @@ import { supabase } from "lib/supabaseClient";
 import PetEditForm, { Pet } from "forms/pet-edit-form";
 
 interface Props {
-  params: { code: string };
-}
+    params: Promise<{ code: string }>; // Adjust the type to match the expected constraint
+  }
 
 export default async function VetPage({ params }: Props) {
-  const codeParam = params.code;
+    
+    const resolvedParams = await params; // Resolve the params if it's a Promise
+    const codeParam = resolvedParams.code;
 
   // 1. Look up code record
   const { data: codeData, error: codeError } = await supabase

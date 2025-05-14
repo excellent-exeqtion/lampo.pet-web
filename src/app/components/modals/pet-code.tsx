@@ -13,7 +13,7 @@ export default function PetCodeModule({
   const [copied, setCopied] = useState(false);
 
   async function generar() {
-    const res = await fetch(`https://${process.env.VERCEL_URL}/api/pets/me/code`, { method: "POST" });
+    const res = await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/pets/me/code`, { method: "POST" });
     const json = await res.json();
     if (json.code) {
       setCode(json.code);

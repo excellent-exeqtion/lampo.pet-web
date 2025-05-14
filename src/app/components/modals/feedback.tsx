@@ -18,7 +18,7 @@ export default function FeedbackModule({
     setSending(true);
 
     try {
-      const res = await fetch(`https://${process.env.VERCEL_URL}/api/feedback`, {
+      const res = await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ feedback, anonymous }),

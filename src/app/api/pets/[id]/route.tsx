@@ -72,5 +72,5 @@ export async function PUT(
     );
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, status: 200 });
 }

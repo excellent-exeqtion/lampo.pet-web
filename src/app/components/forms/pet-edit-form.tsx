@@ -23,6 +23,7 @@ export default function PetEditForm({ code, pet, disabled = false }: Props) {
     const [breed, setBreed] = useState(pet.breed || "");
     const [birthDate, setBirthDate] = useState(pet.birth_date || "");
     const [alert, setAlert] = useState<string | null>(null);
+    const [formFailed, setFormFailed ] = useState(false);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -40,6 +41,8 @@ export default function PetEditForm({ code, pet, disabled = false }: Props) {
             }),
         });
         const json = await res.json();
+
+        setFormFailed(json.status != 200);
 
         if (res.ok) setAlert("Datos actualizados correctamente.");
         else setAlert(json.error || "Error al actualizar.");
@@ -93,7 +96,7 @@ export default function PetEditForm({ code, pet, disabled = false }: Props) {
             </button>
 
             {alert && (
-                <p style={{ color: disabled ? "gray" : "green" }}>{alert}</p>
+                <p style={{ color: disabled || formFailed ? "red" : "green" }}>{alert}</p>
             )}
         </form>
     );

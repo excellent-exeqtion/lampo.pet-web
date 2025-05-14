@@ -12,9 +12,9 @@ interface UpdateBody {
 
 export async function PUT(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
-    const petId = params.id;
+    const { id } = await params;
     const { code, name, species, breed, birth_date } = (await req.json()) as UpdateBody;
 
     if (!code) {
@@ -46,7 +46,7 @@ export async function PUT(
     }
 
     // 3) Verificar que el código pertenezca a esta mascota
-    if (codeData.pet_id !== petId) {
+    if (codeData.pet_id !== id) {
         return NextResponse.json(
             { error: "Código no corresponde a esta mascota." },
             { status: 403 }
@@ -68,7 +68,7 @@ export async function PUT(
     const { error: updateErr } = await supabase
         .from("pets")
         .update(updates)
-        .eq("id", petId);
+        .eq("id", id);
 
     if (updateErr) {
         return NextResponse.json(

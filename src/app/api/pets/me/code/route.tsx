@@ -5,6 +5,7 @@ import { generateCode } from "lib/codeGenerator";
 
 export async function POST(req: Request) {
 
+    console.log(process.env.TESTING_TOKEN)
   // 1. Obtener usuario autenticado (ajusta según tu auth)
   const { data } = await supabase.auth.getUser(process.env.TESTING_TOKEN); 
   if (!data.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
 
   // 4. Generar nuevo código
   const code = generateCode();
-  const ttlMinutes = 5;
+  const ttlMinutes = parseInt(process.env.CODE_EXPIRE_AT!);
   const expiresAt = new Date(Date.now() + ttlMinutes * 60_000).toISOString();
 
   const { error: errInsert } = await supabase

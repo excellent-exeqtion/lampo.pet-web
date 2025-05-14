@@ -26,7 +26,7 @@ export default function VeterinaryModule({ setShowVetModal }: VeterinaryModulePr
     setLoading(true);
 
     try {
-      const res = await fetch(`https://${process.env.VERCEL_SITE_URL}/api/vet/use-code`, {
+      const res = await fetch(`https://${process.env.VERCEL_URL}/api/vet/use-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: sanitizedCode }),

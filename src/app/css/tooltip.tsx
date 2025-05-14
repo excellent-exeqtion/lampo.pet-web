@@ -1,3 +1,4 @@
+// app/css/tooltip.tsx
 export const tooltipStyles =
     `
         .tooltip-container { position: relative; display: inline-block; }

@@ -1,3 +1,4 @@
+// app/components/modals/bubbles.tsx
 "use client";
 import React, { Dispatch, SetStateAction } from "react";
 import {
@@ -6,8 +7,8 @@ import {
     FaUserMd
 } from "react-icons/fa";
 import FeedbackModule from "./feedback";
-import VeterinaryModule from "./veterinary";
 import PetCodeModule from "./pet-code";
+import VeterinaryModule from "./veterinary";
 
 export default function BubblesModule({ setShowFeedbackModal, showFeedbackModal, setShowVetModal, showVetModal, setShowCodeModal, showCodeModal }: { setShowFeedbackModal: Dispatch<SetStateAction<boolean>>, showFeedbackModal: boolean, setShowVetModal: Dispatch<SetStateAction<boolean>>, showVetModal: boolean, setShowCodeModal: Dispatch<SetStateAction<boolean>>, showCodeModal: boolean }) {
     return (

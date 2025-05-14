@@ -1,7 +1,8 @@
+// app/vaccines/page.tsx (server component)
 "use client";
 import React from "react";
-import { vaccinesMock } from "../../data/petdata";
-import { useIsMobile } from "../../layout";
+import { vaccinesMock } from "data/petdata";
+import { useIsMobile } from "app/layout";
 import { FaSyringe } from "react-icons/fa";
 
 export default function VaccinesModule() {

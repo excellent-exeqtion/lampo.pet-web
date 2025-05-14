@@ -49,6 +49,9 @@ export default function RootLayout({
 
   return (
     <html lang="en" data-theme="ligth">
+      <head>
+        <title>Lampo</title>
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <style>{tooltipStyles}</style>
 

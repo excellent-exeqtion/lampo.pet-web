@@ -1,3 +1,4 @@
+// app/calendar/page.tsx (server component)
 "use client";
 import React from "react";
 

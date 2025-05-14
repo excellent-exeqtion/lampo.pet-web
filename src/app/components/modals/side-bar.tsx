@@ -1,3 +1,4 @@
+// app/components/modals/side-bar.tsx
 "use client";
 import React, { Dispatch, SetStateAction, JSX } from "react";
 import {
@@ -39,8 +40,10 @@ export default function SidebarModule({
                 >
                     <div style={{ padding: "0 1rem 1rem" }}>
                         <Image
-                            src={'https://excellent-exeqtion.github.io/lampo.pet-web/pets/camus.png'}
+                            src={'/pets/camus.png'}
                             alt="profile"
+                            width={80}
+                            height={80}
                             style={{ width: "80px", height: "80px", borderRadius: "50%", marginBottom: "0.5rem" }}
                         />
                         <select
@@ -68,8 +71,8 @@ export default function SidebarModule({
                         </ul>
                     </nav>
                     <div style={{ display: "flex", justifyContent: "space-around", marginTop: "1rem" }}>
-                        <Image src="https://excellent-exeqtion.github.io/lampo.pet-web/others/google-play-badge-logo.svg" alt="Google Play" style={{ height: "6rem" }} />
-                        <Image src="https://excellent-exeqtion.github.io/lampo.pet-web/others/download-on-the-app-store-apple-logo.svg" alt="App Store" style={{ height: "6rem" }} />
+                        <Image src="/others/google-play-badge-logo.svg" alt="Google Play" width={120} height={40} />
+                        <Image src="/others/download-on-the-app-store-apple-logo.svg" alt="App Store" width={120} height={40} />
                     </div>
                 </aside>
             )}
@@ -93,8 +96,10 @@ export default function SidebarModule({
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <Image
-                            src={'https://excellent-exeqtion.github.io/lampo.pet-web/pets/camus.png'}
+                            src={'/pets/camus.png'}
                             alt="profile"
+                            width={40}
+                            height={40}
                             style={{ width: "40px", height: "40px", borderRadius: "50%" }}
                         />
                         <span style={{ fontSize: "1rem", fontWeight: "600" }}>{selectedPet}</span>

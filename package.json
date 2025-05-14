@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@picocss/pico": "^2.1.1",
+    "@supabase/supabase-js": "^2.49.4",
     "@types/nodemailer": "^6.4.17",
     "dotenv": "^16.5.0",
     "mailtrap": "^4.1.0",

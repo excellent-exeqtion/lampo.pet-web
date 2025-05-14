@@ -1,7 +1,8 @@
+// app/medicines/page.tsx (server component)
 "use client";
 import React from "react";
-import { medicinesMock } from "../../data/petdata";
-import { useIsMobile } from "../../layout";
+import { medicinesMock } from "data/petdata";
+import { useIsMobile } from "app/layout";
 import { FaPills } from "react-icons/fa";
 
 export default function MedicinesModule() {

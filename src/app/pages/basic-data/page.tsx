@@ -1,7 +1,8 @@
+// app/basic-data/page.tsx (server component)
 "use client";
 import React from "react";
-import { basicDataMock, contactMock } from "../../data/petdata";
-import { useIsMobile } from "../../layout";
+import { basicDataMock, contactMock } from "data/petdata";
+import { useIsMobile } from "app/layout";
 import { FaUser } from "react-icons/fa";
 
 export interface BasicData {

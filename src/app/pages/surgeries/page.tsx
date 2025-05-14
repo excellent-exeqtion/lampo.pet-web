@@ -1,7 +1,8 @@
+// app/surgeries/page.tsx (server component)
 "use client";
 import React from "react";
-import { surgeriesMock } from "../../data/petdata";
-import { useIsMobile } from "../../layout";
+import { surgeriesMock } from "data/petdata";
+import { useIsMobile } from "app/layout";
 import { FaCut } from "react-icons/fa";
 
 export default function SurgeriesModule() {

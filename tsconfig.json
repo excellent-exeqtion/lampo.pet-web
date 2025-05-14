@@ -19,8 +19,13 @@
       }
     ],
     "paths": {
-      "medical-record/*": ["./src/*"],
+      "src/*": ["./src/*"],
       "assets/*": ["./public/*"],
+      "lib/*": ["./src/app/lib/*"],
+      "data/*": ["./src/app/data/*"],
+      "app/*": ["./src/app/*"],
+      "modals/*": ["./src/app/components/modals/*"],
+      "forms/*": ["./src/app/components/forms/*"],
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

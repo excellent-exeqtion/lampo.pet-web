@@ -1,35 +1,34 @@
 // app/api/vet/use-code/route.ts
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/auth/supabaseClient";
+import { PetCodeRepository } from "@/lib/db/repositories/petCode.repository";
 
 export async function POST(req: Request) {
-  const { code } = await req.json();
+  try {
+    const { code } = await req.json();
 
-  // 1. Buscar el código activo
-  const { data, error } = await supabase
-    .from("pet_codes")
-    .select("pet_id, used, expires_at")
-    .eq("code", code)
-    .single();
+    // 1) Obtener y validar código
+    const data = await PetCodeRepository.find(code);
+    if (!data) {
+      return NextResponse.json({ error: "Código inválido" }, { status: 404 });
+    }
+    const now = new Date().toISOString();
+    if (data.used) {
+      return NextResponse.json({ error: "Código ya utilizado" }, { status: 410 });
+    }
+    if (data.expires_at < now) {
+      return NextResponse.json({ error: "Código expirado" }, { status: 410 });
+    }
 
-  if (error || !data)
-    return NextResponse.json({ error: "Código inválido" }, { status: 404 });
+    // 2) Marcar como usado
+    await PetCodeRepository.markUsed(code);
 
-  const now = new Date().toISOString();
-  if (data.used)
-    return NextResponse.json({ error: "Código ya utilizado" }, { status: 410 });
-  if (data.expires_at < now)
-    return NextResponse.json({ error: "Código expirado" }, { status: 410 });
-
-  // 2. Marcar como usado (para un solo uso)
-  const { error: errUpdate } = await supabase
-    .from("pet_codes")
-    .update({ used: true })
-    .eq("code", code);
-
-  if (errUpdate)
-    return NextResponse.json({ error: errUpdate.message }, { status: 500 });
-
-  // 3. Devolver el pet_id para cargar el formulario de edición
-  return NextResponse.json({ success: true, petId: data.pet_id });
+    // 3) Devolver petId
+    return NextResponse.json({ success: true, petId: data.pet_id });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Error interno" },
+      { status: 500 }
+    );
+  }
 }

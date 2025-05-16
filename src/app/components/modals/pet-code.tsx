@@ -22,7 +22,7 @@ export default function PetCodeModule({
         {
           method: 'POST',
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: session?.access_token }),
+          body: JSON.stringify({ token: session?.db?.access_token }),
         }
       );
 

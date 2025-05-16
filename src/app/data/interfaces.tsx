@@ -1,10 +1,3 @@
-export interface Pet {
-    pet_id: string;
-    name: string;
-    image?: string | null;
-    owner_id: string;
-};
-
 export interface OwnerData {
     owner_id: string;
     name: string;

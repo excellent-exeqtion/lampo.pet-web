@@ -1,65 +1,53 @@
 // app/vet/[code]/page.tsx
-import { supabase } from "@/lib/auth/supabaseClient";
-import PetEditForm, { Pet } from "@/forms/pet-edit-form";
+import PetEditForm from "@/forms/pet-edit-form";
+import { Pet } from "@/lib/db/repositories";
+import { PetRepository } from "@/lib/db/repositories/pet.repository";
+import { PetCodeRepository } from "@/lib/db/repositories/petCode.repository";
 
-interface Props {
-    params: Promise<{ code: string }>; // Adjust the type to match the expected constraint
-  }
+interface VetPageProps {
+  params: { code: string };
+}
 
-export default async function VetPage({ params }: Props) {
-    
-    const resolvedParams = await params; // Resolve the params if it's a Promise
-    const codeParam = resolvedParams.code;
-
-  // 1. Look up code record
-  const { data: codeData, error: codeError } = await supabase
-    .from("pet_codes")
-    .select("pet_id, expires_at")
-    .eq("code", codeParam)
-    .single();
-
-  const now = new Date();
-  let isValid = false;
+export default async function VetPage({ params: { code } }: VetPageProps) {
   let pet: Pet | null = null;
   let message = "";
+  let isValid = false;
 
-  if (codeError || !codeData) {
-    message = "Código inválido. Pídele al dueño que genere uno nuevo.";
-  } else {
-    const expiresAt = new Date(codeData.expires_at);
-    if (expiresAt < now) {
+  try {
+    // 1. Buscar el código
+    const codeRecord = await PetCodeRepository.find(code);
+    if (!codeRecord) {
+      message = "Código inválido. Pídele al dueño que genere uno nuevo.";
+    } else if (new Date(codeRecord.expires_at) < new Date()) {
+      // 2. Código expirado
       message = "El código ha expirado. Pídele al dueño que genere uno nuevo.";
     } else {
-      // 2. Código válido → fetch pet
-      const { data: petData, error: petError } = await supabase
-        .from("pets")
-        .select("id, name, species, breed, birth_date")
-        .eq("id", codeData.pet_id)
-        .single();
-
-      if (petError || !petData) {
+      // 3. Código válido → buscar mascota
+      pet = await PetRepository.findById(codeRecord.pet_id);
+      if (!pet) {
         message = "No se encontró la mascota asociada.";
       } else {
-        pet = petData;
         isValid = true;
       }
     }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.error(err);
+    message = "Ocurrió un error al validar el código.";
   }
 
   return (
-    <main style={{ padding: "2rem" }}>
+    <main className="container" style={{ padding: "2rem" }}>
       <h1>Editar datos de mascota</h1>
 
       {!isValid && (
-        <p style={{ color: "red", marginBottom: "1rem" }}>{message}</p>
+        <p className="text-error" style={{ marginBottom: "1rem" }}>
+          {message}
+        </p>
       )}
 
       {pet && (
-        <PetEditForm
-          code={codeParam}
-          pet={pet}
-          disabled={!isValid}
-        />
+        <PetEditForm code={code} pet={pet} disabled={!isValid} />
       )}
     </main>
   );

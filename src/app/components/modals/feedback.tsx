@@ -23,7 +23,7 @@ export default function FeedbackModule({
       const res = await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback, anonymous, userEmail: session?.user.email }),
+        body: JSON.stringify({ feedback, anonymous, userEmail: session?.db?.user.email }),
       });
       if (!res.ok) throw new Error("Error en el servidor");
       alert("¡Gracias por tu opinión!");

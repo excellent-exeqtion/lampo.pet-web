@@ -1,25 +1,23 @@
 // app/layout.tsx
 "use client";
 import React, { useState, useEffect, createContext, useContext } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
 import { useRouter } from "next/navigation";
-import type { Session } from "@supabase/supabase-js";
+import type { AppSession } from "@/lib/db/types/session"; 
+import type { AppContextType } from "./data";
 
 import SidebarModule from "./components/layout/side-bar";
 import BubblesModule from "./components/modals/bubbles";
 import LoginPage from "./pages/login/page";
+import { LibComponents } from "@/lib/components";
 
 import "./globals.css";
 import "@picocss/pico";
 import { tooltipStyles } from "./css/tooltip";
-import type { AppContextType } from "./data/context";
-import type { Pet } from "./data";
 
-import { getSession, onAuthStateChange, signOut } from "@/lib/db/services/authService";
-import { LibComponents } from "./lib/components";
-
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+// Hooks y servicios de autenticación
+import { useSession as useRawSession, signOut } from "@/lib/db/services/authService";
+import { geistMono, geistSans } from "./css/geist";
+import { Pet } from "./lib/db/repositories";
 
 const AppContext = createContext<AppContextType>({
   isMobile: false,
@@ -29,18 +27,31 @@ const AppContext = createContext<AppContextType>({
   setSelectedPet: () => {},
 });
 
+export function useAppContext() {
+  return useContext(AppContext);
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const rawSession = useRawSession(); // Session | null | undefined
 
-  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+  // Mapear a AppSession
+  let appSession: AppSession | null | undefined;
+  if (rawSession === undefined) {
+    appSession = undefined;
+  } else if (rawSession === null) {
+    appSession = null;
+  } else {
+    appSession = { db: rawSession };
+  }
+
+  // Estados UI
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showVetModal, setShowVetModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
-
-  // undefined = cargando, null = no auth, Session = auth
-  const [session, setSession] = useState<Session | null | undefined>(undefined);
 
   const handleLogout = async () => {
     await signOut();
@@ -48,29 +59,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   };
 
   useEffect(() => {
-    // Detectar mobile
     const onResize = () => setIsMobile(window.innerWidth <= 767);
     onResize();
     window.addEventListener("resize", onResize);
-
-    // Cargar sesión inicial
-    (async () => {
-      const { data } = await getSession();
-      setSession(data.session);
-    })();
-
-    // Suscribirse a cambios de auth; TS infiere bien el tipo de `subscription`
-    const subscription = onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
-
-    return () => {
-      window.removeEventListener("resize", onResize);
-      subscription.unsubscribe();
-    };
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  if (session === undefined) {
+  // Estado de carga de sesión
+  if (appSession === undefined) {
     return (
       <html lang="en" data-theme="light">
         <head><title>Lampo</title></head>
@@ -82,7 +78,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
-  if (!session) {
+  // No autenticado
+  if (appSession === null) {
     return (
       <html lang="en" data-theme="light">
         <head><title>Lampo</title></head>
@@ -94,6 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
+  // Usuario autenticado
   const cols = isMobile ? "1fr" : "250px 1fr";
 
   return (
@@ -104,7 +102,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AppContext.Provider
           value={{
             isMobile,
-            session,
+            session: appSession,
             logout: handleLogout,
             selectedPet,
             setSelectedPet,
@@ -136,5 +134,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
-export const useAppContext = () => useContext(AppContext);

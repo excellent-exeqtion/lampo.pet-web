@@ -1,47 +1,37 @@
 // app/api/pets/me/code/route.ts
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/auth/supabaseClient";
-import { generateCode } from "@/lib/utils/random";
+import { getUser } from "@/lib/db/services/authService";
+import { PetRepository } from "@/lib/db/repositories/pet.repository";
+import { PetCodeRepository } from "@/lib/db/repositories/petCode.repository";
 
 export async function POST(req: Request) {
-
   try {
     const { token } = await req.json();
+    const user = await getUser(token);
 
-    // 1. Obtener usuario autenticado (ajusta según tu auth)
-    const { data } = await supabase.auth.getUser(token);
-    if (!data.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    // 1) Mascota del owner
+    const pet = await PetRepository.findByOwnerId(user.id);
+    if (!pet) {
+      return NextResponse.json(
+        { error: "Mascota no encontrada" },
+        { status: 404 }
+      );
+    }
 
-    // 2. Buscar la mascota de ese dueño (ajusta si hay varias)
-    const { data: pet, error: errPet } = await supabase
-      .from("pets")
-      .select("id")
-      .eq("owner_id", data.user.id)
-      .single();
-    if (errPet || !pet) return NextResponse.json({ error: "Mascota no encontrada" }, { status: 404 });
+    // 2) Invalida códigos anteriores
+    await PetCodeRepository.invalidateAll(pet.pet_id);
 
-    // 3. Invalidar códigos anteriores
-    await supabase
-      .from("pet_codes")
-      .update({ used: true })
-      .eq("pet_id", pet.id)
-      .is("used", false);
+    // 3) Crea nuevo código
+    const ttl = parseInt(process.env.CODE_EXPIRE_AT!);
+    const code = await PetCodeRepository.create(pet.pet_id, ttl);
 
-    // 4. Generar nuevo código
-    const code = generateCode();
-    const ttlMinutes = parseInt(process.env.CODE_EXPIRE_AT!);
-    const expiresAt = new Date(Date.now() + ttlMinutes * 60_000).toISOString();
-
-    const { error: errInsert } = await supabase
-      .from("pet_codes")
-      .insert({ pet_id: pet.id, code, expires_at: expiresAt });
-
-    if (errInsert) return NextResponse.json({ error: errInsert.message }, { status: 500 });
-
-    // 5. Devolver el código
     return NextResponse.json({ code });
-  } catch (err) {
-    console.error('Error interno en /api/pets/me/code:', err)
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    const msg = err.message.includes("No autorizado")
+      ? { error: "No autorizado" }
+      : { error: err.message || "Error interno" };
+    const status = msg.error === "No autorizado" ? 401 : 500;
+    return NextResponse.json(msg, { status });
   }
 }

@@ -1,33 +1,62 @@
 // app/pages/login/page.tsx
 "use client";
-import React, { useState } from "react";
+import React, { FormEvent, useState } from "react";
 import "@picocss/pico";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { signIn, signUp, resetPassword } from "../../../services/authService";
+import type { OwnerDataType } from "@/types/index";
+import { OwnerRepository } from "@/repos/owner.repository";
+import PlanSelection from "./components/PlanSelection";
 
 export default function LoginPage() {
   const router = useRouter();
+
+  // Estados comunes
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isRegistering, setIsRegistering] = useState(false);
 
-  const handleAuth = async (e: React.FormEvent) => {
+  // Estados adicionales para registro
+  const [ownerInfo, setOwnerInfo] = useState<Partial<OwnerDataType>>({
+    // Ajusta estos campos según tu definición real de OwnerDataType
+    name: "",
+    phone: "",
+    address: "",
+  });
+
+  // Control para mostrar minibosquejo de selección de plan
+  const [showPlanSelection, setShowPlanSelection] = useState(false);
+
+  
+  const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     if (isRegistering) {
-      const { error: signUpError } = await signUp(email, password);
+      // 1) Crear cuenta en Supabase (envía correo de confirmación)
+      const { error: signUpError, data } = await signUp(email, password);
       if (signUpError) {
         setError(signUpError.message);
       } else {
-        setError("Revisa tu correo para confirmar tu cuenta.");
+        // 2) Guardar datos del owner en tu tabla ‘owners’
+        const userId = data?.user?.id;
+        if (userId) {
+          await OwnerRepository.create({
+            // spread de ownerInfo, casteado a OwnerDataType
+            ...(ownerInfo as OwnerDataType),
+            owner_id: userId,
+          });
+        }
+        // 3) Mostrar selección de plan
+        setShowPlanSelection(true);
       }
     } else {
+      // Login normal
       const { error: signInError } = await signIn(email, password);
       if (signInError) {
         setError(signInError.message);
@@ -52,6 +81,11 @@ export default function LoginPage() {
       setError("Revisa tu correo para restablecer la contraseña.");
     }
   };
+
+  // 4) Si ya registró, mostrar bosquejo de planes
+  if (showPlanSelection) {
+    return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} />;
+  }
 
   return (
     <main
@@ -79,6 +113,7 @@ export default function LoginPage() {
           <h1>{isRegistering ? "Regístrate" : "Inicia sesión"}</h1>
         </div>
 
+        {/* Campos comunes */}
         <label htmlFor="email">
           Email
           <input
@@ -101,9 +136,51 @@ export default function LoginPage() {
           />
         </label>
 
-        {error && (
-          <p style={{ color: "red", marginTop: "0.5rem" }}>{error}</p>
+        {/* Campos extra sólo en registro */}
+        {isRegistering && (
+          <>
+            <label htmlFor="name">
+              Nombre
+              <input
+                id="name"
+                type="text"
+                value={ownerInfo.name || ""}
+                onChange={(e) =>
+                  setOwnerInfo({ ...ownerInfo, name: e.target.value })
+                }
+                required
+              />
+            </label>
+
+            <label htmlFor="phone">
+              Teléfono
+              <input
+                id="phone"
+                type="tel"
+                value={ownerInfo.phone || ""}
+                onChange={(e) =>
+                  setOwnerInfo({ ...ownerInfo, phone: e.target.value })
+                }
+                required
+              />
+            </label>
+
+            <label htmlFor="address">
+              Dirección
+              <input
+                id="address"
+                type="text"
+                value={ownerInfo.address || ""}
+                onChange={(e) =>
+                  setOwnerInfo({ ...ownerInfo, address: e.target.value })
+                }
+                required
+              />
+            </label>
+          </>
         )}
+
+        {error && <p style={{ color: "red", marginTop: "0.5rem" }}>{error}</p>}
 
         <button
           type="submit"
@@ -130,7 +207,7 @@ export default function LoginPage() {
                 border: "none",
                 padding: 0,
                 cursor: "pointer",
-                color: "rgb(55, 60, 68)"
+                color: "rgb(55, 60, 68)",
               }}
             >
               ¿Olvidaste tu contraseña?

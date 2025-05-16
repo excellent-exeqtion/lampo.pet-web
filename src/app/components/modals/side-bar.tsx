@@ -1,30 +1,62 @@
 // app/components/modals/side-bar.tsx
 "use client";
-import React, { Dispatch, SetStateAction, JSX } from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import {
     FaBars,
     FaTimes
 } from "react-icons/fa";
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAppContext } from "@/app/layout";
+import { menuData, PetsData } from '@/data/petdata';
+import { Pet } from "@/data/index";
+import { LibComponents } from "@/lib/components";
 
 export default function SidebarModule({
-    isMobile,
-    selectedPet,
-    setSelectedPet,
-    mascotas,
-    menuItems,
     menuOpen,
     setMenuOpen
 }: {
-    isMobile: boolean;
-    selectedPet: string;
-    setSelectedPet: Dispatch<SetStateAction<string>>;
-    mascotas: string[];
-    menuItems: { label: string; icon: JSX.Element, url: string }[];
     menuOpen: boolean;
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
 }) {
+    const { isMobile, logout, session, selectedPet, setSelectedPet } = useAppContext();
+
+    const menuItems = menuData;
+
+    var ownersPets = PetsData.filter(x => x.owner_id == session?.user.id);
+
+    if(ownersPets.length == 0){
+        return (<LibComponents.Loading />);
+    }
+
+    if (selectedPet == undefined) {
+        setSelectedPet(ownersPets[0]);
+    }
+
+    const petDropdown = () => {
+        if (ownersPets.length == 1) {
+            return (
+                <p>{ownersPets[0].name}</p>
+            );
+        }
+        else {
+            return (
+                <select
+                    value={selectedPet?.pet_id}
+                    onChange={(e) => setSelectedPet(ownersPets.filter(x => x.pet_id == e.target.value)[0])}
+                    style={{ border: 'none', paddingLeft: '0' }}
+                    className="pet-dropdown"
+                >
+                    {ownersPets.map((pet) => (
+                        <option key={pet.pet_id} value={pet.pet_id}>
+                            {pet.name}
+                        </option>
+                    ))}
+                </select>
+            );
+        }
+    }
+
     return (
         <div>
             {!isMobile && (
@@ -40,24 +72,13 @@ export default function SidebarModule({
                 >
                     <div style={{ padding: "0 1rem 1rem" }}>
                         <Image
-                            src={'/pets/camus.png'}
+                            src={selectedPet?.image ?? '/pets/pet.png'}
                             alt="profile"
                             width={80}
                             height={80}
                             style={{ width: "80px", height: "80px", borderRadius: "50%", marginBottom: "0.5rem" }}
                         />
-                        <select
-                            value={selectedPet}
-                            onChange={(e) => setSelectedPet(e.target.value)}
-                            style={{ border: 'none', paddingLeft: '0' }}
-                            className="pet-dropdown"
-                        >
-                            {mascotas.map((m) => (
-                                <option key={m} value={m}>
-                                    {m}
-                                </option>
-                            ))}
-                        </select>
+                        {petDropdown()}
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
@@ -68,6 +89,7 @@ export default function SidebarModule({
                                     </Link>
                                 </li>
                             ))}
+                            <li><button onClick={logout}>Cerrar sesión</button></li>
                         </ul>
                     </nav>
                     <div style={{ display: "flex", justifyContent: "space-around", marginTop: "1rem" }}>
@@ -96,13 +118,13 @@ export default function SidebarModule({
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <Image
-                            src={'/pets/camus.png'}
+                            src={selectedPet?.image ?? '/pets/pet.png'}
                             alt="profile"
-                            width={40}
-                            height={40}
+                            width={80}
+                            height={80}
                             style={{ width: "40px", height: "40px", borderRadius: "50%" }}
                         />
-                        <span style={{ fontSize: "1rem", fontWeight: "600" }}>{selectedPet}</span>
+                        <span style={{ fontSize: "1rem", fontWeight: "600" }}>{selectedPet?.name}</span>
                     </div>
                     <button
                         onClick={() => setMenuOpen(!menuOpen)}
@@ -136,6 +158,7 @@ export default function SidebarModule({
                                 </Link>
                             </li>
                         ))}
+                        <li><button onClick={logout}>Cerrar sesión</button></li>
                     </ul>
                 </nav>
             )}

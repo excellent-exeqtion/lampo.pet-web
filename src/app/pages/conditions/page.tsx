@@ -1,33 +1,46 @@
 // app/conditions/page.tsx (server component)
 "use client";
 import React from "react";
-import { conditionsMock } from "data/petdata";
-import { useIsMobile } from "app/layout";
+import { conditionsMock } from "@/data/petdata";
+import { useAppContext } from "@/app/layout";
 import { FaCloudSun } from "react-icons/fa";
+import { v4 } from "uuid";
+import { Utils } from "@/lib/utils";
+import { LibComponents } from "@/lib/components"
 
 export default function ConditionsModule() {
-    const items = conditionsMock;
-    const isMobile = useIsMobile();
+
+    const { isMobile, selectedPet } = useAppContext();
+
+    const petConditions = conditionsMock.filter(p => p.pet_id == selectedPet?.pet_id);
+
+    const renderContent = (isMobile: boolean) => {
+        if (petConditions == undefined) {
+            return (<LibComponents.Loading />);
+        }
+
+        if (petConditions.length == 0) {
+            return (<LibComponents.DataNotFound message="No hay registro de condiciones especiales." />);
+        }
+
+        var formItems: Utils.Form[] = [];
+
+        petConditions.forEach(condition => {
+            formItems.push({
+                id: v4(),
+                fields: [
+                    { label: 'Condición', show: true, value: condition.condition },
+                    { label: 'Severidad', show: true, value: condition.severity }
+                ]
+            });
+        });
+        return Utils.renderForm(formItems, isMobile);
+    };
 
     return (
         <main style={{ padding: isMobile ? "2rem 1rem" : "2rem" }}>
-            <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <FaCloudSun /> Condiciones atm.
-            </h3>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "1rem" }}>
-                {items.map(({ condition, severity }) => (
-                    <div key={condition} style={{ backgroundColor: "rgb(1, 114, 173)", padding: "0.1rem", borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                        <div style={{ backgroundColor: "#fff", padding: "1rem", margin: '0.5rem', borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                            <p style={{ fontSize: "0.75rem", color: "#6B7280", margin: 0 }}>Condición:</p>
-                            <p style={{ fontSize: "1rem", margin: "0.25rem 0 0 0" }}>{condition}</p>
-                        </div>
-                        <div style={{ backgroundColor: "#fff", padding: "1rem", margin: '0.5rem', borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                            <p style={{ fontSize: "0.75rem", color: "#6B7280", margin: 0 }}>Severidad:</p>
-                            <p style={{ fontSize: "1rem", margin: "0.25rem 0 0 0" }}>{severity}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            {Utils.renderTitle(<FaCloudSun />, 'Condiciones especiales')}
+            {renderContent(isMobile)}
         </main>
     );
 }

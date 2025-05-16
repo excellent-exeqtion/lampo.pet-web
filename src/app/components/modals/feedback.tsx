@@ -3,6 +3,7 @@
 
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaTimes } from "react-icons/fa";
+import { useAppContext } from "@/app/layout";
 
 export default function FeedbackModule({
   setShowFeedbackModal,
@@ -12,6 +13,7 @@ export default function FeedbackModule({
   const [feedback, setFeedback] = useState("");
   const [sending, setSending] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const { session } = useAppContext();
 
   const sendFeedback = async (anonymous: boolean) => {
     if (!feedback.trim()) return;
@@ -21,7 +23,7 @@ export default function FeedbackModule({
       const res = await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback, anonymous }),
+        body: JSON.stringify({ feedback, anonymous, userEmail: session?.user.email }),
       });
       if (!res.ok) throw new Error("Error en el servidor");
       alert("¡Gracias por tu opinión!");

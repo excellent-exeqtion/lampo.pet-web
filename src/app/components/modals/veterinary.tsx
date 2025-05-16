@@ -4,7 +4,7 @@
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { useRouter } from "next/navigation";
-import { veterinaryStyles } from "css/veterinary";
+import { veterinaryStyles } from "@/css/veterinary";
 
 interface VeterinaryModuleProps {
   setShowVetModal: Dispatch<SetStateAction<boolean>>;

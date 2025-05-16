@@ -1,6 +1,6 @@
 // app/vet/[code]/page.tsx
-import { supabase } from "lib/supabaseClient";
-import PetEditForm, { Pet } from "forms/pet-edit-form";
+import { supabase } from "@/lib/supabaseClient";
+import PetEditForm, { Pet } from "@/forms/pet-edit-form";
 
 interface Props {
     params: Promise<{ code: string }>; // Adjust the type to match the expected constraint

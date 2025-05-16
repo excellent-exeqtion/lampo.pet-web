@@ -1,11 +1,11 @@
 // /app/api/feedback/route.ts
 export const runtime = 'nodejs'
 
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { feedback, anonymous } = await req.json()
+    const { feedback, anonymous, userEmail } = await req.json()
     if (!feedback || typeof feedback !== 'string') {
       return NextResponse.json({ error: 'Falta el texto del feedback' }, { status: 400 })
     }
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         from: { email: MAILTRAP_FROM },
         to:   [{ email: MAILTRAP_TO }],
-        subject: `${MAILTRAP_SUBJECT}${anonymous? ' Anonymous' : ' From User'}`,
+        subject: `${MAILTRAP_SUBJECT}${anonymous? ' Anonymous' : ` From ${userEmail}`}`,
         text: feedback,
         // si quisieras HTML: html: "<p>…</p>"
       }),

@@ -1,4 +1,5 @@
 // app/data/petdata.tsx
+import { v4 } from "uuid";
 import { Metadata } from "next";
 import {
   FaHome,
@@ -11,33 +12,7 @@ import {
   FaRocket,
   FaCog
 } from "react-icons/fa";
-
-// Datos básicos y de contacto
-export const basicDataMock = [
-  { label: "Tipo de mascota", value: "Gato" },
-  { label: "Género", value: "Macho" },
-  { label: "Peso", value: "5.5 KG" },
-  { label: "Raza", value: "Mestizo" },
-  { label: "Alergias", value: "No" },
-  { label: "Condición de peso", value: "Normal" },
-  { label: "Tamaño", value: "Mediano" },
-  { label: "Vive con otros", value: "No" },
-  { label: "Comida principal", value: "Taste the Wild" },
-];
-
-export const contactMock = [
-  { label: "Nombre del contacto", value: "Andrés Aulestia" },
-  { label: "Teléfono", value: "+57 3146061490" },
-  { label: "Dirección", value: "Cra. 74 #152b-70 Torre 3 Apto. 1704" },
-  { label: "Ciudad", value: "Bogotá" },
-  { label: "País", value: "Colombia" },
-  { label: "Email", value: "a.aulestia@exe.com.co" },
-  { label: "Última vacuna", value: "Parvigen (2024-07-25)" },
-  { label: "Castrado", value: "Sí (2023-12-02)" },
-  { label: "Antipulgas", value: "Sí (2023-12-15)" },
-  { label: "¿Usa medicina?", value: "No" },
-  { label: "Condición especial", value: "No" },
-];
+import { BasicData, ConditionData, LabTestData, OwnerData, Pet, SurgeryData, VaccineData } from ".";
 
 export const menuData = [
   { label: "Inicio", icon: <FaHome />, url: "/" },
@@ -45,68 +20,116 @@ export const menuData = [
   { label: "Vacunas", icon: <FaSyringe />, url: "/pages/vaccines" },
   { label: "Cirugías", icon: <FaCut />, url: "/pages/surgeries" },
   { label: "Medicinas", icon: <FaPills />, url: "/pages/medicines" },
-  { label: "Condiciones atm.", icon: <FaCloudSun />, url: "/pages/conditions" },
+  { label: "Condiciones especiales", icon: <FaCloudSun />, url: "/pages/conditions" },
   { label: "Lab. de exámenes", icon: <FaFlask />, url: "/pages/lab-tests" },
   { label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/upgrade" },
   { label: "Configuraciones", icon: <FaCog />, url: "/pages/settings" },
 ];
 
-
 export const metadata: Metadata = {
   title: "Lampo",
-  description: "Lampo es una herramienta para que ayudará a TU MASCOT en sus proceso clínicos y veterinarios",
+  description: "Lampo es una herramienta para que ayudará a TU MASCOTA en sus proceso clínicos y veterinarios",
 };
 
-
-// Interfaces y mocks para las páginas específicas
-export interface VaccineData {
-  name: string;
-  description?: string;
-  date?: string;
-  batch: string;
-  brand: string;
+export const andresData: OwnerData = {
+  owner_id: '8933eed8-daea-4e6c-b4db-44906b9f44f9',
+  name: 'Andrés Aulestia',
+  phone: '+57 3146061490',
+  address: 'Cra. 74 #152b-70 Torre 3 Apto. 1704',
+  city: 'Bogotá',
+  country: 'Colombia',
+  email: 'a.aulestia@exe.com.co'
 }
-export const vaccinesMock: VaccineData[] = [
-  { name: "Rabia", description: "Vacuna contra la rabia", date: "2025-03-15", batch: "RAB12345", brand: "Nobivac" },
-  { name: "Parvovirus", description: "Prevención de parvovirus", date: "2025-02-10", batch: "PARV67890", brand: "Canigen" },
+
+export const johnnyData: OwnerData = {
+  owner_id: '41095adf-27a6-48f8-ada1-d8c7d3dd265a',
+  name: 'Johnnatan Ruiz',
+  phone: '+57 3112849616',
+  address: 'Calle 82 #19A-29 Apt 401',
+  city: 'Bogotá',
+  country: 'Colombia',
+  email: 'excellent.exeqtion@gmail.com'
+}
+
+export const ownersData: OwnerData[] = [
+  andresData,
+  johnnyData
 ];
 
-export interface SurgeryData {
-  name: string;
-  date?: string;
-  description?: string;
+export const PetsData: Pet[] = [
+  { pet_id: 'A001', name: 'Camus', image: '/pets/camus.png', owner_id: andresData.owner_id },
+  { pet_id: 'A002', name: 'Polar', image: '/pets/polar.png', owner_id: johnnyData.owner_id },
+  { pet_id: 'A003', name: 'Toby', image: '/pets/toby.png', owner_id: johnnyData.owner_id }
+];
+
+export const camusData: BasicData =
+{
+  pet_id: 'A001', petType: 'Gato', gender: 'Macho', weight: '5.5 Kg', race: 'Mestizo', hasAllergies: false,
+  weightCondition: 'Normal', size: 'Mediano', livesWithOthers: false,
+  mainFood: 'Taste the Wild', hasVaccine: true, lastVaccineName: 'Parvigen', lastVaccineDate: new Date('2024-07-25'),
+  isCastrated: true, castrationDate: new Date('2023-12-02'), hasAntiFlea: true, antiFleaDate: new Date('2023-12-15'),
+  usesMedicine: false, specialCondition: false
 }
+
+export const polarData: BasicData =
+{
+  pet_id: 'A002', petType: 'Perro', gender: 'Macho', weight: '7 Kg', race: 'Criollo', hasAllergies: false,
+  weightCondition: 'Normal', size: 'Mediano', livesWithOthers: true,
+  mainFood: 'Pro Plan', hasVaccine: false,
+  isCastrated: true, castrationDate: new Date('2023-06-30'), hasAntiFlea: false,
+  usesMedicine: false, specialCondition: false
+};
+
+export const tobyData: BasicData =
+{
+  pet_id: 'A003', petType: 'Perro', gender: 'Macho', weight: '9 Kg', race: 'Criollo', hasAllergies: true,
+  weightCondition: 'Normal', size: 'Mediano', livesWithOthers: true,
+  mainFood: 'Vet Life', hasVaccine: false,
+  isCastrated: true, castrationDate: new Date('2019-05-03'), hasAntiFlea: false,
+  usesMedicine: false, specialCondition: true
+};
+
+export const petsData: BasicData[] =
+  [
+    camusData,
+    polarData,
+    tobyData
+  ];
+
+
+export const vaccinesMock: VaccineData[] = [
+  { id: v4(), pet_id: 'A001', name: "Rabia", description: "Vacuna contra la rabia", date: new Date('2025-03-15'), batch: "RAB12345", brand: "Nobivac" },
+  { id: v4(), pet_id: 'A001', name: "Parvovirus", description: "Prevención de parvovirus", date: new Date('2025-02-10'), batch: "PARV67890", brand: "Canigen" },
+  { id: v4(), pet_id: 'A002', name: "Parvovirus", description: "Prevención de parvovirus", date: new Date('2025-02-10'), batch: "PARV67890", brand: "Canigen" },
+];
+
+
 export const surgeriesMock: SurgeryData[] = [
-  { name: "Castración", date: "2024-11-20", description: "Castración preventiva" },
-  { name: "Extracción dental", date: "2024-12-05", description: "Tooth extraction" },
+  { id: v4(), pet_id: 'A001', name: "Castración", date: new Date("2024-11-20"), description: "Castración preventiva" },
+  { id: v4(), pet_id: 'A001', name: "Extracción dental", date: new Date("2024-12-05"), description: "Tooth extraction" },
+  { id: v4(), pet_id: 'A002', name: "Castración", date: new Date("2023-06-30"), description: "Castración preventiva" },
+  { id: v4(), pet_id: 'A003', name: "Castración", date: new Date("2019-05-03"), description: "Castración preventiva" },
 ];
 
 export interface MedicineData {
+  id: string;
+  pet_id: string;
   name: string;
   dosage: string;
   frequency: string;
 }
 export const medicinesMock: MedicineData[] = [
-  { name: "Antibiótico X", dosage: "250mg", frequency: "Cada 12 horas" },
-  { name: "Vitamina C", dosage: "100mg", frequency: "Diaria" },
+  { id: v4(), pet_id: 'A001', name: "Antibiótico X", dosage: "250mg", frequency: "Cada 12 horas" },
+  { id: v4(), pet_id: 'A001', name: "Vitamina C", dosage: "100mg", frequency: "Diaria" },
 ];
 
-export interface ConditionData {
-  condition: string;
-  severity: string;
-}
 export const conditionsMock: ConditionData[] = [
-  { condition: "Esterilidad aórtica", severity: "Moderada" },
-  { condition: "Alergia alimentaria", severity: "Leve" },
+  { id: v4(), pet_id: 'A001', condition: "Esterilidad aórtica", severity: "Moderada" },
+  { id: v4(), pet_id: 'A001', condition: "Alergia alimentaria", severity: "Leve" },
+  { id: v4(), pet_id: 'A003', condition: "Insuficiencia renal", severity: "Leve" },
 ];
 
-export interface LabTestData {
-  name: string;
-  type: string;
-  date?: string;
-  result?: string;
-}
 export const labTestsMock: LabTestData[] = [
-  { name: "Hemograma completo", type: "Blood", date: "2025-01-10", result: "Normal" },
-  { name: "Ultrasonido abdominal", type: "Ultrasound", date: "2024-12-22", result: "Sin hallazgos" },
+  { id: v4(), pet_id: 'A001', name: "Hemograma completo", type: "Blood", date: new Date("2025-01-10"), result: "Normal" },
+  { id: v4(), pet_id: 'A001', name: "Ultrasonido abdominal", type: "Ultrasound", date: new Date("2024-12-22"), result: "Sin hallazgos" },
 ];

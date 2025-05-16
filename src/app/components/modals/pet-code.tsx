@@ -1,7 +1,7 @@
-// app/components/modals/pet-code.tsx
 "use client";
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaTimes, FaShareAlt, FaCopy } from "react-icons/fa";
+import { useAppContext } from "@/app/layout";
 
 export default function PetCodeModule({
   setShowCodeModal,
@@ -10,15 +10,42 @@ export default function PetCodeModule({
 }) {
   const [code, setCode] = useState("");
   const [show, setShow] = useState(false);
+  const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const { session } = useAppContext();
 
   async function generar() {
-    const res = await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/pets/me/code`, { method: "POST" });
-    const json = await res.json();
-    if (json.code) {
-      setCode(json.code);
-      setShow(true);
-      setCopied(false);
+    setError("");
+    try {
+      const res = await fetch(
+        `${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/pets/me/code`,
+        {
+          method: 'POST',
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: session?.access_token }),
+        }
+      );
+
+      if (res.status === 404) {
+        setError("No se encontró la mascota.");
+        return;
+      }
+      if (!res.ok) {
+        setError("Error al generar el código.");
+        return;
+      }
+
+      const json = await res.json();
+      if (json.code) {
+        setCode(json.code);
+        setShow(true);
+        setCopied(false);
+      } else {
+        setError("Respuesta inválida del servidor.");
+      }
+    } catch (e) {
+      console.error(e);
+      setError("Ocurrió un error al generar el código.");
     }
   }
 
@@ -33,7 +60,10 @@ export default function PetCodeModule({
     <div
       style={{
         position: "fixed",
-        top: 0, left: 0, right: 0, bottom: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         backgroundColor: "rgba(0,0,0,0.5)",
         display: "flex",
         alignItems: "center",
@@ -70,6 +100,12 @@ export default function PetCodeModule({
         <p>
           <strong>Código único de tu mascota</strong>
         </p>
+
+        {error && (
+          <p style={{ color: "red", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
+            {error}
+          </p>
+        )}
 
         {show && (
           <>

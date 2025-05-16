@@ -1,37 +1,47 @@
 // app/medicines/page.tsx (server component)
 "use client";
 import React from "react";
-import { medicinesMock } from "data/petdata";
-import { useIsMobile } from "app/layout";
+import { medicinesMock } from "@/data/petdata";
+import { useAppContext } from "@/app/layout";
 import { FaPills } from "react-icons/fa";
+import { v4 } from "uuid";
+import { Utils } from "@/lib/utils";
+import { LibComponents } from "@/lib/components";
 
 export default function MedicinesModule() {
-    const items = medicinesMock;
-    const isMobile = useIsMobile();
+
+    const { isMobile, selectedPet } = useAppContext();
+
+    const petMedicines = medicinesMock.filter(p => p.pet_id == selectedPet?.pet_id);
+
+    const renderContent = (isMobile: boolean) => {
+        if (petMedicines == undefined) {
+            return (<LibComponents.Loading />);
+        }
+
+        if (petMedicines.length == 0) {
+            return (<LibComponents.DataNotFound message="No hay registro de medicamentos." />);
+        }
+
+        var formItems: Utils.Form[] = [];
+
+        petMedicines.forEach(medicine => {
+            formItems.push({
+                id: v4(),
+                fields: [
+                    { label: 'Medicamento', show: true, value: medicine.name },
+                    { label: 'Dosis', show: true, value: medicine.dosage },
+                    { label: 'Frecuencia', show: true, value: medicine.frequency }
+                ]
+            });
+        });
+        return Utils.renderForm(formItems, isMobile);
+    };
 
     return (
         <main style={{ padding: isMobile ? "2rem 1rem" : "2rem" }}>
-            <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <FaPills /> Medicinas
-            </h3>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "1rem" }}>
-                {items.map(({ name, dosage, frequency }) => (
-                    <div key={name} style={{ backgroundColor: "rgb(1, 114, 173)", padding: "0.1rem", borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                        <div style={{ backgroundColor: "#fff", padding: "1rem", margin: '0.5rem', borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                            <p style={{ fontSize: "0.75rem", color: "#6B7280", margin: 0 }}>Medicamento:</p>
-                            <p style={{ fontSize: "1rem", margin: "0.25rem 0 0 0" }}>{name}</p>
-                        </div>
-                        <div style={{ backgroundColor: "#fff", padding: "1rem", margin: '0.5rem', borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                            <p style={{ fontSize: "0.75rem", color: "#6B7280", margin: 0 }}>Dosis:</p>
-                            <p style={{ fontSize: "1rem", margin: "0.25rem 0 0 0" }}>{dosage}</p>
-                        </div>
-                        <div style={{ backgroundColor: "#fff", padding: "1rem", margin: '0.5rem', borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                            <p style={{ fontSize: "0.75rem", color: "#6B7280", margin: 0 }}>Frecuencia:</p>
-                            <p style={{ fontSize: "1rem", margin: "0.25rem 0 0 0" }}>{frequency}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            {Utils.renderTitle(<FaPills />, 'Medicinas')}
+            {renderContent(isMobile)}
         </main>
     );
 }

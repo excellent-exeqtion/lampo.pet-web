@@ -3,7 +3,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/db/supabaseClient";
 
 export function useRequireAuth() {
   const router = useRouter();

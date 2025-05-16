@@ -1,7 +1,7 @@
 // app/api/pets/me/code/route.ts
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
-import { generateCode } from "@/lib/codeGenerator";
+import { supabase } from "@/lib/auth/supabaseClient";
+import { generateCode } from "@/lib/utils/random";
 
 export async function POST(req: Request) {
 

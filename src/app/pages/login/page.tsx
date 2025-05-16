@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import "@picocss/pico";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/db/supabaseClient";
 import Image from 'next/image';
 
 export default function LoginPage() {
@@ -46,7 +46,7 @@ export default function LoginPage() {
     <main style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#F9FAFB" }}>
       <form onSubmit={handleAuth} style={{ background: "#fff", padding: "2rem", borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", width: "100%", maxWidth: "400px" }}>
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <Image src="/logo.svg" alt="Lampo" style={{ width: "48px", height: "48px" }} />
+          <Image src="/logo.svg" alt="Lampo" width={48} height={48} />
           <h1>{isRegistering ? "Regístrate" : "Inicia sesión"}</h1>
         </div>
 

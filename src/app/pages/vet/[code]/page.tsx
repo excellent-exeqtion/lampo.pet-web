@@ -1,5 +1,5 @@
 // app/vet/[code]/page.tsx
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/auth/supabaseClient";
 import PetEditForm, { Pet } from "@/forms/pet-edit-form";
 
 interface Props {

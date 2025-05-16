@@ -1,6 +1,6 @@
 // app/api/vet/use-code/route.ts
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/auth/supabaseClient";
 
 export async function POST(req: Request) {
   const { code } = await req.json();

@@ -1,31 +1,33 @@
+// app/layout.tsx
 "use client";
 import React, { useState, useEffect, createContext, useContext } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
-import { Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
+
 import SidebarModule from "./components/layout/side-bar";
 import BubblesModule from "./components/modals/bubbles";
-import { tooltipStyles } from "./css/tooltip";
 import LoginPage from "./pages/login/page";
+
 import "./globals.css";
 import "@picocss/pico";
-import { AppContextType } from "./data/context";
-import { Pet } from "./data";
+import { tooltipStyles } from "./css/tooltip";
+import type { AppContextType } from "./data/context";
+import type { Pet } from "./data";
+
+import { getSession, onAuthStateChange, signOut } from "@/lib/db/services/authService";
 import { LibComponents } from "./lib/components";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const AppContext = createContext<AppContextType>({
+  isMobile: false,
+  session: null,
+  logout: async () => {},
+  selectedPet: null,
+  setSelectedPet: () => {},
 });
-
-// Create context with default fallback (logout no-op)
-const AppContext = createContext<AppContextType>({ isMobile: false, logout: async () => { }, selectedPet: null, setSelectedPet: () => null });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -37,45 +39,41 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [showVetModal, setShowVetModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
 
-  // Auth session state
+  // undefined = cargando, null = no auth, Session = auth
   const [session, setSession] = useState<Session | null | undefined>(undefined);
 
-  // Logout function
-  const logout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
+  const handleLogout = async () => {
+    await signOut();
+    router.push("/");
   };
 
   useEffect(() => {
-    // Detect mobile viewport
-    const handleResize = () => setIsMobile(window.innerWidth <= 767);
-    handleResize();
-    window.addEventListener("resize", handleResize);
+    // Detectar mobile
+    const onResize = () => setIsMobile(window.innerWidth <= 767);
+    onResize();
+    window.addEventListener("resize", onResize);
 
-    // Fetch initial session
+    // Cargar sesión inicial
     (async () => {
-      const { data } = await supabase.auth.getSession();
+      const { data } = await getSession();
       setSession(data.session);
     })();
 
-    // Subscribe to auth changes
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    // Suscribirse a cambios de auth; TS infiere bien el tipo de `subscription`
+    const subscription = onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
     });
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-      listener.subscription.unsubscribe();
+      window.removeEventListener("resize", onResize);
+      subscription.unsubscribe();
     };
   }, []);
 
-  // While loading session
   if (session === undefined) {
     return (
       <html lang="en" data-theme="light">
-        <head>
-          <title>Lampo</title>
-        </head>
+        <head><title>Lampo</title></head>
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
           <style>{tooltipStyles}</style>
           <LibComponents.Loading />
@@ -84,13 +82,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
-  // If not authenticated, show login page
   if (!session) {
     return (
       <html lang="en" data-theme="light">
-        <head>
-          <title>Lampo</title>
-        </head>
+        <head><title>Lampo</title></head>
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
           <style>{tooltipStyles}</style>
           <LoginPage />
@@ -99,39 +94,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
-
-  // Layout for authenticated users
-  const containerStyle = isMobile
-    ? { gridTemplateColumns: "1fr" }
-    : { gridTemplateColumns: "250px 1fr" };
+  const cols = isMobile ? "1fr" : "250px 1fr";
 
   return (
     <html lang="en" data-theme="light">
-      <head>
-        <title>Lampo</title>
-      </head>
+      <head><title>Lampo</title></head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <style>{tooltipStyles}</style>
-
-        <AppContext.Provider value={{ isMobile, session, logout, selectedPet, setSelectedPet }}>
+        <AppContext.Provider
+          value={{
+            isMobile,
+            session,
+            logout: handleLogout,
+            selectedPet,
+            setSelectedPet,
+          }}
+        >
           <div
             className="container grid"
             style={{
-              ...containerStyle,
+              gridTemplateColumns: cols,
               minHeight: "100vh",
               transition: "grid-template-columns 0.3s ease",
               backgroundColor: "#F9FAFB",
               fontFamily: "'Inter', sans-serif",
-              position: "relative",
             }}
           >
-            {/* Sidebar Desktop */}
-            <SidebarModule
-              menuOpen={menuOpen}
-              setMenuOpen={setMenuOpen}
-            />
-
-            {/* Floating Bubbles */}
+            <SidebarModule menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
             <BubblesModule
               setShowCodeModal={setShowCodeModal}
               showCodeModal={showCodeModal}
@@ -140,11 +129,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               setShowFeedbackModal={setShowFeedbackModal}
               showFeedbackModal={showFeedbackModal}
             />
-
-            {/* Main Content */}
-            <div style={{ padding: "1rem" }}>
-              {children}
-            </div>
+            <main style={{ padding: "1rem" }}>{children}</main>
           </div>
         </AppContext.Provider>
       </body>
@@ -152,5 +137,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   );
 }
 
-// Custom hook for context
 export const useAppContext = () => useContext(AppContext);

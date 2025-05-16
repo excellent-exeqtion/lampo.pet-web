@@ -1,6 +1,6 @@
 // app/api/pets/[id]/route.tsx
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/auth/supabaseClient";
 
 interface UpdateBody {
     code: string;

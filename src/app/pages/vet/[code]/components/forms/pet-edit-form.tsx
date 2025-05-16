@@ -19,7 +19,7 @@ export default function PetEditForm({ code, pet, disabled = false }: Props) {
         e.preventDefault();
         if (disabled) return;
 
-        const res = await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/pets/${pet.pet_id}`, {
+        const res = await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/pets/${pet.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -31,6 +31,11 @@ export default function PetEditForm({ code, pet, disabled = false }: Props) {
         const json = await res.json();
 
         setFormFailed(json.status != 200);
+
+        
+    console.log(formFailed)
+    console.log(disabled)
+
 
         if (res.ok) setAlert("Datos actualizados correctamente.");
         else setAlert(json.error || "Error al actualizar.");

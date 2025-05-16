@@ -44,13 +44,13 @@ export default function SidebarModule({
         else {
             return (
                 <select
-                    value={selectedPet?.pet_id}
-                    onChange={(e) => setSelectedPet(ownersPets.filter(x => x.pet_id == e.target.value)[0])}
+                    value={selectedPet?.id}
+                    onChange={(e) => setSelectedPet(ownersPets.filter(x => x.id == e.target.value)[0])}
                     style={{ border: 'none', paddingLeft: '0' }}
                     className="pet-dropdown"
                 >
                     {ownersPets.map((pet) => (
-                        <option key={pet.pet_id} value={pet.pet_id}>
+                        <option key={pet.id} value={pet.id}>
                             {pet.name}
                         </option>
                     ))}

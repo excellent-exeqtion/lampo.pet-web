@@ -14,7 +14,7 @@ export default function MedicinesModule() {
 
     const { isMobile, selectedPet } = useAppContext();
 
-    const petMedicines = medicinesMock.filter(p => p.pet_id == selectedPet?.pet_id);
+    const petMedicines = medicinesMock.filter(p => p.pet_id == selectedPet?.id);
 
     const renderContent = (isMobile: boolean) => {
         if (petMedicines == undefined) {

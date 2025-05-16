@@ -15,7 +15,7 @@ export default function BasicDataModule() {
   const { isMobile, selectedPet } = useAppContext();
 
   // Datos básicos y de contacto
-  const petData = petsData.filter(p => p.pet_id == selectedPet?.pet_id)[0];
+  const petData = petsData.filter(p => p.pet_id == selectedPet?.id)[0];
 
   if (petData == undefined) {
     return (<LibComponents.Loading />)

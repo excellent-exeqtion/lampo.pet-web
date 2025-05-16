@@ -12,7 +12,7 @@ export default function PetCodeModule({
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const { session } = useAppContext();
+  const { session, selectedPet } = useAppContext();
 
   async function generar() {
     setError("");
@@ -22,7 +22,7 @@ export default function PetCodeModule({
         {
           method: 'POST',
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: session?.db?.access_token }),
+          body: JSON.stringify({ owner_id: session?.db?.user.id, pet_id: selectedPet?.id }),
         }
       );
 

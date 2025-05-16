@@ -1,5 +1,5 @@
 // app/vet/[code]/page.tsx
-import PetEditForm from "@/forms/pet-edit-form";
+import PetEditForm from "@/app/pages/vet/[code]/components/forms/pet-edit-form";
 import { Pet } from "@/lib/db/repositories";
 import { PetRepository } from "@/lib/db/repositories/pet.repository";
 import { PetCodeRepository } from "@/lib/db/repositories/petCode.repository";
@@ -22,7 +22,6 @@ export default async function VetPage({ params: { code } }: VetPageProps) {
       // 2. Código expirado
       message = "El código ha expirado. Pídele al dueño que genere uno nuevo.";
     } else {
-      // 3. Código válido → buscar mascota
       pet = await PetRepository.findById(codeRecord.pet_id);
       if (!pet) {
         message = "No se encontró la mascota asociada.";

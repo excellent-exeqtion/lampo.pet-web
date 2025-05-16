@@ -14,7 +14,7 @@ export default function VaccinesModule() {
 
   const { isMobile, selectedPet } = useAppContext();
 
-  const petVaccines = vaccinesMock.filter(p => p.pet_id == selectedPet?.pet_id);
+  const petVaccines = vaccinesMock.filter(p => p.pet_id == selectedPet?.id);
 
   const renderContent = (isMobile: boolean) => {
     if (petVaccines == undefined) {

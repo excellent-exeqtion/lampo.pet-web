@@ -15,7 +15,8 @@ import "@picocss/pico";
 import { tooltipStyles } from "./css/tooltip";
 
 // Hooks y servicios de autenticación
-import { useSession as useRawSession, signOut } from "@/lib/db/services/authService";
+import { useSession as useRawSession } from "@/hooks/useSession";
+import { signOut } from "@/lib/db/services/authService";
 import { geistMono, geistSans } from "./css/geist";
 import { Pet } from "./lib/db/repositories";
 

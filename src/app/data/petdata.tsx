@@ -12,7 +12,8 @@ import {
   FaRocket,
   FaCog
 } from "react-icons/fa";
-import { BasicData, ConditionData, LabTestData, OwnerData, Pet, SurgeryData, VaccineData } from ".";
+import { BasicData, ConditionData, LabTestData, OwnerData, SurgeryData, VaccineData } from ".";
+import { Pet } from "@/lib/db/repositories";
 
 export const menuData = [
   { label: "Inicio", icon: <FaHome />, url: "/" },
@@ -57,9 +58,9 @@ export const ownersData: OwnerData[] = [
 ];
 
 export const PetsData: Pet[] = [
-  { pet_id: 'A001', name: 'Camus', image: '/pets/camus.png', owner_id: andresData.owner_id },
-  { pet_id: 'A002', name: 'Polar', image: '/pets/polar.png', owner_id: johnnyData.owner_id },
-  { pet_id: 'A003', name: 'Toby', image: '/pets/toby.png', owner_id: johnnyData.owner_id }
+  { id: 'A001', name: 'Camus', image: '/pets/camus.png', owner_id: andresData.owner_id },
+  { id: 'A002', name: 'Polar', image: '/pets/polar.png', owner_id: johnnyData.owner_id },
+  { id: 'A003', name: 'Toby', image: '/pets/toby.png', owner_id: johnnyData.owner_id }
 ];
 
 export const camusData: BasicData =

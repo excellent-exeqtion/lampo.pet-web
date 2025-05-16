@@ -14,7 +14,7 @@ export default function LabTestsModule() {
 
     const { isMobile, selectedPet } = useAppContext();
 
-    const petLabTests = labTestsMock.filter(p => p.pet_id == selectedPet?.pet_id);
+    const petLabTests = labTestsMock.filter(p => p.pet_id == selectedPet?.id);
 
     const renderContent = (isMobile: boolean) => {
         if (petLabTests == undefined) {

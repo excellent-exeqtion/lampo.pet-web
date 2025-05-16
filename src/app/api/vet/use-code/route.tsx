@@ -1,6 +1,6 @@
 // app/api/vet/use-code/route.ts
 import { NextResponse } from "next/server";
-import { supabase }    from "lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
 export async function POST(req: Request) {
   const { code } = await req.json();
@@ -12,13 +12,13 @@ export async function POST(req: Request) {
     .eq("code", code)
     .single();
 
-  if (error || !data) 
+  if (error || !data)
     return NextResponse.json({ error: "Código inválido" }, { status: 404 });
 
   const now = new Date().toISOString();
-  if (data.used) 
+  if (data.used)
     return NextResponse.json({ error: "Código ya utilizado" }, { status: 410 });
-  if (data.expires_at < now) 
+  if (data.expires_at < now)
     return NextResponse.json({ error: "Código expirado" }, { status: 410 });
 
   // 2. Marcar como usado (para un solo uso)
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     .update({ used: true })
     .eq("code", code);
 
-  if (errUpdate) 
+  if (errUpdate)
     return NextResponse.json({ error: errUpdate.message }, { status: 500 });
 
   // 3. Devolver el pet_id para cargar el formulario de edición

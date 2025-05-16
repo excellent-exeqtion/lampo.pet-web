@@ -1,7 +1,6 @@
 // app/surgeries/page.tsx (server component)
 "use client";
-import React from "react";
-import { surgeriesMock } from "../../../data/petdata";
+import React, { useEffect, useState } from "react";
 import { useAppContext } from "@/app/layout";
 import { FaCut } from "react-icons/fa";
 import { v4 } from "uuid";
@@ -9,13 +8,31 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { DataNotFound, Form, Loading, Title } from "@/components/index";
 import { Dates } from "@/utils/index";
 import { FormType } from "@/types/lib";
+import { SurgeryRepository } from "@/repos/surgery.repository";
+import { SurgeryDataType } from "@/types/index";
 
 export default function SurgeriesPage() {
     useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
+    const [petSurgeries, setPetSurgeries] = useState<SurgeryDataType[] | null>(null);
 
-    const petSurgeries = surgeriesMock.filter(p => p.pet_id == selectedPet?.id);
+    useEffect(() => {
+        if (!selectedPet?.id) return;         // don't run if no pet selected
+
+        const fetchData = async () => {
+            try {
+                const surgeries = await SurgeryRepository.findByPet(selectedPet.id);
+                setPetSurgeries(surgeries);
+
+            } catch (err) {
+                console.error("Error loading medicines:", err);
+                // you might set an error state here
+            }
+        };
+
+        fetchData();
+    }, [selectedPet]);
 
     const renderContent = (isMobile: boolean) => {
         if (petSurgeries == undefined) {

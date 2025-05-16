@@ -1,20 +1,37 @@
 // app/medicines/page.tsx (server component)
 "use client";
-import React from "react";
-import { medicinesMock } from "../../../data/petdata";
+import React, { useEffect, useState } from "react";
 import { useAppContext } from "@/app/layout";
 import { FaPills } from "react-icons/fa";
 import { v4 } from "uuid";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loading, DataNotFound, Form, Title } from "@/components/index";
 import { FormType } from "@/types/lib";
+import { MedicineDataType } from "@/types/index";
+import { MedicineRepository } from "@/repos/medicine.repository";
 
 export default function MedicinesPage() {
     useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
-
-    const petMedicines = medicinesMock.filter(p => p.pet_id == selectedPet?.id);
+        const [petMedicines, setPetMedicines] = useState<MedicineDataType[] | null>(null);
+    
+        useEffect(() => {
+            if (!selectedPet?.id) return;         // don't run if no pet selected
+    
+            const fetchData = async () => {
+                try {
+                    const medicines = await MedicineRepository.findByPet(selectedPet.id);
+                    setPetMedicines(medicines);
+    
+                } catch (err) {
+                    console.error("Error loading medicines:", err);
+                    // you might set an error state here
+                }
+            };
+    
+            fetchData();
+        }, [selectedPet]);
 
     const renderContent = (isMobile: boolean) => {
         if (petMedicines == undefined) {

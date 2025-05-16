@@ -1,7 +1,6 @@
 // app/lab-tests/page.tsx (server component)
 "use client";
-import React from "react";
-import { labTestsMock } from "../../../data/petdata";
+import React, { useEffect, useState } from "react";
 import { useAppContext } from "@/app/layout";
 import { FaFlask } from "react-icons/fa";
 import { v4 } from "uuid";
@@ -9,13 +8,31 @@ import { Dates } from "@/utils/index";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loading, DataNotFound, Form, Title } from "@/components/index";
 import { FormType } from "@/types/lib";
+import { LabTestDataType } from "@/types/index";
+import { LabTestRepository } from "@/repos/labTest.repository";
 
 export default function LabTestsPage() {
     useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
+    const [petLabTests, setPetLabTests] = useState<LabTestDataType[] | null>(null);
 
-    const petLabTests = labTestsMock.filter(p => p.pet_id == selectedPet?.id);
+    useEffect(() => {
+        if (!selectedPet?.id) return;         // don't run if no pet selected
+
+        const fetchData = async () => {
+            try {
+                const labTest = await LabTestRepository.findByPet(selectedPet.id);
+                setPetLabTests(labTest);
+
+            } catch (err) {
+                console.error("Error loading lab. tests:", err);
+                // you might set an error state here
+            }
+        };
+
+        fetchData();
+    }, [selectedPet]);
 
     const renderContent = (isMobile: boolean) => {
         if (petLabTests == undefined) {

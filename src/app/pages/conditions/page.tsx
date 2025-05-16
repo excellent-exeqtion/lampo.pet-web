@@ -1,20 +1,37 @@
 // app/conditions/page.tsx (server component)
 "use client";
-import React from "react";
-import { conditionsMock } from "../../../data/petdata";
+import React, { useEffect, useState } from "react";
 import { useAppContext } from "@/app/layout";
 import { FaCloudSun } from "react-icons/fa";
 import { v4 } from "uuid";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loading, DataNotFound, Form, Title } from "@/components/index";
 import { FormType } from "@/types/lib";
+import { ConditionRepository } from "@/repos/condition.repository";
+import { ConditionDataType } from "@/types/index";
 
 export default function ConditionsPage() {
     useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
+    const [petConditions, setPetConditions] = useState<ConditionDataType[] | null>(null);
 
-    const petConditions = conditionsMock.filter(p => p.pet_id == selectedPet?.id);
+    useEffect(() => {
+        if (!selectedPet?.id) return;         // don't run if no pet selected
+
+        const fetchData = async () => {
+            try {
+                const conditions = await ConditionRepository.findByPet(selectedPet.id);
+                setPetConditions(conditions);
+
+            } catch (err) {
+                console.error("Error loading conditions:", err);
+                // you might set an error state here
+            }
+        };
+
+        fetchData();
+    }, [selectedPet]);
 
     const renderContent = (isMobile: boolean) => {
         if (petConditions == undefined) {

@@ -23,24 +23,24 @@ export interface OwnerDataType {
 
 export interface BasicDataType {
     pet_id: string;
-    petType: string;
+    pet_type: string;
     gender: string;
     weight: string;
     race: string;
-    hasAllergies: boolean;
-    weightCondition: string;
+    has_allergies: boolean;
+    weight_condition: string;
     size: string;
-    livesWithOthers: boolean;
-    mainFood: string;
-    hasVaccine: boolean;
-    lastVaccineName?: string;
-    lastVaccineDate?: Date;
-    isCastrated: boolean;
-    castrationDate?: Date;
-    hasAntiFlea: boolean;
-    antiFleaDate?: Date;
-    usesMedicine: boolean;
-    specialCondition: boolean;
+    lives_with_others: boolean;
+    main_food: string;
+    has_vaccine: boolean;
+    last_vaccine_name?: string;
+    last_vaccine_date?: Date;
+    is_castrated: boolean;
+    castration_date?: Date;
+    has_anti_flea: boolean;
+    anti_flea_date?: Date;
+    uses_medicine: boolean;
+    special_condition: boolean;
 }
 
 export interface VaccineDataType {

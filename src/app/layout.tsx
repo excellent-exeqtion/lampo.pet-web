@@ -4,7 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { Session } from "@supabase/supabase-js";
-import SidebarModule from "./components/modals/side-bar";
+import SidebarModule from "./components/layout/side-bar";
 import BubblesModule from "./components/modals/bubbles";
 import { tooltipStyles } from "./css/tooltip";
 import LoginPage from "./pages/login/page";

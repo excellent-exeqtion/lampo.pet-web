@@ -130,6 +130,7 @@ export default function LoginPage() {
                 border: "none",
                 padding: 0,
                 cursor: "pointer",
+                color: "rgb(55, 60, 68)"
               }}
             >
               ¿Olvidaste tu contraseña?

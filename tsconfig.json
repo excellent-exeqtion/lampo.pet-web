@@ -22,7 +22,7 @@
       "@/assets/*": ["./public/*"],
       "@/lib/*": ["./src/app/lib/*"],
       "@/data/*": ["./src/app/data/*"],
-      "@/css/*": ["src/app/css/*"],
+      "@/css/*": ["./src/app/css/*"],
       "@/app/*": ["./src/app/*"],
       "@/modals/*": ["./src/app/components/modals/*"],
       "@/forms/*": ["./src/app/components/forms/*"],

@@ -27,6 +27,7 @@
       "@/modals/*": ["./src/app/components/modals/*"],
       "@/forms/*": ["./src/app/components/forms/*"],
       "@/utils/*": ["./src/app/lib/utils/*"],
+      "@/hooks/*": ["./src/app/lib/hooks/*"],
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

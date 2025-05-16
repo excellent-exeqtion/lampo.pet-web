@@ -7,8 +7,10 @@ import { FaUser } from "react-icons/fa";
 import { formatDate } from "@/utils/dates";
 import { Utils } from "@/lib/utils";
 import { LibComponents } from "@/lib/components";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export default function BasicDataModule() {
+  useRequireAuth();
 
   const { isMobile, selectedPet } = useAppContext();
 

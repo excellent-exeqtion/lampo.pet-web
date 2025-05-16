@@ -7,8 +7,10 @@ import { FaFlask } from "react-icons/fa";
 import { v4 } from "uuid";
 import { LibComponents } from "@/lib/components";
 import { Utils } from "@/lib/utils";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export default function LabTestsModule() {
+    useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
 

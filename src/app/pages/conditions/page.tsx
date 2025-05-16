@@ -6,9 +6,11 @@ import { useAppContext } from "@/app/layout";
 import { FaCloudSun } from "react-icons/fa";
 import { v4 } from "uuid";
 import { Utils } from "@/lib/utils";
-import { LibComponents } from "@/lib/components"
+import { LibComponents } from "@/lib/components";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export default function ConditionsModule() {
+    useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
 

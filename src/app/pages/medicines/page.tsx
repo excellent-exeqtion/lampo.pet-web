@@ -7,8 +7,10 @@ import { FaPills } from "react-icons/fa";
 import { v4 } from "uuid";
 import { Utils } from "@/lib/utils";
 import { LibComponents } from "@/lib/components";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export default function MedicinesModule() {
+    useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
 

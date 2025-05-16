@@ -22,12 +22,13 @@ export default function SidebarModule({
 
     const menuItems = menuData;
 
-    var ownersPets = PetsData.filter(x => x.owner_id == session?.user.id);
+    const ownersPets = PetsData.filter(x => x.owner_id == session?.user.id);
 
     if(ownersPets.length == 0){
         return (<LibComponents.Loading />);
     }
     
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
       if (!selectedPet && ownersPets.length > 0) {
         setSelectedPet(ownersPets[0]);

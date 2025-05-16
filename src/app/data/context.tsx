@@ -6,7 +6,7 @@ import { Dispatch, SetStateAction } from "react";
 export interface AppContextType {
   isMobile: boolean;
   session?: Session | null;
-  logout: () => {};
+  logout: () => object;
   selectedPet?: Pet | null;
   setSelectedPet: Dispatch<SetStateAction<Pet | null>>
 }

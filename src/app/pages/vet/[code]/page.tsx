@@ -40,7 +40,7 @@ export default async function VetPage({ params: { code } }: VetPageProps) {
       <h1>Editar datos de mascota</h1>
 
       {!isValid && (
-        <p className="text-error" style={{ marginBottom: "1rem" }}>
+        <p style={{ marginBottom: "1rem", color: "red" }}>
           {message}
         </p>
       )}

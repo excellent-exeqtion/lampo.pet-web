@@ -39,4 +39,14 @@ export class PetRepository {
     // Devolvemos la primera mascota (puedes adaptar si quieres soportar varias)
     return data[0];
   }
+
+  static async getPetsForUser(owner_id: string): Promise<Pet[]> {
+    const { data, error } = await supabase
+      .from("pets")
+      .select("*")
+      .eq("owner_id", owner_id);
+
+    if (error) throw error;
+    return data as Pet[];
+  }
 }

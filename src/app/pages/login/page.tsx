@@ -1,9 +1,11 @@
+// app/pages/login/page.tsx
 "use client";
 import React, { useState } from "react";
 import "@picocss/pico";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/db/supabaseClient";
-import Image from 'next/image';
+import Image from "next/image";
+
+import { signIn, signUp, resetPassword } from "@/lib/db/services/authService";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,13 +21,19 @@ export default function LoginPage() {
     setLoading(true);
 
     if (isRegistering) {
-      const { error: signUpError } = await supabase.auth.signUp({ email, password });
-      if (signUpError) setError(signUpError.message);
-      else setError("Revisa tu correo para confirmar tu cuenta.");
+      const { error: signUpError } = await signUp(email, password);
+      if (signUpError) {
+        setError(signUpError.message);
+      } else {
+        setError("Revisa tu correo para confirmar tu cuenta.");
+      }
     } else {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) setError(signInError.message);
-      else router.push("/");
+      const { error: signInError } = await signIn(email, password);
+      if (signInError) {
+        setError(signInError.message);
+      } else {
+        router.push("/");
+      }
     }
 
     setLoading(false);
@@ -37,20 +45,42 @@ export default function LoginPage() {
       setError("Ingresa tu correo para restablecer la contraseña.");
       return;
     }
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
-    if (resetError) setError(resetError.message);
-    else setError("Revisa tu correo para restablecer la contraseña.");
+    const { error: resetError } = await resetPassword(email);
+    if (resetError) {
+      setError(resetError.message);
+    } else {
+      setError("Revisa tu correo para restablecer la contraseña.");
+    }
   };
 
   return (
-    <main style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#F9FAFB" }}>
-      <form onSubmit={handleAuth} style={{ background: "#fff", padding: "2rem", borderRadius: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", width: "100%", maxWidth: "400px" }}>
+    <main
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        background: "#F9FAFB",
+      }}
+    >
+      <form
+        onSubmit={handleAuth}
+        style={{
+          background: "#fff",
+          padding: "2rem",
+          borderRadius: "0.5rem",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          width: "100%",
+          maxWidth: "400px",
+        }}
+      >
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
           <Image src="/logo.svg" alt="Lampo" width={48} height={48} />
           <h1>{isRegistering ? "Regístrate" : "Inicia sesión"}</h1>
         </div>
 
-        <label htmlFor="email">Email
+        <label htmlFor="email">
+          Email
           <input
             id="email"
             type="email"
@@ -60,7 +90,8 @@ export default function LoginPage() {
           />
         </label>
 
-        <label htmlFor="password">Contraseña
+        <label htmlFor="password">
+          Contraseña
           <input
             id="password"
             type="password"
@@ -70,9 +101,15 @@ export default function LoginPage() {
           />
         </label>
 
-        {error && <p style={{ color: "red", marginTop: "0.5rem" }}>{error}</p>}
+        {error && (
+          <p style={{ color: "red", marginTop: "0.5rem" }}>{error}</p>
+        )}
 
-        <button type="submit" disabled={loading} style={{ width: "100%", marginTop: "1rem" }}>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ width: "100%", marginTop: "1rem" }}
+        >
           {loading
             ? isRegistering
               ? "Creando..."
@@ -84,7 +121,17 @@ export default function LoginPage() {
 
         {!isRegistering && (
           <p style={{ textAlign: "right", marginTop: "0.5rem" }}>
-            <button type="button" onClick={handleReset} className="contrast" style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="contrast"
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+              }}
+            >
               ¿Olvidaste tu contraseña?
             </button>
           </p>
@@ -95,7 +142,13 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setIsRegistering(!isRegistering)}
-            style={{ background: "none", border: "none", color: "#3B82F6", cursor: "pointer", marginLeft: "0.25rem" }}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#3B82F6",
+              cursor: "pointer",
+              marginLeft: "0.25rem",
+            }}
           >
             {isRegistering ? "Inicia sesión" : "Regístrate"}
           </button>

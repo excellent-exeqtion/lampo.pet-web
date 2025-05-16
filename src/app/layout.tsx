@@ -2,7 +2,7 @@
 "use client";
 import React, { useState, useEffect, createContext, useContext } from "react";
 import { useRouter } from "next/navigation";
-import type { AppSession } from "@/lib/db/types/session"; 
+import type { AppSession } from "@/lib/db/types/session";
 import type { AppContextType } from "./data";
 
 import SidebarModule from "./components/layout/side-bar";
@@ -19,13 +19,14 @@ import { useSession as useRawSession } from "@/hooks/useSession";
 import { signOut } from "@/lib/db/services/authService";
 import { geistMono, geistSans } from "./css/geist";
 import { Pet } from "./lib/db/repositories";
+import { PetRepository } from "@/lib/db/repositories/pet.repository";
 
 const AppContext = createContext<AppContextType>({
   isMobile: false,
   session: null,
-  logout: async () => {},
+  logout: async () => { },
   selectedPet: null,
-  setSelectedPet: () => {},
+  setSelectedPet: () => { },
 });
 
 export function useAppContext() {
@@ -36,15 +37,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const rawSession = useRawSession(); // Session | null | undefined
 
+  // Hydration detection
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
   // Mapear a AppSession
-  let appSession: AppSession | null | undefined;
-  if (rawSession === undefined) {
-    appSession = undefined;
-  } else if (rawSession === null) {
-    appSession = null;
-  } else {
-    appSession = { db: rawSession };
-  }
+  const [appSession, setAppSession] = useState<AppSession | null | undefined>(undefined);
+  useEffect(() => {
+    if (rawSession === undefined) setAppSession(undefined);
+    else if (rawSession === null) setAppSession(null);
+    else setAppSession({ db: rawSession });
+  }, [rawSession]);
 
   // Estados UI
   const [isMobile, setIsMobile] = useState(false);
@@ -54,12 +59,51 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [showVetModal, setShowVetModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
 
+  // Cargar selectedPet inicial usando PetRepository y persistencia
+  useEffect(() => {
+    // Solo ejecutar en cliente y con sesión válida
+    if (!hydrated || !appSession || !appSession.db.user?.id) return;
+    const userId = appSession.db.user.id;
+    const storageKey = `selectedPet-${userId}`;
+    let isMounted = true;
+    (async () => {
+      try {
+        const pets = await PetRepository.getPetsForUser(userId);
+        // Recuperar selección previa
+        const storedId = window.localStorage.getItem(storageKey);
+        const petFromStorage = pets.find(p => p.id === storedId) || null;
+        const initialPet = petFromStorage ?? (pets.length > 0 ? pets[0] : null);
+        if (isMounted) setSelectedPet(initialPet);
+      } catch (err) {
+        console.error("Error loading pets:", err);
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [hydrated, appSession]);
+
+  // Persistir selección en localStorage
+  useEffect(() => {
+    if (!appSession || !appSession.db.user?.id || !selectedPet) return;
+    const userId = appSession.db.user.id;
+    const storageKey = `selectedPet-${userId}`;
+    try {
+      console.log(selectedPet);
+      window.localStorage.setItem(storageKey, selectedPet.id);
+
+    } catch { }
+  }, [selectedPet, appSession]);
+
   const handleLogout = async () => {
     await signOut();
+    if (appSession?.db.user?.id) {
+      window.localStorage.removeItem(`selectedPet-${appSession.db.user.id}`);
+    }
+    setSelectedPet(null);
     router.push("/");
   };
 
   useEffect(() => {
+
     const onResize = () => setIsMobile(window.innerWidth <= 767);
     onResize();
     window.addEventListener("resize", onResize);

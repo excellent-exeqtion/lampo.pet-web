@@ -25,7 +25,7 @@ export default function MedicinesModule() {
             return (<LibComponents.DataNotFound message="No hay registro de medicamentos." />);
         }
 
-        var formItems: Utils.Form[] = [];
+        const formItems: Utils.Form[] = [];
 
         petMedicines.forEach(medicine => {
             formItems.push({

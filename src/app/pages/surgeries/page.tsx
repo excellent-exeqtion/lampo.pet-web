@@ -25,7 +25,7 @@ export default function SurgeriesModule() {
             return (<LibComponents.DataNotFound message="No hay registro de cirugías."/>);
         }
 
-        var formItems: Utils.Form[] = [];
+        const formItems: Utils.Form[] = [];
 
         petSurgeries.forEach(surgery => {
             formItems.push({

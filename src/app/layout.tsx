@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, createContext, useContext, Dispatch } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";

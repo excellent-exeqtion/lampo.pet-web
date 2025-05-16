@@ -25,7 +25,7 @@ export default function LabTestsModule() {
             return (<LibComponents.DataNotFound message="No hay registro de resultados de laboratorio." />);
         }
 
-        var formItems: Utils.Form[] = [];
+        const formItems: Utils.Form[] = [];
 
         petLabTests.forEach(labTest => {
             formItems.push({

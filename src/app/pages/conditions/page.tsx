@@ -25,7 +25,7 @@ export default function ConditionsModule() {
             return (<LibComponents.DataNotFound message="No hay registro de condiciones especiales." />);
         }
 
-        var formItems: Utils.Form[] = [];
+        const formItems: Utils.Form[] = [];
 
         petConditions.forEach(condition => {
             formItems.push({

@@ -25,7 +25,7 @@ export default function VaccinesModule() {
       return (<LibComponents.DataNotFound message="No hay registro de vacunas." />);
     }
 
-    var formItems: Utils.Form[] = [];
+    const formItems: Utils.Form[] = [];
 
     petVaccines.forEach(vaccine => {
       formItems.push({

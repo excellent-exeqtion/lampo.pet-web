@@ -9,7 +9,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAppContext } from "@/app/layout";
 import { menuData, PetsData } from '@/data/petdata';
-import { Pet } from "@/data/index";
 import { LibComponents } from "@/lib/components";
 
 export default function SidebarModule({

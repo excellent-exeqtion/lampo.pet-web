@@ -20,14 +20,18 @@
     ],
     "paths": {
       "@/assets/*": ["./public/*"],
-      "@/lib/*": ["./src/app/lib/*"],
-      "@/data/*": ["./src/app/data/*"],
-      "@/css/*": ["./src/app/css/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/context/*": ["./src/context/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/data/*": ["./src/data/*"],
+      "@/styles/*": ["./src/styles/*"],
       "@/app/*": ["./src/app/*"],
-      "@/modals/*": ["./src/app/components/modals/*"],
-      "@/forms/*": ["./src/app/pages/vet/[code]/components/forms/*"],
-      "@/utils/*": ["./src/app/lib/utils/*"],
-      "@/hooks/*": ["./src/app/lib/db/hooks/*"]
+      "@/utils/*": ["./src/utils/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/repos/*": ["./src/repositories/*"],
+      "@/services/*": ["./src/services/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/pages/*": ["./src/app/pages/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

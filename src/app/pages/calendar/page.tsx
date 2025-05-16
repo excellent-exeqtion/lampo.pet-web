@@ -1,11 +1,13 @@
 // app/calendar/page.tsx (server component)
 "use client";
+import { Title } from "@/components/index";
 import React from "react";
+import { FaCalendar } from "react-icons/fa";
 
-export default function CalendarModule() {
+export default function CalendarPage() {
     return (
         <div style={{ width: "100%" }}>
-            <h2>Próximos eventos programados</h2>
+            {<Title icon={<FaCalendar />} title="Próximos eventos programados" />}
             <section style={{ width: "100%", marginBottom: "2rem" }}>
                 {/* <input type="date" value="2025-01-01" /> */}
             </section>

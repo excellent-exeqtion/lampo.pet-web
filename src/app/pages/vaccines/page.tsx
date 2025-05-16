@@ -1,15 +1,16 @@
 // app/vaccines/page.tsx (server component)
 "use client";
 import React from "react";
-import { vaccinesMock } from "@/data/petdata";
+import { vaccinesMock } from "../../../data/petdata";
 import { useAppContext } from "@/app/layout";
 import { FaSyringe } from "react-icons/fa";
-import { Utils } from "@/lib/utils";
 import { v4 } from "uuid";
-import { LibComponents } from "@/lib/components";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { DataNotFound, Form, Loading, Title } from "@/components/index";
+import { FormType } from "@/types/lib";
+import { Dates } from "@/utils/index";
 
-export default function VaccinesModule() {
+export default function VaccinesPage() {
   useRequireAuth();
 
   const { isMobile, selectedPet } = useAppContext();
@@ -18,14 +19,14 @@ export default function VaccinesModule() {
 
   const renderContent = (isMobile: boolean) => {
     if (petVaccines == undefined) {
-      return (<LibComponents.Loading />);
+      return (<Loading />);
     }
 
     if (petVaccines.length == 0) {
-      return (<LibComponents.DataNotFound message="No hay registro de vacunas." />);
+      return (<DataNotFound message="No hay registro de vacunas." />);
     }
 
-    const formItems: Utils.Form[] = [];
+    const formItems: FormType[] = [];
 
     petVaccines.forEach(vaccine => {
       formItems.push({
@@ -33,18 +34,18 @@ export default function VaccinesModule() {
         fields: [
           { label: 'Vacuna', show: true, value: vaccine.name },
           { label: 'Description', show: vaccine.description != null, value: vaccine.description },
-          { label: 'Fecha', show: vaccine.date != null, value: Utils.formatDate(vaccine.date) },
+          { label: 'Fecha', show: vaccine.date != null, value: Dates.format(vaccine.date) },
           { label: 'Lote', show: true, value: vaccine.batch },
           { label: 'Marca', show: true, value: vaccine.brand }
         ]
       });
     });
-    return Utils.renderForm(formItems, isMobile);
+    return <Form formItems={formItems} isMobile={isMobile} />;
   };
 
   return (
     <main style={{ padding: isMobile ? "2rem 1rem" : "2rem" }}>
-      {Utils.renderTitle(<FaSyringe />, 'Vacunas')}
+      {<Title icon={ <FaSyringe />} title="Vacunas" />}
       {renderContent(isMobile)}
     </main>
   );

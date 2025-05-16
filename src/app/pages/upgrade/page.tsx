@@ -2,7 +2,7 @@
 "use client";
 import React from "react";
 
-export default function UpgradeModule() {
+export default function UpgradePage() {
     return (
         <div style={{ width: "100%" }}>
             <h2>Mejora tu plan</h2>

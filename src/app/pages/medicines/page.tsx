@@ -1,15 +1,15 @@
 // app/medicines/page.tsx (server component)
 "use client";
 import React from "react";
-import { medicinesMock } from "@/data/petdata";
+import { medicinesMock } from "../../../data/petdata";
 import { useAppContext } from "@/app/layout";
 import { FaPills } from "react-icons/fa";
 import { v4 } from "uuid";
-import { Utils } from "@/lib/utils";
-import { LibComponents } from "@/lib/components";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { Loading, DataNotFound, Form, Title } from "@/components/index";
+import { FormType } from "@/types/lib";
 
-export default function MedicinesModule() {
+export default function MedicinesPage() {
     useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
@@ -18,14 +18,14 @@ export default function MedicinesModule() {
 
     const renderContent = (isMobile: boolean) => {
         if (petMedicines == undefined) {
-            return (<LibComponents.Loading />);
+            return (<Loading />);
         }
 
         if (petMedicines.length == 0) {
-            return (<LibComponents.DataNotFound message="No hay registro de medicamentos." />);
+            return (<DataNotFound message="No hay registro de medicamentos." />);
         }
 
-        const formItems: Utils.Form[] = [];
+        const formItems: FormType[] = [];
 
         petMedicines.forEach(medicine => {
             formItems.push({
@@ -37,12 +37,12 @@ export default function MedicinesModule() {
                 ]
             });
         });
-        return Utils.renderForm(formItems, isMobile);
+        return <Form formItems={formItems} isMobile={isMobile} />;
     };
 
     return (
         <main style={{ padding: isMobile ? "2rem 1rem" : "2rem" }}>
-            {Utils.renderTitle(<FaPills />, 'Medicinas')}
+            {<Title icon={<FaPills />} title="Medicinas" />}
             {renderContent(isMobile)}
         </main>
     );

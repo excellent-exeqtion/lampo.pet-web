@@ -5,7 +5,7 @@ import "@picocss/pico";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { signIn, signUp, resetPassword } from "@/lib/db/services/authService";
+import { signIn, signUp, resetPassword } from "../../../services/authService";
 
 export default function LoginPage() {
   const router = useRouter();

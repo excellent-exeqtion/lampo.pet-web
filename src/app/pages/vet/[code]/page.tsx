@@ -1,15 +1,15 @@
 // app/vet/[code]/page.tsx
-import PetEditForm from "@/app/pages/vet/[code]/components/forms/pet-edit-form";
-import { Pet } from "@/lib/db/repositories";
-import { PetRepository } from "@/lib/db/repositories/pet.repository";
-import { PetCodeRepository } from "@/lib/db/repositories/petCode.repository";
+import { PetRepository } from "@/repos/pet.repository";
+import { PetCodeRepository } from "@/repos/petCode.repository";
+import PetEditForm from "./components/forms/PetEditForm";
+import { PetType } from "@/types/index";
 
 interface VetPageProps {
   params: { code: string };
 }
 
 export default async function VetPage({ params: { code } }: VetPageProps) {
-  let pet: Pet | null = null;
+  let pet: PetType | null = null;
   let message = "";
   let isValid = false;
 

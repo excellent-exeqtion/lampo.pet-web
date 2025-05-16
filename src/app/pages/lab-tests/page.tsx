@@ -1,15 +1,16 @@
 // app/lab-tests/page.tsx (server component)
 "use client";
 import React from "react";
-import { labTestsMock } from "@/data/petdata";
+import { labTestsMock } from "../../../data/petdata";
 import { useAppContext } from "@/app/layout";
 import { FaFlask } from "react-icons/fa";
 import { v4 } from "uuid";
-import { LibComponents } from "@/lib/components";
-import { Utils } from "@/lib/utils";
+import { Dates } from "@/utils/index";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { Loading, DataNotFound, Form, Title } from "@/components/index";
+import { FormType } from "@/types/lib";
 
-export default function LabTestsModule() {
+export default function LabTestsPage() {
     useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
@@ -18,14 +19,14 @@ export default function LabTestsModule() {
 
     const renderContent = (isMobile: boolean) => {
         if (petLabTests == undefined) {
-            return (<LibComponents.Loading />);
+            return (<Loading />);
         }
 
         if (petLabTests.length == 0) {
-            return (<LibComponents.DataNotFound message="No hay registro de resultados de laboratorio." />);
+            return (<DataNotFound message="No hay registro de resultados de laboratorio." />);
         }
 
-        const formItems: Utils.Form[] = [];
+        const formItems: FormType[] = [];
 
         petLabTests.forEach(labTest => {
             formItems.push({
@@ -33,17 +34,17 @@ export default function LabTestsModule() {
                 fields: [
                     { label: 'Prueba', show: true, value: labTest.name },
                     { label: 'Tipo', show: true, value: labTest.type },
-                    { label: 'Fecha', show: labTest.date != null, value: Utils.formatDate(labTest.date) },
+                    { label: 'Fecha', show: labTest.date != null, value: Dates.format(labTest.date) },
                     { label: 'Resultado', show: labTest.result != null, value: labTest.result }
                 ]
             });
         });
-        return Utils.renderForm(formItems, isMobile);
+        return <Form formItems={formItems} isMobile={isMobile} />;
     };
 
     return (
         <main style={{ padding: isMobile ? "2rem 1rem" : "2rem" }}>
-            {Utils.renderTitle(<FaFlask />, 'Lab. de exámenes')}
+            {<Title icon={<FaFlask />} title="Exámenes de laboratorio" />}
             {renderContent(isMobile)}
         </main>
     );

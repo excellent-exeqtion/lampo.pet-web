@@ -1,15 +1,16 @@
 // app/surgeries/page.tsx (server component)
 "use client";
 import React from "react";
-import { surgeriesMock } from "@/data/petdata";
+import { surgeriesMock } from "../../../data/petdata";
 import { useAppContext } from "@/app/layout";
 import { FaCut } from "react-icons/fa";
 import { v4 } from "uuid";
-import { Utils } from "@/lib/utils";
-import { LibComponents } from "@/lib/components";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { DataNotFound, Form, Loading, Title } from "@/components/index";
+import { Dates } from "@/utils/index";
+import { FormType } from "@/types/lib";
 
-export default function SurgeriesModule() {
+export default function SurgeriesPage() {
     useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
@@ -18,31 +19,31 @@ export default function SurgeriesModule() {
 
     const renderContent = (isMobile: boolean) => {
         if (petSurgeries == undefined) {
-            return (<LibComponents.Loading />);
+            return (<Loading />);
         }
 
         if (petSurgeries.length == 0) {
-            return (<LibComponents.DataNotFound message="No hay registro de cirugías."/>);
+            return (<DataNotFound message="No hay registro de cirugías." />);
         }
 
-        const formItems: Utils.Form[] = [];
+        const formItems: FormType[] = [];
 
         petSurgeries.forEach(surgery => {
             formItems.push({
                 id: v4(),
                 fields: [
                     { label: 'Procedimiento', show: true, value: surgery.name },
-                    { label: 'Fecha', show: surgery.date != null, value: Utils.formatDate(surgery.date) },
+                    { label: 'Fecha', show: surgery.date != null, value: Dates.format(surgery.date) },
                     { label: 'Notas', show: surgery.description != null, value: surgery.description }
                 ]
             });
         });
-        return Utils.renderForm(formItems, isMobile);
+        return <Form formItems={formItems} isMobile={isMobile} />;
     };
 
     return (
         <main style={{ padding: isMobile ? "2rem 1rem" : "2rem" }}>
-            {Utils.renderTitle(<FaCut />, 'Cirugías')}
+            {<Title icon={<FaCut />} title="Cirugías" />}
             {renderContent(isMobile)}
         </main>
     );

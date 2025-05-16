@@ -1,15 +1,15 @@
 // app/conditions/page.tsx (server component)
 "use client";
 import React from "react";
-import { conditionsMock } from "@/data/petdata";
+import { conditionsMock } from "../../../data/petdata";
 import { useAppContext } from "@/app/layout";
 import { FaCloudSun } from "react-icons/fa";
 import { v4 } from "uuid";
-import { Utils } from "@/lib/utils";
-import { LibComponents } from "@/lib/components";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { Loading, DataNotFound, Form, Title } from "@/components/index";
+import { FormType } from "@/types/lib";
 
-export default function ConditionsModule() {
+export default function ConditionsPage() {
     useRequireAuth();
 
     const { isMobile, selectedPet } = useAppContext();
@@ -18,14 +18,14 @@ export default function ConditionsModule() {
 
     const renderContent = (isMobile: boolean) => {
         if (petConditions == undefined) {
-            return (<LibComponents.Loading />);
+            return (<Loading />);
         }
 
         if (petConditions.length == 0) {
-            return (<LibComponents.DataNotFound message="No hay registro de condiciones especiales." />);
+            return (<DataNotFound message="No hay registro de condiciones especiales." />);
         }
 
-        const formItems: Utils.Form[] = [];
+        const formItems: FormType[] = [];
 
         petConditions.forEach(condition => {
             formItems.push({
@@ -36,12 +36,12 @@ export default function ConditionsModule() {
                 ]
             });
         });
-        return Utils.renderForm(formItems, isMobile);
+        return <Form formItems={formItems} isMobile={isMobile} />;
     };
 
     return (
         <main style={{ padding: isMobile ? "2rem 1rem" : "2rem" }}>
-            {Utils.renderTitle(<FaCloudSun />, 'Condiciones especiales')}
+            {<Title icon={<FaCloudSun />} title="Condiciones especiales" />}
             {renderContent(isMobile)}
         </main>
     );

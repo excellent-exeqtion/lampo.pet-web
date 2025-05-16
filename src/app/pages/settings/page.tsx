@@ -2,7 +2,7 @@
 "use client";
 import React from "react";
 
-export default function SettingsModule() {
+export default function SettingsPage() {
     return (
         <div style={{ width: "100%" }}>
             <h2>Configuración</h2>

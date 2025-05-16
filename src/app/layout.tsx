@@ -1,38 +1,24 @@
 // app/layout.tsx
 "use client";
 import React, { useState, useEffect, createContext, useContext } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
 import { useRouter } from "next/navigation";
-
-import SidebarModule from "./components/layout/side-bar";
-import BubblesModule from "./components/modals/bubbles";
-import LoginPage from "./pages/login/page";
-import { LibComponents } from "@/lib/components";
+import { Bubbles, SideBar, Loading } from "@/components/index";
+import { LoginPage } from "@/pages/index";
 
 import "./globals.css";
 import "@picocss/pico";
-import { tooltipStyles } from "./css/tooltip";
+import { tooltipStyles } from "@/styles/tooltip";
 
-import { useSession as useRawSession } from "@/hooks/useSession";
-import {signOut} from "@/lib/db/services/authService";
-import { PetRepository } from "./lib/db/repositories/pet.repository";
-import { AppSession } from "./lib/db/types/session";
-import { Pet } from "./lib/db/repositories";
-import { useLocalStorage } from "./lib/db/hooks/useLocalStorage";
+import { useSession as useRawSession } from "../hooks/useSession";
+import {signOut} from "../services/authService";
+import { PetRepository } from "@/repos/pet.repository";
+import { AppSession } from "@/types/lib/index";
+import { PetType } from "@/types/index";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { AppContextType } from "@/context/AppContextType";
+import { geistMono, geistSans } from "@/styles/geist";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-
-// Contexto de la app
-type LayoutContext = {
-  isMobile: boolean;
-  session: AppSession;
-  logout: () => Promise<void>;
-  selectedPet: Pet | null;
-  setSelectedPet: (pet: Pet | null) => void;
-};
-
-const AppContext = createContext<LayoutContext>({
+const AppContext = createContext<AppContextType>({
   isMobile: false,
   session: { db: null! },
   logout: async () => {},
@@ -61,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   }, [rawSession]);
 
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+  const [selectedPet, setSelectedPet] = useState<PetType | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showVetModal, setShowVetModal] = useState(false);
@@ -120,7 +106,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <head><title>Lampo</title></head>
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
           <style>{tooltipStyles}</style>
-          <LibComponents.Loading />
+          <Loading />
         </body>
       </html>
     );
@@ -166,8 +152,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            <SidebarModule menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
-            <BubblesModule
+            <SideBar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+            <Bubbles
               setShowCodeModal={setShowCodeModal}
               showCodeModal={showCodeModal}
               setShowVetModal={setShowVetModal}

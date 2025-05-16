@@ -1,0 +1,30 @@
+// app/lib/db/services/authService.ts
+import { supabase } from "@/lib/client/supabase";
+import type { Session, User, AuthError, AuthChangeEvent } from "@supabase/supabase-js";
+
+export const signIn = async (
+  email: string,
+  password: string
+): Promise<{ data: { session: Session | null; user: User | null }; error: AuthError | null }> => {
+  return supabase.auth.signInWithPassword({ email, password });
+};
+
+export const signUp = async (
+  email: string,
+  password: string
+): Promise<{ data: { user: User | null }; error: AuthError | null }> => {
+  return supabase.auth.signUp({ email, password });
+};
+
+export const resetPassword = async (
+  email: string
+): Promise<{ data: object | null; error: AuthError | null }> => {
+  return supabase.auth.resetPasswordForEmail(email);
+};
+export const signOut = () => supabase.auth.signOut();
+
+export const getSession = () => supabase.auth.getSession();
+
+export const onAuthStateChange = (
+  cb: (event: AuthChangeEvent, session: Session | null) => void
+) => supabase.auth.onAuthStateChange(cb).data.subscription;

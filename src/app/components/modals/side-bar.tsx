@@ -1,6 +1,6 @@
 // app/components/modals/side-bar.tsx
 "use client";
-import React, { Dispatch, SetStateAction } from "react";
+import React, { Dispatch, SetStateAction, useEffect } from "react";
 import {
     FaBars,
     FaTimes
@@ -28,10 +28,12 @@ export default function SidebarModule({
     if(ownersPets.length == 0){
         return (<LibComponents.Loading />);
     }
-
-    if (selectedPet == undefined) {
+    
+    useEffect(() => {
+      if (!selectedPet && ownersPets.length > 0) {
         setSelectedPet(ownersPets[0]);
-    }
+      }
+    }, [selectedPet, ownersPets, setSelectedPet]);
 
     const petDropdown = () => {
         if (ownersPets.length == 1) {

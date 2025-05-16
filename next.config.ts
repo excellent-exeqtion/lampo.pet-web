@@ -12,7 +12,8 @@ const nextConfig: NextConfig = {
     PROTOCOL: process.env.PROTOCOL,
     VERCEL_URL: process.env.VERCEL_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_STORAGE_SECRET: process.env.NEXT_PUBLIC_STORAGE_SECRET
   },
   async headers() {
     return [

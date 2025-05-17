@@ -42,7 +42,8 @@ export const metadata: Metadata = {
 
 export const andresData: OwnerDataType = {
   owner_id: '8933eed8-daea-4e6c-b4db-44906b9f44f9',
-  name: 'Andrés Aulestia',
+  name: 'Andrés',
+  last_name: 'Aulestia',
   phone: '+57 3146061490',
   address: 'Cra. 74 #152b-70 Torre 3 Apto. 1704',
   city: 'Bogotá',
@@ -52,7 +53,8 @@ export const andresData: OwnerDataType = {
 
 export const johnnyData: OwnerDataType = {
   owner_id: '41095adf-27a6-48f8-ada1-d8c7d3dd265a',
-  name: 'Johnnatan Ruiz',
+  name: 'Johnnatan',
+  last_name: 'Ruiz',
   phone: '+57 3112849616',
   address: 'Calle 82 #19A-29 Apt 401',
   city: 'Bogotá',

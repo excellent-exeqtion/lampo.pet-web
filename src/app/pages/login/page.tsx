@@ -22,16 +22,18 @@ export default function LoginPage() {
 
   // Estados adicionales para registro
   const [ownerInfo, setOwnerInfo] = useState<Partial<OwnerDataType>>({
-    // Ajusta estos campos según tu definición real de OwnerDataType
     name: "",
+    last_name: "",
     phone: "",
     address: "",
+    city: "",
+    country: "",
+    email: ""
   });
 
   // Control para mostrar minibosquejo de selección de plan
   const [showPlanSelection, setShowPlanSelection] = useState(false);
 
-  
   const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
@@ -41,20 +43,29 @@ export default function LoginPage() {
       // 1) Crear cuenta en Supabase (envía correo de confirmación)
       const { error: signUpError, data } = await signUp(email, password);
       if (signUpError) {
-        setError(signUpError.message);
-      } else {
-        // 2) Guardar datos del owner en tu tabla ‘owners’
-        const userId = data?.user?.id;
-        if (userId) {
-          await OwnerRepository.create({
-            // spread de ownerInfo, casteado a OwnerDataType
-            ...(ownerInfo as OwnerDataType),
-            owner_id: userId,
-          });
-        }
-        // 3) Mostrar selección de plan
-        setShowPlanSelection(true);
+        console.log('error:', signUpError);
+        setError("Ocurrio un error al registrar el usuario.");
+        setLoading(false);
+        return;
       }
+
+      // 2) Guardar datos del owner en tu tabla ‘owners’ y manejar errores
+      const userId = data?.user?.id;
+      if (userId) {
+        const { error: ownerError } = await OwnerRepository.create({
+          ...(ownerInfo as OwnerDataType),
+          owner_id: userId,
+          email: email
+        });
+        if (ownerError) {
+          setError(ownerError.message);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 3) Mostrar selección de plan
+      setShowPlanSelection(true);
     } else {
       // Login normal
       const { error: signInError } = await signIn(email, password);
@@ -87,6 +98,7 @@ export default function LoginPage() {
     return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} />;
   }
 
+    return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} />;
   return (
     <main
       style={{
@@ -105,11 +117,11 @@ export default function LoginPage() {
           borderRadius: "0.5rem",
           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           width: "100%",
-          maxWidth: "400px",
+          maxWidth: "550px",
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <Image src="/logo.svg" alt="Lampo" width={48} height={48} />
+          <Image src="/logo.png" alt="Lampo" width={150} height={48} style={{marginBottom: '10px'}}/>
           <h1>{isRegistering ? "Regístrate" : "Inicia sesión"}</h1>
         </div>
 
@@ -119,35 +131,36 @@ export default function LoginPage() {
           <input
             id="email"
             type="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </label>
 
-        <label htmlFor="password">
-          Contraseña
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-
         {/* Campos extra sólo en registro */}
         {isRegistering && (
-          <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <label htmlFor="name">
               Nombre
               <input
                 id="name"
                 type="text"
+                autoComplete="given-name"
                 value={ownerInfo.name || ""}
-                onChange={(e) =>
-                  setOwnerInfo({ ...ownerInfo, name: e.target.value })
-                }
+                onChange={e => setOwnerInfo({ ...ownerInfo, name: e.target.value })}
+                required
+              />
+            </label>
+
+            <label htmlFor="lastname">
+              Apellido
+              <input
+                id="lastname"
+                type="text"
+                autoComplete="family-name"
+                value={ownerInfo.last_name || ""}
+                onChange={e => setOwnerInfo({ ...ownerInfo, last_name: e.target.value })}
                 required
               />
             </label>
@@ -157,10 +170,9 @@ export default function LoginPage() {
               <input
                 id="phone"
                 type="tel"
+                autoComplete="phone"
                 value={ownerInfo.phone || ""}
-                onChange={(e) =>
-                  setOwnerInfo({ ...ownerInfo, phone: e.target.value })
-                }
+                onChange={e => setOwnerInfo({ ...ownerInfo, phone: e.target.value })}
                 required
               />
             </label>
@@ -170,15 +182,51 @@ export default function LoginPage() {
               <input
                 id="address"
                 type="text"
+                autoComplete="address-line1"
                 value={ownerInfo.address || ""}
-                onChange={(e) =>
-                  setOwnerInfo({ ...ownerInfo, address: e.target.value })
-                }
+                onChange={e => setOwnerInfo({ ...ownerInfo, address: e.target.value })}
                 required
               />
             </label>
-          </>
+
+            <label htmlFor="city">
+              Ciudad
+              <input
+                id="city"
+                type="text"
+                autoComplete="address-level2"
+                value={ownerInfo.city || ""}
+                onChange={e => setOwnerInfo({ ...ownerInfo, city: e.target.value })}
+                required
+              />
+            </label>
+
+            <label htmlFor="country">
+              País
+              <input
+                id="country"
+                type="text"
+                autoComplete="country-name"
+                value={ownerInfo.country || ""}
+                onChange={e => setOwnerInfo({ ...ownerInfo, country: e.target.value })}
+                required
+              />
+            </label>
+            
+          </div>
         )}
+
+        <label htmlFor="password">
+          Contraseña
+          <input
+            id="password"
+            type="password"
+            autoComplete={isRegistering? 'new-password' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </label>
 
         {error && <p style={{ color: "red", marginTop: "0.5rem" }}>{error}</p>}
 

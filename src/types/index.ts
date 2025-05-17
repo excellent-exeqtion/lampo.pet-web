@@ -14,6 +14,7 @@ export interface PetCodeType {
 export interface OwnerDataType {
     owner_id: string;
     name: string;
+    last_name: string;
     phone: string;
     address: string;
     city: string;
@@ -62,11 +63,11 @@ export interface SurgeryDataType {
 };
 
 export interface MedicineDataType {
-  id: string;
-  pet_id: string;
-  name: string;
-  dosage: string;
-  frequency: string;
+    id: string;
+    pet_id: string;
+    name: string;
+    dosage: string;
+    frequency: string;
 }
 
 export interface ConditionDataType {

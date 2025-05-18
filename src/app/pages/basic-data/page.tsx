@@ -19,8 +19,7 @@ export default function BasicDataPage() {
   const [petData, setPetData] = useState<BasicDataType | null>(null);
   const [ownerData, setOwnerData] = useState<OwnerDataType | null>(null);
 
-  useEffect(() => {
-    if (!selectedPet?.id) return;         // don't run if no pet selected
+  useEffect(() => {       // don't run if no pet selected
 
     const fetchData = async () => {
       try {

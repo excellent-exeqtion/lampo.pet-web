@@ -1,6 +1,5 @@
-// app/components/modals/feedback.tsx
+// app/components/modals/FeedbackModal.tsx
 "use client";
-
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { useAppContext } from "@/app/layout";

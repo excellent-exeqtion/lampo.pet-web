@@ -1,3 +1,4 @@
+// app/components/modals/PetCodeModal.tsx
 "use client";
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaTimes, FaShareAlt, FaCopy } from "react-icons/fa";

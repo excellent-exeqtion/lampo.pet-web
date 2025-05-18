@@ -1,6 +1,6 @@
 import { FieldType } from "@/types/lib";
 
-export interface BasicFieldProps {
+interface BasicFieldProps {
     item: FieldType
 }
 

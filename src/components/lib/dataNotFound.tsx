@@ -2,7 +2,7 @@
 import React from "react";
 import { FaInbox } from "react-icons/fa";
 
-export interface DataNotFoundProps {
+interface DataNotFoundProps {
   message: string;
 }
 

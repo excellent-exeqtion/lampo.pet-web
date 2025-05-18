@@ -1,6 +1,5 @@
-// app/components/modals/vet-code.tsx
+// app/components/modals/VeterinaryModal.tsx
 "use client";
-
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { useRouter } from "next/navigation";

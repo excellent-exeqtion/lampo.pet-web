@@ -1,10 +1,12 @@
-// app/components/modals/bubbles.tsx
-"use client";
-import React, { Dispatch, SetStateAction } from "react";
-import { FaShareAlt, FaCommentDots, FaUserMd } from "react-icons/fa";
+// app/components/modals/Bubbles.tsx
+"use client"
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { FaShareAlt, FaCommentDots, FaUserMd, FaExchangeAlt } from "react-icons/fa";
 import FeedbackModal from "./FeedbackModal";
 import PetCodeModal from "./PetCodeModal";
 import VeterinaryModal from "./VeterinaryModal";
+import ChangePetModal from "./ChangePetModal";
+import { useAppContext } from "@/app/layout";
 
 interface BubblesProps {
   setShowFeedbackModal: Dispatch<SetStateAction<boolean>>;
@@ -13,6 +15,8 @@ interface BubblesProps {
   showVetModal: boolean;
   setShowCodeModal: Dispatch<SetStateAction<boolean>>;
   showCodeModal: boolean;
+  setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
+  showChangePetModal: boolean;
 }
 
 const bubbleStyleBase: React.CSSProperties = {
@@ -36,7 +40,19 @@ export default function Bubbles({
   showVetModal,
   setShowCodeModal,
   showCodeModal,
+  setShowChangePetModal,
+  showChangePetModal,
 }: BubblesProps) {
+
+  const { ownerPets } = useAppContext();
+  const [showChangePetBubble, setShowChangePetBubble] = useState(false);
+
+  useEffect(() => {
+    console.log(ownerPets);
+    const show = (ownerPets?.length ?? 0) > 1;
+    setShowChangePetBubble(show);
+  }, [ownerPets]);
+
   return (
     <div
       style={{
@@ -85,10 +101,25 @@ export default function Bubbles({
         <span className="tooltip-text">Código único de tu mascota</span>
       </div>
 
+      {/* Change Pet Bubble */}
+      {showChangePetBubble &&
+        <div className="tooltip-container" draggable>
+          <button
+            onClick={() => setShowChangePetModal(true)}
+            style={bubbleStyleBase}
+            aria-label="Cambia de mascota"
+          >
+            <FaExchangeAlt />
+          </button>
+          <span className="tooltip-text">Cambia de mascota</span>
+        </div>
+      }
+
       {/* Modals */}
-      {showFeedbackModal && <FeedbackModal setShowFeedbackModal={setShowFeedbackModal} />}
+      {showChangePetModal && <ChangePetModal setShowChangePetModal={setShowChangePetModal} />}
       {showVetModal && <VeterinaryModal setShowVetModal={setShowVetModal} />}
       {showCodeModal && <PetCodeModal setShowCodeModal={setShowCodeModal} />}
+      {showFeedbackModal && <FeedbackModal setShowFeedbackModal={setShowFeedbackModal} />}
     </div>
   );
 }

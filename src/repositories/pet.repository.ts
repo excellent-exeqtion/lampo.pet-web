@@ -26,8 +26,8 @@ export class PetRepository {
     if (error) throw new Error(error.message);
   }
 
-  /** Retorna la primera mascota del owner, o null */
-  static async findByOwnerId(ownerId: string, pet_id: string): Promise<{ id: string } | null> {
+  /** Verifica que el usuario loggeado y la mascota seleccionada se encuentren en la base de datos  */
+  static async findByOwnerIdAndPetId(ownerId: string, pet_id: string): Promise<{ id: string } | null> {
     const { data, error } = await supabase
       .from("pets")
       .select("id")
@@ -41,13 +41,17 @@ export class PetRepository {
     return data[0];
   }
 
-  static async getPetsForUser(owner_id: string): Promise<PetType[]> {
+  /** Retorna la primera mascota del owner, o null */
+  static async findByOwnerId(ownerId: string): Promise<PetType[] | null> {
     const { data, error } = await supabase
       .from("pets")
       .select("*")
-      .eq("owner_id", owner_id);
+      .eq("owner_id", ownerId);
 
-    if (error) throw error;
-    return data as PetType[];
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) return null;
+
+    // Devolvemos la primera mascota (puedes adaptar si quieres soportar varias)
+    return data;
   }
 }

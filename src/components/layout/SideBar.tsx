@@ -8,8 +8,8 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAppContext } from "@/app/layout";
-import { menuData, PetsData } from '../../data/petdata';
-import { Loading } from "@/components/index";
+import { menuData } from '../../data/petdata';
+import { MenuType } from "@/types/lib";
 
 export default function SideBar({
     menuOpen,
@@ -18,36 +18,21 @@ export default function SideBar({
     menuOpen: boolean;
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
 }) {
-    const { isMobile, logout, session, selectedPet, setSelectedPet } = useAppContext();
+    const { isMobile, logout, selectedPet } = useAppContext();
 
-    const menuItems = menuData;
+    const menuItems = menuData(selectedPet != null);
 
-    const ownersPets = PetsData.filter(x => x.owner_id == session?.db?.user.id);
-
-    if(ownersPets.length == 0){
-        return (<Loading />);
-    }
-
-    const petDropdown = () => {
-        if (ownersPets.length == 1) {
-            return (
-                <p>{ownersPets[0].name}</p>
-            );
+    function item({ label, icon, url, show }: MenuType) {
+        if (!show) {
+            return <div></div>;
         }
         else {
             return (
-                <select
-                    value={selectedPet?.id}
-                    onChange={(e) => setSelectedPet(ownersPets.filter(x => x.id == e.target.value)[0])}
-                    style={{ border: 'none', paddingLeft: '0' }}
-                    className="pet-dropdown"
-                >
-                    {ownersPets.map((pet) => (
-                        <option key={pet.id} value={pet.id}>
-                            {pet.name}
-                        </option>
-                    ))}
-                </select>
+                <li key={label} style={{ marginBottom: "0.5rem" }}>
+                    <Link href={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        {icon} {label}
+                    </Link>
+                </li>
             );
         }
     }
@@ -73,17 +58,11 @@ export default function SideBar({
                             height={80}
                             style={{ width: "80px", height: "80px", borderRadius: "50%", marginBottom: "0.5rem" }}
                         />
-                        {petDropdown()}
+                        <p>{selectedPet?.name ?? 'Nombre de tu mascota'}</p>
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
-                            {menuItems.map(({ label, icon, url }) => (
-                                <li key={label} style={{ marginBottom: "0.5rem" }}>
-                                    <Link href={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                        {icon} {label}
-                                    </Link>
-                                </li>
-                            ))}
+                            {menuItems.map(({ label, icon, url, show }) => item({ label, icon, url, show }))}
                             <li><button onClick={logout}>Cerrar sesión</button></li>
                         </ul>
                     </nav>

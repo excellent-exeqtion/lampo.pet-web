@@ -2,7 +2,7 @@ import { FieldType, FormType } from "@/types/lib";
 import { Field } from "@/components/index";
 import { v4 } from "uuid";
 
-export interface FormsProps {
+interface FormsProps {
     formItems: FormType[];
     isMobile: boolean;
 }

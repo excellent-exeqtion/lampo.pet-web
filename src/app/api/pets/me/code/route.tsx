@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const { owner_id, pet_id } = await req.json();
 
     // 1) Mascota del owner
-    const pet = await PetRepository.findByOwnerId(owner_id, pet_id);
+    const pet = await PetRepository.findByOwnerIdAndPetId(owner_id, pet_id);
     if (!pet) {
       return NextResponse.json(
         { error: "Mascota no encontrada" },

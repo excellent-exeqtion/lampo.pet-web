@@ -10,7 +10,7 @@ import "@picocss/pico";
 import { tooltipStyles } from "@/styles/tooltip";
 
 import { useSession as useRawSession } from "../hooks/useSession";
-import {signOut} from "../services/authService";
+import { signOut } from "../services/authService";
 import { PetRepository } from "@/repos/pet.repository";
 import { AppSession } from "@/types/lib/index";
 import { PetType } from "@/types/index";
@@ -21,9 +21,10 @@ import { geistMono, geistSans } from "@/styles/geist";
 const AppContext = createContext<AppContextType>({
   isMobile: false,
   session: { db: null! },
-  logout: async () => {},
+  logout: async () => { },
   selectedPet: null,
-  setSelectedPet: () => {},
+  setSelectedPet: () => { },
+  ownerPets: null
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -52,41 +53,51 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showVetModal, setShowVetModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const [showChangePetModal, setShowChangePetModal] = useState(false);
 
   // LocalStorage abstraction via hook
-  const userId = appSession?.db.user?.id;
+  const ownerId = appSession?.db.user?.id;
   const [storedPetId, setStoredPetId] = useLocalStorage<string | null>(
-  `selectedPet-${userId}`,
-  null,
-  { secret: process.env.NEXT_PUBLIC_STORAGE_SECRET! }
-);
+    `selectedPet-${ownerId}`,
+    null,
+    { secret: process.env.NEXT_PUBLIC_STORAGE_SECRET! }
+  );
+  const [storedOwnersPets, setStoredOwnersPets] = useLocalStorage<PetType[] | null>(
+    `ownersPets-${ownerId}`,
+    null,
+    { secret: process.env.NEXT_PUBLIC_STORAGE_SECRET! }
+  );
 
 
   // Cargar selectedPet usando PetRepository y storedPetId
   useEffect(() => {
-    if (!hydrated || !appSession || !userId) return;
+    if (!hydrated || !appSession || !ownerId) return;
     let isMounted = true;
     (async () => {
       try {
-        const pets = await PetRepository.getPetsForUser(userId);
-        const petToSelect = pets.find(p => p.id === storedPetId) ?? pets[0] ?? null;
+        const pets = storedOwnersPets ?? await PetRepository.findByOwnerId(ownerId);
+        if(storedOwnersPets == null) setStoredOwnersPets(pets);
+        const petToSelect = pets?.find(p => p.id === storedPetId) ?? null;
         if (isMounted) setSelectedPet(petToSelect);
       } catch (err) {
         console.error("Error loading pets:", err);
       }
     })();
     return () => { isMounted = false; };
-  }, [hydrated, appSession, userId, storedPetId]);
+  }, [hydrated, appSession, ownerId, storedPetId, storedOwnersPets, setStoredOwnersPets]);
 
   // Persistir selección en storage
   useEffect(() => {
-    if (!userId || selectedPet === null) return;
+    if (!ownerId || selectedPet === null) return;
     setStoredPetId(selectedPet.id);
-  }, [selectedPet, userId, setStoredPetId]);
+  }, [selectedPet, ownerId, setStoredPetId]);
 
   const handleLogout = async () => {
     await signOut();
-    if (userId) setStoredPetId(null);
+    if (ownerId){
+      setStoredPetId(null);
+      setStoredOwnersPets(null);
+    }
     setSelectedPet(null);
     router.push("/");
   };
@@ -140,6 +151,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             logout: handleLogout,
             selectedPet,
             setSelectedPet,
+            ownerPets: storedOwnersPets
           }}
         >
           <div
@@ -156,6 +168,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Bubbles
               setShowCodeModal={setShowCodeModal}
               showCodeModal={showCodeModal}
+              setShowChangePetModal={setShowChangePetModal}
+              showChangePetModal={showChangePetModal}
               setShowVetModal={setShowVetModal}
               showVetModal={showVetModal}
               setShowFeedbackModal={setShowFeedbackModal}

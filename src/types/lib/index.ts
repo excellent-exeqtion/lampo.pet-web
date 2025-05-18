@@ -1,7 +1,7 @@
 import { Session } from "@supabase/supabase-js";
 
 export interface AppSession {
-    db: Session;
+  db: Session;
 }
 
 export interface FormType {
@@ -13,4 +13,11 @@ export interface FieldType {
   label: string;
   show: boolean;
   value?: string;
+}
+
+export interface MenuType {
+   label: string;
+   icon: React.JSX.Element,
+   url: string; 
+   show: boolean;
 }

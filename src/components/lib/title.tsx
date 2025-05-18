@@ -1,4 +1,4 @@
-export interface TitleProps {
+interface TitleProps {
     icon: React.JSX.Element;
     title: string;
 }

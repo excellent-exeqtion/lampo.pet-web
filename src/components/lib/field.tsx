@@ -1,7 +1,7 @@
 import { FieldType } from "@/types/lib";
 import React from "react";
 
-export interface FieldsProps {
+interface FieldsProps {
     field: FieldType;
 } 
 

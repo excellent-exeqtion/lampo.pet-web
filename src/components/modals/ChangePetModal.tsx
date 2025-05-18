@@ -1,8 +1,16 @@
 // app/components/modals/ChangePetModal.tsx
 "use client";
-import React, { Dispatch, SetStateAction } from "react";
-import { FaTimes } from "react-icons/fa";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useState,
+  useRef,
+  useEffect,
+} from "react";
+import { FaTimes, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { useAppContext } from "@/app/layout";
+import Image from 'next/image'
+import { PetType } from "@/types/index";
 
 export default function ChangePetModal({
   setShowChangePetModal,
@@ -10,17 +18,34 @@ export default function ChangePetModal({
   setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
 }) {
   const { ownerPets, selectedPet, setSelectedPet } = useAppContext();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  console.log(ownerPets);
+  // close dropdown if you click outside
+  useEffect(() => {
+    const handleClickOutside = (ev: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(ev.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = (pet: PetType) => {
+    setSelectedPet(pet);
+    setIsOpen(false);
+  };
 
   return (
     <div
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        inset: 0,
         backgroundColor: "rgba(0,0,0,0.5)",
         display: "flex",
         alignItems: "center",
@@ -29,8 +54,9 @@ export default function ChangePetModal({
       }}
     >
       <div
+        ref={dropdownRef}
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "#fff",
           borderRadius: "1rem",
           padding: "2rem",
           width: "90%",
@@ -38,6 +64,7 @@ export default function ChangePetModal({
           position: "relative",
         }}
       >
+        {/* Close button */}
         <button
           onClick={() => setShowChangePetModal(false)}
           style={{
@@ -47,42 +74,100 @@ export default function ChangePetModal({
             background: "none",
             border: "none",
             fontSize: "1rem",
-            color: "#000",
             cursor: "pointer",
+            color: '#000'
           }}
+          aria-label="Cerrar modal"
         >
           <FaTimes />
         </button>
 
-        <p>
-          <strong>Cambia la mascota que deseas visualizar: </strong>
+        <p style={{paddingTop: '20px'}}>
+          <strong>Selecciona a la mascota que le deseas visualizar los datos</strong>
         </p>
 
-        <select
-          value={selectedPet?.id}
-          onChange={(e) => setSelectedPet(ownerPets?.filter(x => x.id == e.target.value)[0] ?? null)}
-          style={{ border: 'none', paddingLeft: '0' }}
-          className="pet-dropdown"
-        >
-          {ownerPets?.map((pet) => (
-            <option key={pet.id} value={pet.id}>
-              {pet.name}
-            </option>
-          ))}
-        </select>
+        {/* Custom dropdown */}
+        <div style={{ position: "relative", marginTop: "1rem" }}>
+          <button
+            type="button"
+            onClick={() => setIsOpen((o) => !o)}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0.5rem 1rem",
+              borderRadius: "0.5rem",
+              border: "1px solid #ccc",
+              background: "#fff",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <Image
+                src={selectedPet?.image ?? "/pets/pet.png"}
+                alt={selectedPet?.name ?? "Sin mascota"}
+                width={40}
+                height={40}
+                style={{
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  marginRight: "0.75rem",
+                }}
+              />
+              <span style={{color: '#000'}}>
+                {selectedPet?.name ?? "Selecciona una mascota"}
+              </span>
+            </div>
+            {isOpen ? <FaChevronUp /> : <FaChevronDown />}
+          </button>
 
+          {isOpen && (
+            <ul
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                background: "#fff",
+                border: "1px solid #ccc",
+                borderRadius: "0.5rem",
+                maxHeight: 200,
+                overflowY: "auto",
+                marginTop: "0.25rem",
+                zIndex: 2010,
+                padding: 0,
+                listStyle: "none",
+              }}
+            >
+              {ownerPets?.map((pet) => (
+                <li
+                  key={pet.id}
+                  onClick={() => handleSelect(pet)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "0.5rem 1rem",
+                    cursor: "pointer",
+                  }}
+                >
+                  <Image
+                    src={pet.image ?? '/pets/pet.png'}
+                    alt={pet.name}
+                    width={32}
+                    height={32}
+                    style={{
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      marginRight: "0.75rem",
+                    }}
+                  />
+                  <span style={{color: '#000'}}>{pet.name}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
-    </div >
+    </div>
   );
 }
-
-/*
-
-              <Image
-                src={selectedPet?.image ?? '/pets/pet.png'}
-                alt="profile"
-                width={80}
-                height={80}
-                style={{ width: "80px", height: "80px", borderRadius: "50%", marginBottom: "0.5rem" }} />
-                {pet.name}
-                */

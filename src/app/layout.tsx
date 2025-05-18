@@ -59,13 +59,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const ownerId = appSession?.db.user?.id;
   const [storedPetId, setStoredPetId] = useLocalStorage<string | null>(
     `selectedPet-${ownerId}`,
-    null,
-    { secret: process.env.NEXT_PUBLIC_STORAGE_SECRET! }
+    null
   );
   const [storedOwnersPets, setStoredOwnersPets] = useLocalStorage<PetType[] | null>(
     `ownersPets-${ownerId}`,
-    null,
-    { secret: process.env.NEXT_PUBLIC_STORAGE_SECRET! }
+    null
   );
 
 
@@ -76,7 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     (async () => {
       try {
         const pets = storedOwnersPets ?? await PetRepository.findByOwnerId(ownerId);
-        if(storedOwnersPets == null) setStoredOwnersPets(pets);
+        if (storedOwnersPets == null) setStoredOwnersPets(pets);
         const petToSelect = pets?.find(p => p.id === storedPetId) ?? null;
         if (isMounted) setSelectedPet(petToSelect);
       } catch (err) {
@@ -94,7 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   const handleLogout = async () => {
     await signOut();
-    if (ownerId){
+    if (ownerId) {
       setStoredPetId(null);
       setStoredOwnersPets(null);
     }

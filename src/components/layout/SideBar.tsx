@@ -38,11 +38,11 @@ export default function SideBar({
     }
 
     return (
-        <div>
+        <React.Fragment>
             {!isMobile && (
                 <aside
                     style={{
-                        width: "250px",
+                        width: "300px",
                         display: "flex",
                         flexDirection: "column",
                         paddingTop: "1rem",
@@ -50,7 +50,7 @@ export default function SideBar({
                         boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
                     }}
                 >
-                    <div style={{ padding: "0 1rem 1rem" }}>
+                    <div style={{ padding: "0 1rem 1rem", display: 'flex', alignItems: 'center' }}>
                         <Image
                             src={selectedPet?.image ?? '/pets/pet.png'}
                             alt="profile"
@@ -58,7 +58,7 @@ export default function SideBar({
                             height={80}
                             style={{ width: "80px", height: "80px", borderRadius: "50%", marginBottom: "0.5rem" }}
                         />
-                        <p>{selectedPet?.name ?? 'Nombre de tu mascota'}</p>
+                        <p style={{marginLeft: '20px'}}><b>{selectedPet?.name ?? 'Nombre de tu mascota'}</b></p>
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
@@ -136,6 +136,6 @@ export default function SideBar({
                     </ul>
                 </nav>
             )}
-        </div>
+        </React.Fragment>
     );
 }

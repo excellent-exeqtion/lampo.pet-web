@@ -1,7 +1,6 @@
 // app/layout.tsx
 "use client";
 import React, { useState, useEffect, createContext, useContext } from "react";
-import { useRouter } from "next/navigation";
 import { Bubbles, SideBar, Loading } from "@/components/index";
 import { LoginPage } from "@/pages/index";
 
@@ -30,7 +29,6 @@ const AppContext = createContext<AppContextType>({
 export const useAppContext = () => useContext(AppContext);
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const rawSession = useRawSession(); // undefined | null | Session
 
   // Hydration detection
@@ -72,34 +70,50 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     let isMounted = true;
     (async () => {
       try {
+        // Obtener lista de mascotas (desde storage o API)
         const pets = storedOwnersPets ?? await PetRepository.findByOwnerId(ownerId);
-        if (storedOwnersPets == null) setStoredOwnersPets(pets);
-        const petToSelect = pets?.find(p => p.id === storedPetId) ?? null;
+        if (storedOwnersPets == null) {
+          setStoredOwnersPets(pets);
+        }
+        // Determinar ID a seleccionar: preferir el almacenado, si no existe usar la primera mascota
+        let initial_id = null;
+        if (pets != undefined && pets != null && pets?.length > 0) initial_id = pets[0].id;
+        const idToSelect = storedPetId ?? initial_id;
 
-        if (petToSelect == null && selectedPet?.id == undefined && pets != undefined && pets != null && pets?.length > 0)
-          setStoredPetId(pets[0].id);
-
-        if (isMounted && petToSelect?.id !== selectedPet?.id) {
-          setSelectedPet(petToSelect);
-          if (storedPetId == null) {
-            setStoredPetId(petToSelect?.id ?? null);
-          }
+        // Actualizar storage solo si es necesario
+        if (idToSelect && idToSelect !== storedPetId) {
+          setStoredPetId(idToSelect);
+        }
+        // Encontrar la mascota correspondiente
+        const pet = pets?.find(p => p.id === idToSelect) ?? null;
+        // Actualizar estado solo si cambia
+        if (isMounted && pet && pet.id !== selectedPet?.id) {
+          setSelectedPet(pet);
         }
       } catch (err) {
         console.error("Error loading pets:", err);
       }
     })();
     return () => { isMounted = false; };
-  }, [hydrated, appSession, ownerId, storedPetId, storedOwnersPets, setStoredOwnersPets, setStoredPetId, selectedPet?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, appSession, ownerId, storedPetId, storedOwnersPets, selectedPet]);
 
+
+  // Nuevo handleLogout: fuerza recarga completa
   const handleLogout = async () => {
-    await signOut();
-    if (ownerId) {
-      setStoredPetId(null);
-      setStoredOwnersPets(null);
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error during sign out:", error);
+    } finally {
+      if (ownerId) {
+        setStoredPetId(null);
+        setStoredOwnersPets(null);
+      }
+      setSelectedPet(null);
+      // Redirigir y recargar para asegurar estado limpio
+      window.location.href = "/";
     }
-    setSelectedPet(null);
-    router.push("/");
   };
 
   // Detección de viewport
@@ -137,7 +151,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   }
 
   // Autenticado
-  const cols = isMobile ? "1fr" : "250px 1fr";
+  const cols = isMobile ? "1fr" : "300px 1fr";
 
   return (
     <html lang="en" data-theme="light">
@@ -162,6 +176,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               transition: "grid-template-columns 0.3s ease",
               backgroundColor: "#F9FAFB",
               fontFamily: "'Inter', sans-serif",
+              margin: '2%'
             }}
           >
             <SideBar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />

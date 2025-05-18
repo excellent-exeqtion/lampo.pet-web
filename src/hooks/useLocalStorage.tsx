@@ -15,7 +15,7 @@ export function useLocalStorage<T>(
   initialValue: T,
   options?: { secret?: string }
 ): [T, (value: T | null) => void] {
-  const secret = options?.secret || process.env.NEXT_PUBLIC_STORAGE_SECRET!;
+  const secret = options?.secret || "";//process.env.NEXT_PUBLIC_STORAGE_SECRET!;
   // Generar clave de storage hasheada si hay secreto
   const storageKey = secret
     ? CryptoJS.SHA256(key + secret).toString()

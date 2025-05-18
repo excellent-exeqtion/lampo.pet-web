@@ -32,7 +32,7 @@ export default function LabTestsPage() {
         };
 
         fetchData();
-    }, [selectedPet]);
+    }, [selectedPet?.id]);
 
     const renderContent = (isMobile: boolean) => {
         if (petLabTests == undefined) {

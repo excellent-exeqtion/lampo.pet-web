@@ -31,7 +31,7 @@ export default function MedicinesPage() {
             };
     
             fetchData();
-        }, [selectedPet]);
+        }, [selectedPet?.id]);
 
     const renderContent = (isMobile: boolean) => {
         if (petMedicines == undefined) {

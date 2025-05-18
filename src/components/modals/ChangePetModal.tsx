@@ -17,7 +17,7 @@ export default function ChangePetModal({
 }: {
   setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
 }) {
-  const { ownerPets, selectedPet, setSelectedPet } = useAppContext();
+  const { ownerPets, selectedPet, setStoredPetId } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -37,8 +37,9 @@ export default function ChangePetModal({
   }, []);
 
   const handleSelect = (pet: PetType) => {
-    setSelectedPet(pet);
+    setStoredPetId(pet.id);
     setIsOpen(false);
+    setShowChangePetModal(false);
   };
 
   return (
@@ -82,7 +83,7 @@ export default function ChangePetModal({
           <FaTimes />
         </button>
 
-        <p style={{paddingTop: '20px'}}>
+        <p style={{ paddingTop: '20px' }}>
           <strong>Selecciona a la mascota que le deseas visualizar los datos</strong>
         </p>
 
@@ -114,7 +115,7 @@ export default function ChangePetModal({
                   marginRight: "0.75rem",
                 }}
               />
-              <span style={{color: '#000'}}>
+              <span style={{ color: '#000' }}>
                 {selectedPet?.name ?? "Selecciona una mascota"}
               </span>
             </div>
@@ -161,7 +162,7 @@ export default function ChangePetModal({
                       marginRight: "0.75rem",
                     }}
                   />
-                  <span style={{color: '#000'}}>{pet.name}</span>
+                  <span style={{ color: '#000' }}>{pet.name}</span>
                 </li>
               ))}
             </ul>

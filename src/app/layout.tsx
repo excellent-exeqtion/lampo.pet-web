@@ -23,7 +23,7 @@ const AppContext = createContext<AppContextType>({
   session: { db: null! },
   logout: async () => { },
   selectedPet: null,
-  setSelectedPet: () => { },
+  setStoredPetId: () => { },
   ownerPets: null
 });
 
@@ -76,19 +76,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         const pets = storedOwnersPets ?? await PetRepository.findByOwnerId(ownerId);
         if (storedOwnersPets == null) setStoredOwnersPets(pets);
         const petToSelect = pets?.find(p => p.id === storedPetId) ?? null;
-        if (isMounted) setSelectedPet(petToSelect);
+        if (isMounted && petToSelect?.id !== selectedPet?.id) {
+          setSelectedPet(petToSelect);
+        if(storedPetId == null) setStoredPetId(petToSelect?.id??null);
+        }
       } catch (err) {
         console.error("Error loading pets:", err);
       }
     })();
     return () => { isMounted = false; };
-  }, [hydrated, appSession, ownerId, storedPetId, storedOwnersPets, setStoredOwnersPets]);
-
-  // Persistir selección en storage
-  useEffect(() => {
-    if (!ownerId || selectedPet === null) return;
-    setStoredPetId(selectedPet.id);
-  }, [selectedPet, ownerId, setStoredPetId]);
+  }, [hydrated, appSession, ownerId, storedPetId, storedOwnersPets, setStoredOwnersPets, setStoredPetId, selectedPet?.id]);
 
   const handleLogout = async () => {
     await signOut();
@@ -148,7 +145,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             session: appSession,
             logout: handleLogout,
             selectedPet,
-            setSelectedPet,
+            setStoredPetId,
             ownerPets: storedOwnersPets
           }}
         >

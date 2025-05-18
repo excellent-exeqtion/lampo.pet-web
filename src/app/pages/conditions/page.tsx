@@ -31,7 +31,7 @@ export default function ConditionsPage() {
         };
 
         fetchData();
-    }, [selectedPet]);
+    }, [selectedPet?.id]);
 
     const renderContent = (isMobile: boolean) => {
         if (petConditions == undefined) {

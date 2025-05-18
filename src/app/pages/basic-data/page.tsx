@@ -19,23 +19,23 @@ export default function BasicDataPage() {
   const [petData, setPetData] = useState<BasicDataType | null>(null);
   const [ownerData, setOwnerData] = useState<OwnerDataType | null>(null);
 
-  useEffect(() => {       // don't run if no pet selected
+useEffect(() => {
+  if (!selectedPet?.id) return;
 
-    const fetchData = async () => {
-      try {
-        const basicData = await BasicDataRepository.findByPetId(selectedPet.id);
-        setPetData(basicData);
+  const fetchData = async () => {
+    try {
+      const basicData = await BasicDataRepository.findByPetId(selectedPet.id);
+      setPetData(basicData);
+      const owner = await OwnerRepository.findById(selectedPet.owner_id);
+      setOwnerData(owner);
+    } catch (err) {
+      console.error("Error cargando datos básicos o dueño:", err);
+    }
+  };
 
-        const owner = await OwnerRepository.findById(selectedPet.owner_id);
-        setOwnerData(owner);
-      } catch (err) {
-        console.error("Error loading basic data or owner:", err);
-        // you might set an error state here
-      }
-    };
+  fetchData();
+}, [selectedPet?.id, selectedPet?.owner_id]); 
 
-    fetchData();
-  }, [selectedPet]);
 
   if (petData === null || ownerData === null) {
     return (<Loading />)

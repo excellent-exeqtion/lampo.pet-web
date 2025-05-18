@@ -32,7 +32,7 @@ export default function VaccinesPage() {
           };
   
           fetchData();
-      }, [selectedPet]);
+      }, [selectedPet?.id]);
 
   const renderContent = (isMobile: boolean) => {
     if (petVaccines == undefined) {

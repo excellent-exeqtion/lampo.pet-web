@@ -32,7 +32,7 @@ export default function SurgeriesPage() {
         };
 
         fetchData();
-    }, [selectedPet]);
+    }, [selectedPet?.id]);
 
     const renderContent = (isMobile: boolean) => {
         if (petSurgeries == undefined) {

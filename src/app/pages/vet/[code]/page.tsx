@@ -5,11 +5,13 @@ import PetEditForm from "./components/forms/PetEditForm";
 import { PetType } from "@/types/index";
 
 interface VetPageProps {
-  params: { code: string };
+  params: Promise<{
+    code: string;
+  }>;
 }
 
 export default async function VetPage({ params }: VetPageProps) {
-  const { code } = params; // Destructuring code from params
+  const { code } = await params; // Destructuring code from params
   let pet: PetType | null = null;
   let message = "";
   let isValid = false;

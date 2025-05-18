@@ -66,7 +66,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     null
   );
 
-
   // Cargar selectedPet usando PetRepository y storedPetId
   useEffect(() => {
     if (!hydrated || !appSession || !ownerId) return;
@@ -76,9 +75,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         const pets = storedOwnersPets ?? await PetRepository.findByOwnerId(ownerId);
         if (storedOwnersPets == null) setStoredOwnersPets(pets);
         const petToSelect = pets?.find(p => p.id === storedPetId) ?? null;
+
+        if (petToSelect == null && selectedPet?.id == undefined && pets != undefined && pets != null && pets?.length > 0)
+          setStoredPetId(pets[0].id);
+
         if (isMounted && petToSelect?.id !== selectedPet?.id) {
           setSelectedPet(petToSelect);
-        if(storedPetId == null) setStoredPetId(petToSelect?.id??null);
+          if (storedPetId == null) {
+            setStoredPetId(petToSelect?.id ?? null);
+          }
         }
       } catch (err) {
         console.error("Error loading pets:", err);

@@ -97,8 +97,7 @@ export default function LoginPage() {
   if (showPlanSelection) {
     return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} />;
   }
-
-    return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} />;
+  
   return (
     <main
       style={{

@@ -339,7 +339,7 @@ export default function PlanSelection({
                                 {plan.cta}
                             </button>
 
-                            <p style={{ visibility: plan.variant == 'free' ? 'visible' : 'hidden', color: 'gray', fontSize: '16px', marginTop: '20px', whiteSpace: 'nowrap', textAlign: 'center' }}><b>Sin tarjetas de crédito ni pagos ocultos.</b></p>
+                            <p style={{ visibility: plan.variant == 'free' ? 'visible' : 'hidden', color: 'gray', fontSize: '16px', marginTop: '20px', whiteSpace: 'nowrap', textAlign: 'center' }}><b>{'Sin tarjetas de crédito ni pagos ocultos.'}</b></p>
                         </article>
                     );
                 })}

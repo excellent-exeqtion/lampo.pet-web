@@ -8,7 +8,8 @@ interface VetPageProps {
   params: { code: string };
 }
 
-export default async function VetPage({ params: { code } }: VetPageProps) {
+export default async function VetPage({ params }: VetPageProps) {
+  const { code } = params; // Destructuring code from params
   let pet: PetType | null = null;
   let message = "";
   let isValid = false;

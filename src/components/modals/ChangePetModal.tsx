@@ -12,11 +12,11 @@ import { useAppContext } from "@/app/layout";
 import Image from 'next/image'
 import { PetType } from "@/types/index";
 
-export default function ChangePetModal({
-  setShowChangePetModal,
-}: {
+interface ChangePetModalProps {
   setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
-}) {
+};
+
+export default function ChangePetModal({ setShowChangePetModal }: ChangePetModalProps) {
   const { ownerPets, selectedPet, setStoredPetId } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

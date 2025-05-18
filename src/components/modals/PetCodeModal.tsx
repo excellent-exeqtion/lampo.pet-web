@@ -4,11 +4,11 @@ import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaTimes, FaShareAlt, FaCopy } from "react-icons/fa";
 import { useAppContext } from "@/app/layout";
 
-export default function PetCodeModal({
-  setShowCodeModal,
-}: {
+interface PetCodeModalProps {
   setShowCodeModal: Dispatch<SetStateAction<boolean>>;
-}) {
+};
+
+export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
   const [code, setCode] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");

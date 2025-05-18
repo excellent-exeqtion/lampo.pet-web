@@ -6,6 +6,7 @@ export interface PetType {
 };
 
 export interface PetCodeType {
+    id: string;
     pet_id: string;
     code: string;
     used: boolean;
@@ -84,4 +85,16 @@ export interface LabTestDataType {
     type: string;
     date?: Date;
     result?: string;
+}
+
+export interface VeterinaryAccess {
+  id: string;
+  pet_id: string;
+  pet_code_id: string;
+  vet_first_name: string;
+  vet_last_name: string;
+  professional_registration: string;
+  clinic_name: string;
+  city: string;
+  created_at: string;
 }

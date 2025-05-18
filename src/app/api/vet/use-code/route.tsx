@@ -1,10 +1,18 @@
 // app/api/vet/use-code/route.ts
 import { NextResponse } from "next/server";
 import { PetCodeRepository } from "@/repos/petCode.repository";
+import { VeterinaryAccessRepository } from "@/repos/veterinaryAccess.repository";
 
 export async function POST(req: Request) {
   try {
-    const { code } = await req.json();
+    const {
+      code,
+      firstName,
+      lastName,
+      registration,
+      clinicName,
+      city,
+    } = await req.json();
 
     // 1) Obtener y validar código
     const data = await PetCodeRepository.find(code);
@@ -22,8 +30,19 @@ export async function POST(req: Request) {
     // 2) Marcar como usado
     await PetCodeRepository.markUsed(code);
 
-    // 3) Devolver petId
-    return NextResponse.json({ success: true, petId: data.pet_id });
+    // 3) Registrar acceso veterinario
+    await VeterinaryAccessRepository.create({
+      pet_id: data.pet_id,
+      pet_code_id: data.id,
+      vet_first_name: firstName,
+      vet_last_name: lastName,
+      professional_registration: registration,
+      clinic_name: clinicName,
+      city,
+    });
+
+    // 4) Devolver petId
+    return NextResponse.json({ success: true, pet_id: data.pet_id });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return NextResponse.json(

@@ -4,11 +4,11 @@ import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { useAppContext } from "@/app/layout";
 
-export default function FeedbackModal({
-  setShowFeedbackModal,
-}: {
+interface FeedbackModalProps {
   setShowFeedbackModal: Dispatch<SetStateAction<boolean>>;
-}) {
+};
+
+export default function FeedbackModal({ setShowFeedbackModal }: FeedbackModalProps) {
   const [feedback, setFeedback] = useState("");
   const [sending, setSending] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);

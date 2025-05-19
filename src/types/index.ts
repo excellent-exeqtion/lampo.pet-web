@@ -98,3 +98,44 @@ export interface VeterinaryAccess {
   city: string;
   created_at: string;
 }
+
+export interface FeatureType {
+  text: string;
+  badge?: string;
+}
+
+export interface PlanVersionType {
+  id: number;
+  plan_id: number;
+  slug: string;
+  version: number;
+  title: string;
+  description: string;
+  price_month: number;
+  price_year: number;
+  discount_month: number;
+  discount_year: number;
+  features: FeatureType[];
+  effective_from: string;
+  effective_to: string | null;
+  plans: PlanType;
+}
+
+export interface PlanType{
+    id: number;
+    slug: string;
+}
+
+export interface SubscriptionType {
+  id: number;
+  owner_id: string;
+  plan_version_id: number;
+  cycle: 'monthly' | 'annual';
+  status: 'pending' | 'active' | 'canceled' | 'expired';
+  external_id: string | null;
+  price_at_purchase: number;
+  discount_applied: number;
+  started_at: string;
+  expires_at: string | null;
+  updated_at: string;
+}

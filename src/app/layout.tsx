@@ -65,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [showVetModal, setShowVetModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showChangePetModal, setShowChangePetModal] = useState(false);
+  const [showAddPetModal, setShowAddPetModal] = useState(false);
 
   // LocalStorage abstraction via hook
   const ownerId = appSession?.db.user?.id;
@@ -246,6 +247,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               showVetModal={showVetModal}
               setShowFeedbackModal={setShowFeedbackModal}
               showFeedbackModal={showFeedbackModal}
+              showAddPetModal={showAddPetModal}
+              setShowAddPetModal={setShowAddPetModal}
             />
             <main style={{ padding: "1rem" }}>{children}</main>
           </div>

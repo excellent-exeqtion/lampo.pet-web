@@ -14,9 +14,10 @@ import { PetType } from "@/types/index";
 
 interface ChangePetModalProps {
   setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
+  setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
 };
 
-export default function ChangePetModal({ setShowChangePetModal }: ChangePetModalProps) {
+export default function ChangePetModal({ setShowChangePetModal, setShowAddPetModal }: ChangePetModalProps) {
   const { storedOwnerPets, selectedPet, setStoredPet: setStoredPetId, setStoredVetAccess } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -44,7 +45,8 @@ export default function ChangePetModal({ setShowChangePetModal }: ChangePetModal
   };
 
   const addPet = () => {
-
+    setShowChangePetModal(false);
+    setShowAddPetModal(true);
   };
 
   return (

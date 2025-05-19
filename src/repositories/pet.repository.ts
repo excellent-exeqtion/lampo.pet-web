@@ -3,6 +3,10 @@ import { supabase } from "@/lib/client/supabase";
 import { PetType } from "@/types/index";
 
 export class PetRepository {
+static async create(data: PetType) {
+    return supabase.from('pets').insert(data);
+  }
+
   /** Busca la mascota por ID */
   static async findById(id: string): Promise<PetType | null> {
     const { data, error } = await supabase

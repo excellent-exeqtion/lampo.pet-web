@@ -15,6 +15,7 @@ export default function LoginPage() {
 
   // Estados comunes
   const [email, setEmail] = useState("");
+  const [ownerId, setOwnerId] = useState<string | undefined>("");
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,6 +52,7 @@ export default function LoginPage() {
 
       // 2) Guardar datos del owner en tu tabla ‘owners’ y manejar errores
       const userId = data?.user?.id;
+      setOwnerId(userId);
       if (userId) {
         const { error: ownerError } = await OwnerRepository.create({
           ...(ownerInfo as OwnerDataType),
@@ -99,7 +101,7 @@ export default function LoginPage() {
 
   // 4) Si ya registró, mostrar bosquejo de planes
   if (showPlanSelection) {
-    return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} />;
+    return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} ownerId={ownerId} />;
   }
 
   return (

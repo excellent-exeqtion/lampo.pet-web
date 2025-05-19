@@ -8,6 +8,7 @@ import VeterinaryModal from "./VeterinaryModal";
 import ChangePetModal from "./ChangePetModal";
 import { useAppContext } from "@/app/layout";
 import { isOwner, isVet } from "@/services/roleService";
+import AddPetModal from "./AddPetModal";
 
 interface BubblesProps {
   setShowFeedbackModal: Dispatch<SetStateAction<boolean>>;
@@ -18,6 +19,8 @@ interface BubblesProps {
   showCodeModal: boolean;
   setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
   showChangePetModal: boolean;
+  setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
+  showAddPetModal: boolean;
 }
 
 const bubbleStyleBase: React.CSSProperties = {
@@ -43,6 +46,8 @@ export default function Bubbles({
   showCodeModal,
   setShowChangePetModal,
   showChangePetModal,
+  setShowAddPetModal,
+  showAddPetModal,
 }: BubblesProps) {
 
   const { storedOwnerPets, session, storedVetAccess } = useAppContext();
@@ -120,10 +125,11 @@ export default function Bubbles({
       }
 
       {/* Modals */}
-      {showChangePetModal && <ChangePetModal setShowChangePetModal={setShowChangePetModal} />}
+      {showChangePetModal && <ChangePetModal setShowChangePetModal={setShowChangePetModal} setShowAddPetModal={setShowAddPetModal} />}
       {showVetModal && <VeterinaryModal setShowVetModal={setShowVetModal} />}
       {showCodeModal && <PetCodeModal setShowCodeModal={setShowCodeModal} />}
       {showFeedbackModal && <FeedbackModal setShowFeedbackModal={setShowFeedbackModal} />}
+      {showAddPetModal && <AddPetModal setShowAddPetModal={setShowAddPetModal} />}
     </div>
   );
 }

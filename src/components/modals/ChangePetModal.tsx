@@ -7,7 +7,7 @@ import React, {
   useRef,
   useEffect,
 } from "react";
-import { FaTimes, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { FaTimes, FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
 import { useAppContext } from "@/app/layout";
 import Image from 'next/image'
 import { PetType } from "@/types/index";
@@ -41,6 +41,10 @@ export default function ChangePetModal({ setShowChangePetModal }: ChangePetModal
     setIsOpen(false);
     setShowChangePetModal(false);
     setStoredVetAccess(null);
+  };
+
+  const addPet = () => {
+
   };
 
   return (
@@ -143,6 +147,7 @@ export default function ChangePetModal({ setShowChangePetModal }: ChangePetModal
             >
               {storedOwnerPets?.map((pet) => (
                 <li
+                  className="pet-selection"
                   key={pet.id}
                   onClick={() => handleSelect(pet)}
                   style={{
@@ -166,8 +171,21 @@ export default function ChangePetModal({ setShowChangePetModal }: ChangePetModal
                   <span style={{ color: '#000' }}>{pet.name}</span>
                 </li>
               ))}
+              <li
+                className="pet-selection"
+                onClick={addPet}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "0.5rem 1rem",
+                  cursor: "pointer",
+                }}>
+                <FaPlus />
+                <span style={{ color: '#000', marginLeft: '20px' }}>Agregar mascota</span>
+              </li>
             </ul>
           )}
+
         </div>
       </div>
     </div>

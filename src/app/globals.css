@@ -39,6 +39,10 @@
   --switch-checked-background-color: var(--primary);
 }
 
-.pet-dropdown{
+.pet-dropdown {
   --pico-box-shadow: 'none' !important;
+}
+
+.pet-selection:hover {
+  background-color: gray;
 }

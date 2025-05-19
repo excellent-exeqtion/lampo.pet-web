@@ -102,6 +102,12 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
           <strong>Código único de tu mascota</strong>
         </p>
 
+        {!show &&
+          <p style={{ fontSize: "0.8rem" }}>
+            Genera un código de acesso para que tu veterinario pueda editar la información clínica de tu mascota.
+          </p>
+        }
+
         {error && (
           <p style={{ color: "red", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
             {error}
@@ -160,22 +166,25 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
             <p style={{ fontSize: "0.8rem" }}>
               Este código es único para cada mascota. Compártelo con tu médico veterinario para brindarle acceso al historial.
             </p>
+
           </>
         )}
 
-        <button
-          onClick={generar}
-          style={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "0.5rem",
-            marginTop: "1rem",
-          }}
-        >
-          <FaShareAlt size={20} /> Generar código de acceso
-        </button>
+        {!show &&
+          <button
+            onClick={generar}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
+              marginTop: "1rem",
+            }}
+          >
+            <FaShareAlt size={20} /> Generar código
+          </button>
+        }
       </div>
     </div>
   );

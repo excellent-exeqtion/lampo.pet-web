@@ -19,7 +19,7 @@ export default function PetEditForm({ code, pet, disabled = false }: Props) {
     if (disabled) return;
 
     const res = await fetch(
-      `${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/pets/${pet.id}`,
+      `${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/vet/edit/${pet.id}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

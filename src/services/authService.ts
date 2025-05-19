@@ -9,11 +9,14 @@ export const signIn = async (
   return supabase.auth.signInWithPassword({ email, password });
 };
 
-export const signUp = async (
+export const ownerSignUp = async (
   email: string,
   password: string
 ): Promise<{ data: { user: User | null }; error: AuthError | null }> => {
-  return supabase.auth.signUp({ email, password });
+  return supabase.auth.signUp({ email, password,
+    options: {
+    data: { role: "owner" }
+  } });
 };
 
 export const resetPassword = async (

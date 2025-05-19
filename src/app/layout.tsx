@@ -12,23 +12,36 @@ import { useSession as useRawSession } from "../hooks/useSession";
 import { signOut } from "../services/authService";
 import { PetRepository } from "@/repos/pet.repository";
 import { AppSession } from "@/types/lib/index";
-import { PetType } from "@/types/index";
+import { PetCodeType, PetType, VeterinaryAccess } from "@/types/index";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { AppContextType } from "@/context/AppContextType";
 import { geistMono, geistSans } from "@/styles/geist";
+import { usePathname, useRouter } from "next/navigation";
+import { isOwner, isVetWithoutUserSession } from "@/services/roleService";
 
 const AppContext = createContext<AppContextType>({
   isMobile: false,
   session: { db: null! },
   logout: async () => { },
   selectedPet: null,
-  setStoredPetId: () => { },
-  ownerPets: null
+  storedPet: null,
+  setStoredPet: () => { },
+  storedVetAccess: null,
+  setStoredVetAccess: () => { },
+  storedPetCode: null,
+  setStoredPetCode: () => { },
+  storedOwnerPets: null,
+  setStoredOwnerPets: () => { }
 });
 
 export const useAppContext = () => useContext(AppContext);
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+
+  const pathname = usePathname();
+  const router = useRouter();
+  const isVetRoute = pathname?.startsWith("/pages/vet/");
+
   const rawSession = useRawSession(); // undefined | null | Session
 
   // Hydration detection
@@ -55,37 +68,65 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   // LocalStorage abstraction via hook
   const ownerId = appSession?.db.user?.id;
-  const [storedPetId, setStoredPetId] = useLocalStorage<string | null>(
-    `selectedPet-${ownerId}`,
+  const [storedPet, setStoredPet] = useLocalStorage<PetType | null>(
+    `selectedPet`,
     null
   );
-  const [storedOwnersPets, setStoredOwnersPets] = useLocalStorage<PetType[] | null>(
-    `ownersPets-${ownerId}`,
+
+  const [storedOwnerPets, setStoredOwnerPets] = useLocalStorage<PetType[] | null>(
+    `ownerPets-${ownerId}`,
+    null
+  );
+
+  const [storedVetAccess, setStoredVetAccess] = useLocalStorage<VeterinaryAccess | null>(
+    `vetAccess`,
+    null
+  );
+
+  const [storedPetCode, setStoredPetCode] = useLocalStorage<PetCodeType | null>(
+    `petCode`,
     null
   );
 
   // Cargar selectedPet usando PetRepository y storedPetId
   useEffect(() => {
-    if (!hydrated || !appSession || !ownerId) return;
+    if (!isVetWithoutUserSession(appSession, storedVetAccess)) {
+      if (!hydrated || !appSession || !ownerId) return;
+    }
     let isMounted = true;
     (async () => {
       try {
-        // Obtener lista de mascotas (desde storage o API)
-        const pets = storedOwnersPets ?? await PetRepository.findByOwnerId(ownerId);
-        if (storedOwnersPets == null) {
-          setStoredOwnersPets(pets);
+        let pets: PetType[] | null = [];
+        if (isVetWithoutUserSession(appSession, storedVetAccess)) {
+
+          if (storedPet && !selectedPet) {
+            const petFound = await PetRepository.findById(storedPet?.id ?? "");
+            setSelectedPet(petFound);
+          }
+
+          setStoredOwnerPets(null);
+          return null;
+        };
+
+        if (isOwner(appSession)) {
+          // Obtener lista de mascotas (desde storage o API)
+          pets = storedOwnerPets ?? await PetRepository.findByOwnerId(ownerId ?? "");
+          if (storedOwnerPets == null) {
+            setStoredOwnerPets(pets);
+          }
         }
+
         // Determinar ID a seleccionar: preferir el almacenado, si no existe usar la primera mascota
-        let initial_id = null;
-        if (pets != undefined && pets != null && pets?.length > 0) initial_id = pets[0].id;
-        const idToSelect = storedPetId ?? initial_id;
+        let initial_pet = null;
+        if (pets != undefined && pets != null && pets?.length > 0) initial_pet = pets[0];
+        const idToSelect = storedPet ?? initial_pet;
 
         // Actualizar storage solo si es necesario
-        if (idToSelect && idToSelect !== storedPetId) {
-          setStoredPetId(idToSelect);
+        if (idToSelect && idToSelect !== storedPet) {
+          setStoredPet(idToSelect);
         }
         // Encontrar la mascota correspondiente
-        const pet = pets?.find(p => p.id === idToSelect) ?? null;
+        const pet = pets?.find(p => p.id === idToSelect?.id) ?? null;
         // Actualizar estado solo si cambia
         if (isMounted && pet && pet.id !== selectedPet?.id) {
           setSelectedPet(pet);
@@ -96,7 +137,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     })();
     return () => { isMounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, appSession, ownerId, storedPetId, storedOwnersPets, selectedPet]);
+  }, [hydrated, appSession, ownerId, storedPet, storedOwnerPets, selectedPet]);
 
 
   // Nuevo handleLogout: fuerza recarga completa
@@ -107,8 +148,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       console.error("Error during sign out:", error);
     } finally {
       if (ownerId) {
-        setStoredPetId(null);
-        setStoredOwnersPets(null);
+        setStoredPet(null);
+        setStoredOwnerPets(null);
+        setStoredVetAccess(null);
       }
       setSelectedPet(null);
       // Redirigir y recargar para asegurar estado limpio
@@ -137,8 +179,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
-  // No autenticado
-  if (appSession === null) {
+  // Si NO estamos autenticados y NO es ruta de vet, mostramos LoginPage
+  if (appSession === null && !isVetRoute) {
     return (
       <html lang="en" data-theme="light">
         <head><title>Lampo</title></head>
@@ -148,6 +190,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </body>
       </html>
     );
+  }
+
+  const isVetUser = isVetWithoutUserSession(appSession, storedVetAccess);
+
+  // 3) Si es usuario veterinario Y visita una ruta que NO es de vets…
+  if (isVetUser && !isVetRoute) {
+    // por ejemplo, redirigirlo a su panel de vets
+    router.replace("/pages/vet/access");
+    return null;
   }
 
   // Autenticado
@@ -164,8 +215,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             session: appSession,
             logout: handleLogout,
             selectedPet,
-            setStoredPetId,
-            ownerPets: storedOwnersPets
+            storedPet,
+            setStoredPet,
+            storedVetAccess,
+            setStoredVetAccess,
+            storedPetCode,
+            setStoredPetCode,
+            storedOwnerPets,
+            setStoredOwnerPets,
           }}
         >
           <div
@@ -176,7 +233,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               transition: "grid-template-columns 0.3s ease",
               backgroundColor: "#F9FAFB",
               fontFamily: "'Inter', sans-serif",
-              margin: '2%'
+              marginLeft: '2%'
             }}
           >
             <SideBar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />

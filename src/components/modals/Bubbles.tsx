@@ -7,6 +7,7 @@ import PetCodeModal from "./PetCodeModal";
 import VeterinaryModal from "./VeterinaryModal";
 import ChangePetModal from "./ChangePetModal";
 import { useAppContext } from "@/app/layout";
+import { isOwner, isVet } from "@/services/roleService";
 
 interface BubblesProps {
   setShowFeedbackModal: Dispatch<SetStateAction<boolean>>;
@@ -44,14 +45,13 @@ export default function Bubbles({
   showChangePetModal,
 }: BubblesProps) {
 
-  const { ownerPets } = useAppContext();
+  const { storedOwnerPets, session, storedVetAccess } = useAppContext();
   const [showChangePetBubble, setShowChangePetBubble] = useState(false);
 
   useEffect(() => {
-    console.log(ownerPets);
-    const show = (ownerPets?.length ?? 0) > 1;
+    const show = (storedOwnerPets?.length ?? 0) > 1;
     setShowChangePetBubble(show);
-  }, [ownerPets]);
+  }, [storedOwnerPets]);
 
   return (
     <div
@@ -78,28 +78,32 @@ export default function Bubbles({
       </div>
 
       {/* Vet Bubble */}
-      <div className="tooltip-container" draggable>
-        <button
-          onClick={() => setShowVetModal(true)}
-          style={bubbleStyleBase}
-          aria-label="Veterinario"
-        >
-          <FaUserMd />
-        </button>
-        <span className="tooltip-text">Soy médico veterinario</span>
-      </div>
+      {isOwner(session) && !isVet(session, storedVetAccess) &&
+        <div className="tooltip-container" draggable>
+          <button
+            onClick={() => setShowVetModal(true)}
+            style={bubbleStyleBase}
+            aria-label="Veterinario"
+          >
+            <FaUserMd />
+          </button>
+          <span className="tooltip-text">Soy médico veterinario</span>
+        </div>
+      }
 
       {/* Code Bubble */}
-      <div className="tooltip-container" draggable>
-        <button
-          onClick={() => setShowCodeModal(true)}
-          style={bubbleStyleBase}
-          aria-label="Código único"
-        >
-          <FaShareAlt />
-        </button>
-        <span className="tooltip-text">Código único de tu mascota</span>
-      </div>
+      {isOwner(session) && !isVet(session, storedVetAccess) &&
+        <div className="tooltip-container" draggable>
+          <button
+            onClick={() => setShowCodeModal(true)}
+            style={bubbleStyleBase}
+            aria-label="Código único"
+          >
+            <FaShareAlt />
+          </button>
+          <span className="tooltip-text">Código único de tu mascota</span>
+        </div>
+      }
 
       {/* Change Pet Bubble */}
       {showChangePetBubble &&

@@ -5,7 +5,7 @@ import "@picocss/pico";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { signIn, signUp, resetPassword } from "../../../services/authService";
+import { signIn, ownerSignUp, resetPassword } from "../../../services/authService";
 import type { OwnerDataType } from "@/types/index";
 import { OwnerRepository } from "@/repos/owner.repository";
 import PlanSelection from "./components/PlanSelection";
@@ -41,7 +41,7 @@ export default function LoginPage() {
 
     if (isRegistering) {
       // 1) Crear cuenta en Supabase (envía correo de confirmación)
-      const { error: signUpError, data } = await signUp(email, password);
+      const { error: signUpError, data } = await ownerSignUp(email, password);
       if (signUpError) {
         console.log('error:', signUpError);
         setError("Ocurrio un error al registrar el usuario.");
@@ -93,11 +93,15 @@ export default function LoginPage() {
     }
   };
 
+  const goToVetPage = () => {
+    router.replace("/pages/vet/access");
+  }
+
   // 4) Si ya registró, mostrar bosquejo de planes
   if (showPlanSelection) {
     return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} />;
   }
-  
+
   return (
     <main
       style={{
@@ -120,7 +124,7 @@ export default function LoginPage() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <Image src="/logo.png" alt="Lampo" width={150} height={48} style={{marginBottom: '10px'}}/>
+          <Image src="/logo.png" alt="Lampo" width={150} height={48} style={{ marginBottom: '10px' }} />
           <h1>{isRegistering ? "Regístrate" : "Inicia sesión"}</h1>
         </div>
 
@@ -211,7 +215,7 @@ export default function LoginPage() {
                 required
               />
             </label>
-            
+
           </div>
         )}
 
@@ -220,7 +224,7 @@ export default function LoginPage() {
           <input
             id="password"
             type="password"
-            autoComplete={isRegistering? 'new-password' : 'password'}
+            autoComplete={isRegistering ? 'new-password' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -239,8 +243,8 @@ export default function LoginPage() {
               ? "Creando..."
               : "Accediendo..."
             : isRegistering
-            ? "Registrarse"
-            : "Entrar"}
+              ? "Registrarse"
+              : "Entrar"}
         </button>
 
         {!isRegistering && (
@@ -278,6 +282,24 @@ export default function LoginPage() {
             {isRegistering ? "Inicia sesión" : "Regístrate"}
           </button>
         </p>
+        {!isRegistering &&
+          <p style={{ textAlign: "center", marginTop: "1rem" }}>
+
+            <button
+              type="button"
+              onClick={() => goToVetPage()}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#3B82F6",
+                cursor: "pointer",
+                marginLeft: "0.25rem",
+              }}
+            >
+              Soy médico veterinario sin registro
+            </button>
+          </p>
+        }
       </form>
     </main>
   );

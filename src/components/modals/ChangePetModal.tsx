@@ -17,7 +17,7 @@ interface ChangePetModalProps {
 };
 
 export default function ChangePetModal({ setShowChangePetModal }: ChangePetModalProps) {
-  const { ownerPets, selectedPet, setStoredPetId } = useAppContext();
+  const { storedOwnerPets, selectedPet, setStoredPet: setStoredPetId, setStoredVetAccess } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -37,9 +37,10 @@ export default function ChangePetModal({ setShowChangePetModal }: ChangePetModal
   }, []);
 
   const handleSelect = (pet: PetType) => {
-    setStoredPetId(pet.id);
+    setStoredPetId(pet);
     setIsOpen(false);
     setShowChangePetModal(false);
+    setStoredVetAccess(null);
   };
 
   return (
@@ -140,7 +141,7 @@ export default function ChangePetModal({ setShowChangePetModal }: ChangePetModal
                 listStyle: "none",
               }}
             >
-              {ownerPets?.map((pet) => (
+              {storedOwnerPets?.map((pet) => (
                 <li
                   key={pet.id}
                   onClick={() => handleSelect(pet)}

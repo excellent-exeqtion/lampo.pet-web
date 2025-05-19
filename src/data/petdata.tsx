@@ -2,17 +2,6 @@
 import { v4 } from "uuid";
 import { Metadata } from "next";
 import {
-  FaHome,
-  FaUser,
-  FaSyringe,
-  FaCut,
-  FaPills,
-  FaCloudSun,
-  FaFlask,
-  FaRocket,
-  FaCog
-} from "react-icons/fa";
-import {
   BasicDataType,
   ConditionDataType,
   LabTestDataType,
@@ -22,19 +11,6 @@ import {
   SurgeryDataType,
   VaccineDataType
 } from "@/types/index";
-import { MenuType } from "@/types/lib";
-
-export const menuData = (show: boolean): MenuType[] => [
-  { label: "Inicio", icon: <FaHome />, url: "/", show: true },
-  { label: "Datos básicos", icon: <FaUser />, url: "/pages/basic-data", show },
-  { label: "Vacunas", icon: <FaSyringe />, url: "/pages/vaccines", show },
-  { label: "Cirugías", icon: <FaCut />, url: "/pages/surgeries", show },
-  { label: "Medicinas", icon: <FaPills />, url: "/pages/medicines", show },
-  { label: "Condiciones especiales", icon: <FaCloudSun />, url: "/pages/conditions", show },
-  { label: "Lab. de exámenes", icon: <FaFlask />, url: "/pages/lab-tests", show },
-  { label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/upgrade", show: true },
-  { label: "Configuraciones", icon: <FaCog />, url: "/pages/settings", show: true },
-];
 
 export const metadata: Metadata = {
   title: "Lampo",

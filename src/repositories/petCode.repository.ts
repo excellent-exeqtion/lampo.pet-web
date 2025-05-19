@@ -21,9 +21,8 @@ export class PetCodeRepository {
   static async invalidateAll(petId: string): Promise<void> {
     const { error } = await supabase
       .from("pet_codes")
-      .update({ used: true })
-      .eq("pet_id", petId)
-      .is("used", false);
+      .delete()
+      .eq("pet_id", petId);
     if (error) throw new Error(error.message);
   }
 

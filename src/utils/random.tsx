@@ -30,9 +30,13 @@ export async function generateUniquePetId(): Promise<string> {
 
   do {
     candidate = randomPetId();
-    // PetRepository.findById devuelve PetType|null si no encontró
-    const pet = await PetRepository.findById(candidate);
-    exists = pet !== null;
+    try{
+        await PetRepository.findById(candidate);
+        exists = true;
+    }
+    catch{
+        exists = false;
+    }
   } while (exists);
 
   return candidate;

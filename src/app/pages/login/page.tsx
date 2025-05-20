@@ -9,6 +9,7 @@ import { signIn, ownerSignUp, resetPassword } from "../../../services/authServic
 import type { OwnerDataType } from "@/types/index";
 import { OwnerRepository } from "@/repos/owner.repository";
 import PlanSelection from "./components/PlanSelection";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,9 +18,11 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [ownerId, setOwnerId] = useState<string | undefined>("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Estados adicionales para registro
   const [ownerInfo, setOwnerInfo] = useState<Partial<OwnerDataType>>({
@@ -66,8 +69,8 @@ export default function LoginPage() {
         }
       }
 
-      // 3) Mostrar selección de plan
-      setShowPlanSelection(true);
+      setShowConfirmModal(true);
+
     } else {
       // Login normal
       const { error: signInError } = await signIn(email, password);
@@ -99,6 +102,49 @@ export default function LoginPage() {
     router.replace("/pages/vet/access");
   }
 
+  // 4) Mostrar modal de “verifica tu correo”
+  if (showConfirmModal) {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+        }}
+      >
+        <div
+          style={{
+            background: "#fff",
+            padding: "2rem",
+            borderRadius: "0.5rem",
+            maxWidth: "400px",
+            textAlign: "center",
+          }}
+        >
+          <h2>Confirma tu correo</h2>
+          <p>
+            Te hemos enviado un correo de verificación a <strong>{email}</strong>.{" "}
+            <br />
+            Por favor revisa tu bandeja (y carpeta de spam) y haz clic en el enlace.
+          </p>
+          <button
+            onClick={() => {
+              setShowConfirmModal(false);
+              setShowPlanSelection(true);
+            }}
+            style={{ marginTop: "1rem", width: "100%" }}
+          >
+            Ya confirmé, continuar
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
   // 4) Si ya registró, mostrar bosquejo de planes
   if (showPlanSelection) {
     return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} ownerId={ownerId} />;
@@ -221,16 +267,34 @@ export default function LoginPage() {
           </div>
         )}
 
-        <label htmlFor="password">
+        <label htmlFor="password" style={{ position: 'relative' }}>
           Contraseña
           <input
             id="password"
-            type="password"
-            autoComplete={isRegistering ? 'new-password' : 'password'}
+            type={showPassword ? "text" : "password"}
+            autoComplete={isRegistering ? 'new-password' : 'current-password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            style={{ paddingRight: '2.5rem' }} // espacio para el botón
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            style={{
+              position: 'absolute',
+              right: '0.75rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+            }}
+          >
+            {showPassword ? <FaEyeSlash size={23} color={'#000'} style={{ marginTop: '16px' }} /> : <FaEye size={23} color={'#000'} style={{ marginTop: '16px' }} />}
+          </button>
         </label>
 
         {error && <p style={{ color: "red", marginTop: "0.5rem" }}>{error}</p>}

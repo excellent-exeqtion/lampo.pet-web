@@ -12,9 +12,10 @@ export class PetCodeRepository {
       .from("pet_codes")
       .select("*")
       .eq("code", code)
-      .single();
+      .overrideTypes<PetCodeType[], { merge: false }>();
     if (error) throw new Error(error.message);
-    return data;
+    if (!data || data.length === 0) return null;
+    return data[0];
   }
 
   /** Invalida (marca used=true) todos los códigos previos de una mascota */

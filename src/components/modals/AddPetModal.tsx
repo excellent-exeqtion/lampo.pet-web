@@ -1,25 +1,19 @@
 // components/modals/AddPetModal.tsx
 "use client";
-import React, { useState, FormEvent, Dispatch, SetStateAction } from "react";
+
+import React, { useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { useAppContext } from "@/app/layout";
 import { PetRepository } from "@/repos/pet.repository";
-import { BasicDataRepository } from "@/repos/basicData.repository";
-import { VaccineRepository } from "@/repos/vaccine.repository";
-import { MedicineRepository } from "@/repos/medicine.repository";
-import { LabTestRepository } from "@/repos/labTest.repository";
-import { ConditionRepository } from "@/repos/condition.repository";
-import { SurgeryRepository } from "@/repos/surgery.repository";
-import type {
-    BasicDataType,
-    VaccineDataType,
-    MedicineDataType,
-    LabTestDataType,
-    ConditionDataType,
-    SurgeryDataType,
-    PetType,
-} from "@/types/index";
 import { generateUniquePetId } from "@/utils/random";
+import { BasicDataForm } from "@/components/forms/BasicDataForm";
+import { VaccineForm } from "@/components/forms/VaccineForm";
+import { MedicineForm } from "@/components/forms/MedicineForm";
+import { LabTestForm } from "@/components/forms/LabTestForm";
+import { ConditionForm } from "@/components/forms/ConditionForm";
+import { SurgeryForm } from "@/components/forms/SurgeryForm";
+import type { PetType } from "@/types/index";
+import type { Dispatch, SetStateAction } from "react";
 
 interface AddPetModalProps {
     setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
@@ -28,78 +22,49 @@ interface AddPetModalProps {
 export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
     const { session, storedOwnerPets, setStoredOwnerPets, setStoredPet } = useAppContext();
     const [step, setStep] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-
-    // Estado para cada paso
+    const [petId, setPetId] = useState<string | null>(null);
     const [petName, setPetName] = useState("");
     const [petImage, setPetImage] = useState("");
-    const [basicData, setBasicData] = useState<Partial<BasicDataType>>({
-        pet_id: "",
-        pet_type: "",
-        gender: "",
-        weight: "",
-        race: "",
-        has_allergies: false,
-        weight_condition: "",
-        size: "",
-        lives_with_others: false,
-        main_food: "",
-        has_vaccine: false,
-        is_castrated: false,
-        has_anti_flea: false,
-        uses_medicine: false,
-        special_condition: false,
-    });
-    const [vaccines, setVaccines] = useState<VaccineDataType[]>([]);
-    const [medicines, setMedicines] = useState<MedicineDataType[]>([]);
-    const [labTests, setLabTests] = useState<LabTestDataType[]>([]);
-    const [conditions, setConditions] = useState<ConditionDataType[]>([]);
-    const [surgeries, setSurgeries] = useState<SurgeryDataType[]>([]);
-    // 1) Asegurarnos de que session y su user.id existen
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    // Validar sesión
     if (!session?.db?.user?.id) {
         console.error("No hay sesión activa o falta el user.id");
         return null;
     }
-
-    // 2) Ahora que sabemos que no es undefined, TS infiere correctamente que es string
     const ownerId: string = session.db.user.id;
 
-    const next = () => setStep((s) => s + 1);
-    const back = () => setStep((s) => s - 1);
+    const totalSteps = 7; // 0: pet info, 1: basic data, 2-6: optional forms
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        setError("");
+    // Navegación
+    const next = () => setStep((s) => s + 1);
+    const back = () => setStep((s) => Math.max(s - 1, 0));
+
+    // Finalizar: actualizar contexto y cerrar modal
+    const finalize = () => {
+        if (!petId) return;
+        const newPet: PetType = { id: petId, name: petName, image: petImage, owner_id: ownerId } as PetType;
+        setStoredOwnerPets([...(storedOwnerPets ?? []), newPet]);
+        setStoredPet(newPet);
+        setShowAddPetModal(false);
+    };
+
+    // Paso 0: crear mascota
+    const handleCreatePet = async () => {
+        setError(null);
         setLoading(true);
         try {
-            // 1) Crear pet
-            const { data: petData, error: petErr } = await PetRepository.create({
-                id: await generateUniquePetId(),
+            const newId = await generateUniquePetId();
+            const { error: petErr } = await PetRepository.create({
+                id: newId,
                 name: petName,
                 image: petImage,
                 owner_id: ownerId,
             });
-            if (petErr || !petData) throw new Error(petErr?.message || "Error creando mascota");
-            const newPet: PetType = petData[0];
-
-            // 2) Datos básicos (requerido)
-            await BasicDataRepository.create({
-                ...(basicData as BasicDataType),
-                pet_id: newPet.id,
-            });
-
-            // 3) Pasos opcionales
-            await Promise.all(vaccines.map(v => VaccineRepository.create({ ...v, pet_id: newPet.id })));
-            await Promise.all(medicines.map(m => MedicineRepository.create({ ...m, pet_id: newPet.id })));
-            await Promise.all(labTests.map(l => LabTestRepository.create({ ...l, pet_id: newPet.id })));
-            await Promise.all(conditions.map(c => ConditionRepository.create({ ...c, pet_id: newPet.id })));
-            await Promise.all(surgeries.map(s => SurgeryRepository.create({ ...s, pet_id: newPet.id })));
-
-            // 4) Actualizar contexto y cerrar
-            setStoredOwnerPets([...(storedOwnerPets ?? []), newPet]);
-            setStoredPet(newPet);
-            setShowAddPetModal(false);
+            if (petErr) throw new Error(petErr?.message || "Error creando mascota");
+            setPetId(newId);
+            next();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message);
@@ -108,36 +73,59 @@ export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
         }
     };
 
-    // Renderizado por pasos
+    // Skip en formularios opcionales
+    const skipHandler = () => {
+        if (step < totalSteps - 1) next(); else finalize();
+    };
+
+    // Renderiza el componente según el paso actual
     const renderStep = () => {
         switch (step) {
             case 0:
                 return (
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 gap-4" style={{display: 'flow'}}>
                         <label>
                             Nombre
-                            <input value={petName} onChange={e => setPetName(e.target.value)} required />
+                            <input
+                                type="text"
+                                value={petName}
+                                onChange={(e) => setPetName(e.target.value)}
+                                required
+                            />
                         </label>
                         <label>
                             URL de imagen
-                            <input value={petImage} onChange={e => setPetImage(e.target.value)} />
+                            <input
+                                type="text"
+                                value={petImage}
+                                onChange={(e) => setPetImage(e.target.value)}
+                            />
                         </label>
+                        {error && <p className="text-error">{error}</p>}
+                        <button
+                            type="button"
+                            onClick={handleCreatePet}
+                            disabled={loading}
+                            className="btn-primary"
+                        >
+                            {loading ? "Creando…" : "Siguiente"}
+                        </button>
                     </div>
                 );
             case 1:
-                return (
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Aquí todos los campos de basicData */}
-                        <label>
-                            Tipo
-                            <input value={basicData.pet_type} onChange={e => setBasicData({ ...basicData, pet_type: e.target.value })} required />
-                        </label>
-                        {/* … resto de inputs */}
-                    </div>
-                );
-            // cases 2–6: formularios para vacunas, medicinas, exámenes…
+                return <BasicDataForm petId={petId!} onNext={next} />;
+            case 2:
+                return <VaccineForm petId={petId!} onNext={next} />;
+            case 3:
+                return <MedicineForm petId={petId!} onNext={next} />;
+            case 4:
+                return <LabTestForm petId={petId!} onNext={next} />;
+            case 5:
+                return <ConditionForm petId={petId!} onNext={next} />;
+            case 6:
+                return <SurgeryForm petId={petId!} onNext={finalize} />;
             default:
-                return <p>Revisar y crear mascota</p>;
+                return null;
         }
     };
 
@@ -180,17 +168,28 @@ export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
                 >
                     <FaTimes />
                 </button>
-                <h2>Paso {step + 1} de 7</h2>
-                <form onSubmit={handleSubmit}>
-                    {renderStep()}
-                    {error && <p className="text-error">{error}</p>}
-                    <div className="actions">
-                        {step > 0 && <button type="button" onClick={back}>Atrás</button>}
-                        {step < 6
-                            ? <button type="button" onClick={next}>Siguiente</button>
-                            : <button type="submit" disabled={loading}>{loading ? "Guardando…" : "Finalizar"}</button>}
-                    </div>
-                </form>
+                <h2 className="text-xl font-semibold mb-4">Paso {step + 1} de {totalSteps}</h2>
+                <div className="space-y-4">{renderStep()}</div>
+                <div className="mt-4 flex justify-between">
+                    {step >= 2 && (
+                        <button
+                            type="button"
+                            onClick={skipHandler}
+                            className="btn-outline"
+                        >
+                            Agregar más tarde
+                        </button>
+                    )}
+                    {step > 0 && (
+                        <button
+                            type="button"
+                            onClick={back}
+                            className="btn-secondary ml-auto"
+                        >
+                            Atrás
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

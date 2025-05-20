@@ -1,4 +1,4 @@
-// app/lib/db/services/authService.ts
+// src/services/authService.ts
 import { supabase } from "@/lib/client/supabase";
 import type { Session, User, AuthError, AuthChangeEvent } from "@supabase/supabase-js";
 
@@ -31,3 +31,8 @@ export const getSession = () => supabase.auth.getSession();
 export const onAuthStateChange = (
   cb: (event: AuthChangeEvent, session: Session | null) => void
 ) => supabase.auth.onAuthStateChange(cb).data.subscription;
+
+export const setSession = (session: {
+  access_token: string;
+  refresh_token: string;
+}) => supabase.auth.setSession(session);

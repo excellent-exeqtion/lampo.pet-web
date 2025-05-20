@@ -26,7 +26,7 @@ export class PlanRepository {
           slug
         )
       `)
-      .eq('effective_to', null)
+      .is('effective_to', null)
 
     if (error) throw error
     // Mapear para llevar slug al root
@@ -60,7 +60,7 @@ export class PlanRepository {
           slug
         )
       `)
-      .eq('effective_to', null)
+      .is('effective_to', null)
       .eq('plans.slug', slug)
       .overrideTypes<PlanVersionType[], { merge: false }>()
 

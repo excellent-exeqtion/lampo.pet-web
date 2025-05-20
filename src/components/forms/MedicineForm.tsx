@@ -9,7 +9,7 @@ interface MedicineFormProps {
     onNext: () => void;
 }
 
-export function MedicineForm({ petId, onNext }: MedicineFormProps) {
+export default function MedicineForm({ petId, onNext }: MedicineFormProps) {
     const [data, setData] = useState<Partial<MedicineDataType>>({ pet_id: petId, name: '', dosage: '', frequency: '' });
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);

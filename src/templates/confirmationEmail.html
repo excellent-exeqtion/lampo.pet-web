@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Confirma tu correo</title>
+</head>
+<body style="margin:0; padding:0; background-color:#F9FAFB; font-family: 'Helvetica Neue', Arial, sans-serif;">
+
+  <!-- Contenedor principal -->
+  <div style="max-width:600px; margin:40px auto; background:#FFFFFF; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+
+    <!-- Header: logo y fondo principal -->
+    <div style="background:#3B82F6; padding:20px; text-align:center;">
+      <img src="https://lampo-pet-web-git-main-excellent-exeqtions-projects.vercel.app/logo.png" alt="Lampo" width="140" style="display:block; margin:0 auto;">
+    </div>
+
+    <!-- Cuerpo del mensaje -->
+    <div style="padding:30px; color:#333333; line-height:1.6;">
+      <h2 style="margin-top:0; color:#333333;">¡Bienvenido a Lampo!</h2>
+      <p>Para completar tu registro y acceder a todas las funcionalidades de nuestra plataforma, por favor confirma tu correo electrónico.</p>
+
+      <!-- Botón de llamada a la acción -->
+      <div style="text-align:center; margin:30px 0;">
+        <a
+          href="{{ .ConfirmationURL }}pages/auth/verify"
+          style="
+            background-color:#3B82F6;
+            color:#FFFFFF;
+            text-decoration:none;
+            padding:12px 24px;
+            border-radius:4px;
+            font-weight:600;
+            display:inline-block;
+          ">
+          Confirmar mi correo
+        </a>
+      </div>
+
+      <p style="font-size:14px; color:#777777; margin-bottom:0;">
+        Si no solicitaste este correo, puedes ignorar este mensaje.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#F9FAFB; text-align:center; padding:20px; font-size:12px; color:#777777;">
+      © {{ .Year }} Lampo. Todos los derechos reservados.
+    </div>
+
+  </div>
+
+</body>
+</html>

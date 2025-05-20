@@ -22,13 +22,13 @@ export default function VerifyEmail() {
             router.replace("/login");
             return;
           }
-          router.replace("/plan-selection");
+          router.replace("/owners/register");
         });
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       getSession().then(({ data: { session } }: any) => {
         if (session) {
-          router.replace("/plan-selection");
+          router.replace("/owners/register");
         } else {
           router.replace("/login");
         }
@@ -37,7 +37,7 @@ export default function VerifyEmail() {
   }, [router]);
 
   return (
-    <div style={{ padding: "2rem", textAlign: "center" }}>
+    <div style={{ padding: "2rem", textAlign: "center", maxWidth: '500px' }}>
       <h1>Verificando tu correo…</h1>
       <p>Por favor espera un momento.</p>
     </div>

@@ -9,7 +9,7 @@ interface VaccineFormProps {
     onNext: () => void;
 }
 
-export function VaccineForm({ petId, onNext }: VaccineFormProps) {
+export default function VaccineForm({ petId, onNext }: VaccineFormProps) {
     const [data, setData] = useState<Partial<VaccineDataType>>({
         pet_id: petId,
         name: '',

@@ -1,8 +1,9 @@
 // app/components/modals/PetCodeModal.tsx
 "use client";
 import React, { Dispatch, SetStateAction, useState } from "react";
-import { FaTimes, FaShareAlt, FaCopy } from "react-icons/fa";
+import { FaShareAlt, FaCopy } from "react-icons/fa";
 import { useAppContext } from "@/app/layout";
+import Modal from "../lib/modal";
 
 interface PetCodeModalProps {
   setShowCodeModal: Dispatch<SetStateAction<boolean>>;
@@ -58,134 +59,91 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 2000,
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "#ffffff",
-          borderRadius: "1rem",
-          padding: "2rem",
-          width: "90%",
-          maxWidth: "400px",
-          position: "relative",
-        }}
-      >
-        <button
-          onClick={() => setShowCodeModal(false)}
-          style={{
-            position: "absolute",
-            top: "0.5rem",
-            right: "0.5rem",
-            background: "none",
-            border: "none",
-            fontSize: "1rem",
-            color: "#000",
-            cursor: "pointer",
-          }}
-        >
-          <FaTimes />
-        </button>
+    <Modal title="Generar código" setShowModal={setShowCodeModal}>
 
-        <p>
-          <strong>Código único de tu mascota</strong>
+      {!show &&
+        <p style={{ fontSize: "0.8rem" }}>
+          Este es un código dinámico de acesso para que tu veterinario pueda editar la información clínica de tu mascota.
         </p>
+      }
 
-        {!show &&
-          <p style={{ fontSize: "0.8rem" }}>
-            Genera un código de acesso para que tu veterinario pueda editar la información clínica de tu mascota.
-          </p>
-        }
+      {error && (
+        <p style={{ color: "red", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
+          {error}
+        </p>
+      )}
 
-        {error && (
-          <p style={{ color: "red", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
-            {error}
-          </p>
-        )}
-
-        {show && (
-          <>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                marginBottom: "0.5rem",
-              }}
-            >
-              {code.split("").map((char, idx) => (
-                <span
-                  key={idx}
-                  style={{
-                    display: "inline-block",
-                    width: "2rem",
-                    padding: "0.5rem 0",
-                    border: "1px solid #ccc",
-                    borderRadius: "0.25rem",
-                    color: "#007BFF",
-                    fontWeight: "bold",
-                    textAlign: "center",
-                    fontFamily: "monospace",
-                  }}
-                >
-                  {char}
-                </span>
-              ))}
-
-              <button
-                onClick={handleCopy}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "0.5rem",
-                }}
-                title="Copiar código"
-              >
-                <FaCopy size={20} color={copied ? "green" : "#007BFF"} />
-              </button>
-            </div>
-
-            {copied && (
-              <p style={{ color: "green", marginBottom: "0.5rem", fontSize: "0.8rem" }}>
-                ¡Código copiado!
-              </p>
-            )}
-
-            <p style={{ fontSize: "0.8rem" }}>
-              Este código es único para cada mascota. Compártelo con tu médico veterinario para brindarle acceso al historial.
-            </p>
-
-          </>
-        )}
-
-        {!show &&
-          <button
-            onClick={generar}
+      {show && (
+        <>
+          <div
             style={{
-              width: "100%",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
               gap: "0.5rem",
-              marginTop: "1rem",
+              marginBottom: "0.5rem",
             }}
           >
-            <FaShareAlt size={20} /> Generar código
-          </button>
-        }
-      </div>
-    </div>
+            {code.split("").map((char, idx) => (
+              <span
+                key={idx}
+                style={{
+                  display: "inline-block",
+                  width: "2rem",
+                  padding: "0.5rem 0",
+                  border: "1px solid #ccc",
+                  borderRadius: "0.25rem",
+                  color: "#007BFF",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontFamily: "monospace",
+                }}
+              >
+                {char}
+              </span>
+            ))}
+
+            <button
+              onClick={handleCopy}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "0.5rem",
+              }}
+              title="Copiar código"
+            >
+              <FaCopy size={20} color={copied ? "green" : "#007BFF"} />
+            </button>
+          </div>
+
+          {copied && (
+            <p style={{ color: "green", marginBottom: "0.5rem", fontSize: "0.8rem" }}>
+              ¡Código copiado!
+            </p>
+          )}
+
+          <p style={{ fontSize: "0.8rem" }}>
+            Este código es único para cada mascota. Compártelo con tu médico veterinario para brindarle acceso al historial.
+          </p>
+
+        </>
+      )}
+
+      {!show &&
+        <button
+          onClick={generar}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+            marginTop: "1rem",
+          }}
+        >
+          <FaShareAlt size={20} /> Generar
+        </button>
+      }
+    </Modal>
   );
 }

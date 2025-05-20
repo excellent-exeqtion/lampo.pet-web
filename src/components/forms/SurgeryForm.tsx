@@ -9,7 +9,7 @@ interface SurgeryFormProps {
   onNext: () => void;
 }
 
-export function SurgeryForm({ petId, onNext }: SurgeryFormProps) {
+export default function SurgeryForm({ petId, onNext }: SurgeryFormProps) {
   const [data, setData] = useState<Partial<SurgeryDataType>>({ pet_id: petId, name: '', date: undefined, description: '' });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

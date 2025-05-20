@@ -121,7 +121,7 @@ export default function LoginPage() {
             background: "#fff",
             padding: "2rem",
             borderRadius: "0.5rem",
-            maxWidth: "400px",
+            maxWidth: "500px",
             textAlign: "center",
           }}
         >
@@ -144,7 +144,7 @@ export default function LoginPage() {
       </div>
     );
   }
-  
+
   // 4) Si ya registró, mostrar bosquejo de planes
   if (showPlanSelection) {
     return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} ownerId={ownerId} />;

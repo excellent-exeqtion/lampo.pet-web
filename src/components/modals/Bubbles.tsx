@@ -106,7 +106,7 @@ export default function Bubbles({
           >
             <FaShareAlt />
           </button>
-          <span className="tooltip-text">Código único de tu mascota</span>
+          <span className="tooltip-text">Genera un código único para tu veterinario</span>
         </div>
       }
 

@@ -32,16 +32,6 @@ export const veterinaryStyles =
           color: #333;
           cursor: pointer;
         }
-        .modal-title {
-          font-size: 1.5rem;
-          margin-bottom: 1rem;
-          color: #012d4a;
-        }
-        .description {
-          font-size: 0.9rem;
-          color: #555;
-          margin-bottom: 1.5rem;
-        }
         .label {
           font-size: 1.1rem;
           margin-bottom: 0.5rem;

@@ -9,7 +9,7 @@ interface LabTestFormProps {
   onNext: () => void;
 }
 
-export function LabTestForm({ petId, onNext }: LabTestFormProps) {
+export default function LabTestForm({ petId, onNext }: LabTestFormProps) {
   const [data, setData] = useState<Partial<LabTestDataType>>({ pet_id: petId, name: '', type: '', date: undefined, result: '' });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

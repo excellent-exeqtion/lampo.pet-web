@@ -9,7 +9,7 @@ interface ConditionFormProps {
   onNext: () => void;
 }
 
-export function ConditionForm({ petId, onNext }: ConditionFormProps) {
+export default function ConditionForm({ petId, onNext }: ConditionFormProps) {
   const [data, setData] = useState<Partial<ConditionDataType>>({ pet_id: petId, condition: '', severity: '' });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

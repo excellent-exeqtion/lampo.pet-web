@@ -113,3 +113,26 @@ export const labTestsMock: LabTestDataType[] = [
   { id: v4(), pet_id: 'A001', name: "Hemograma completo", type: "Blood", date: new Date("2025-01-10"), result: "Normal" },
   { id: v4(), pet_id: 'A001', name: "Ultrasonido abdominal", type: "Ultrasound", date: new Date("2024-12-22"), result: "Sin hallazgos" },
 ];
+
+export const petTypes = ['Perro', 'Gato', 'Ave', 'Reptil', 'Otro'];
+export const genders = ['Macho', 'Hembra'];
+export const weightUnits = ['Kg', 'Lb'];
+export const breedOptions: Record<string, string[]> = {
+  Perro: ['Labrador', 'Pastor Alemán', 'Bulldog', 'Otro'],
+  Gato: ['Siamés', 'Persa', 'Maine Coon', 'Otro'],
+  Ave: ['Loro', 'Canario', 'Periquito', 'Otro'],
+  Reptil: ['Iguana', 'Tortuga', 'Otro'],
+  Otro: ['Otro'],
+};
+export const foodOptions = [
+  'Royal Canin',
+  'Purina Pro Plan',
+  'Whiskas',
+  'Dog Chow',
+  'Eukanuba',
+  'Nutra Nuggets',
+  'Pedigree',
+  'Otro'
+];
+export const weightConditionOptions = ['Bajo peso', 'Peso ideal', 'Sobrepeso'];
+export const sizeOptions = ['Pequeño', 'Mediano', 'Grande', 'Extra Grande'];

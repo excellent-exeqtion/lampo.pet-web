@@ -1,5 +1,5 @@
 // app/data/context.tsx
-import { PetCodeType, PetType, VeterinaryAccess } from "@/types/index";
+import { PetCodeType, PetType, VeterinaryAccessType } from "@/types/index";
 import { AppSession } from "@/types/lib";
 
 export interface AppContextType {
@@ -9,8 +9,8 @@ export interface AppContextType {
   selectedPet: PetType | null;
   storedPet: PetType | null;
   setStoredPet: (value: PetType | null) => void;
-  storedVetAccess: VeterinaryAccess | null;
-  setStoredVetAccess: (value: VeterinaryAccess | null) => void;
+  storedVetAccess: VeterinaryAccessType | null;
+  setStoredVetAccess: (value: VeterinaryAccessType | null) => void;
   storedPetCode: PetCodeType | null;
   setStoredPetCode: (value: PetCodeType | null) => void;
   storedOwnerPets: PetType[] | null;

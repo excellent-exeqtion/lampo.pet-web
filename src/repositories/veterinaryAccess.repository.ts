@@ -1,14 +1,14 @@
 // app/repos/veterinaryAccess.repository.ts
 import { supabase } from "@/lib/client/supabase";
-import { VeterinaryAccess } from "../types";
+import { VeterinaryAccessType } from "../types";
 import { PetCodeRepository } from "./petCode.repository";
 
 export class VeterinaryAccessRepository {
     /** Registra un nuevo acceso de veterinario */
     static async create(access: Omit<
-        VeterinaryAccess,
+        VeterinaryAccessType,
         "id" | "created_at"
-    >): Promise<VeterinaryAccess> {
+    >): Promise<VeterinaryAccessType> {
         const { data, error } = await supabase
             .from("veterinary_accesses")
             .insert(access)
@@ -22,7 +22,7 @@ export class VeterinaryAccessRepository {
     static async findByCodeAndByPetId(
         code: string,
         pet_id: string
-    ): Promise<VeterinaryAccess | null> {
+    ): Promise<VeterinaryAccessType | null> {
         try {
             const petCode = await PetCodeRepository.find(code);
             if (!petCode) return null;

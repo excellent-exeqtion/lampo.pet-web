@@ -17,6 +17,15 @@ static async create(data: PetType) {
     if (error) throw new Error(error.message);
     return data;
   }
+  /** Busca la mascota por ID */
+  static async existsById(id: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from("pets")
+      .select("*", { count: 'exact', head: true })
+      .eq("id", id);
+    if (error) throw new Error(error.message);
+    return data != null;
+  }
 
   /** Actualiza campos de la mascota */
   static async updateById(

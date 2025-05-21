@@ -16,8 +16,20 @@ export interface FieldType {
 }
 
 export interface MenuType {
-   label: string;
-   icon: React.JSX.Element,
-   url: string; 
-   show: boolean;
+  label: string;
+  icon: React.JSX.Element,
+  url: string;
+  show: boolean;
+}
+
+export interface StepsStateType {
+  number: number;
+  state: StepStateEnum;
+  error?: string | null;
+}
+
+export enum StepStateEnum {
+  Saved,
+  Skipped,
+  Error,
 }

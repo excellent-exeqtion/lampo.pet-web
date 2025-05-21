@@ -21,7 +21,7 @@ import { useAppContext } from "@/app/layout";
 import { AppSession, MenuType } from "@/types/lib";
 import { v4 } from 'uuid';
 import { useRouter } from "next/navigation";
-import { VeterinaryAccess } from "@/types/index";
+import { VeterinaryAccessType } from "@/types/index";
 import { isOwner, isVet } from "@/services/roleService";
 
 export default function SideBar({
@@ -41,7 +41,7 @@ export default function SideBar({
         setImage(storedPet?.image);
     }, [storedPet?.name, storedPet?.image]);
 
-    const menuData = (show: boolean, session: AppSession | null | undefined, vetAccess: VeterinaryAccess | null): MenuType[] => [
+    const menuData = (show: boolean, session: AppSession | null | undefined, vetAccess: VeterinaryAccessType | null): MenuType[] => [
         { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner(session) },
         { label: "Datos básicos", icon: <FaUser />, url: "/pages/pet/basic-data", show },
         { label: "Vacunas", icon: <FaSyringe />, url: "/pages/pet/vaccines", show },

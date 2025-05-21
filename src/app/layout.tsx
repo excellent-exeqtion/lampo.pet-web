@@ -12,7 +12,7 @@ import { useSession as useRawSession } from "../hooks/useSession";
 import { signOut } from "../services/authService";
 import { PetRepository } from "@/repos/pet.repository";
 import { AppSession } from "@/types/lib/index";
-import { PetCodeType, PetType, VeterinaryAccess } from "@/types/index";
+import { PetCodeType, PetType, VeterinaryAccessType } from "@/types/index";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { AppContextType } from "@/context/AppContextType";
 import { geistMono, geistSans } from "@/styles/geist";
@@ -79,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     null
   );
 
-  const [storedVetAccess, setStoredVetAccess] = useLocalStorage<VeterinaryAccess | null>(
+  const [storedVetAccess, setStoredVetAccess] = useLocalStorage<VeterinaryAccessType | null>(
     `vetAccess`,
     null
   );

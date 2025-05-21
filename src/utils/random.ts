@@ -30,13 +30,7 @@ export async function generateUniquePetId(): Promise<string> {
 
   do {
     candidate = randomPetId();
-    try{
-        await PetRepository.findById(candidate);
-        exists = true;
-    }
-    catch{
-        exists = false;
-    }
+    exists = await PetRepository.existsById(candidate);
   } while (exists);
 
   return candidate;

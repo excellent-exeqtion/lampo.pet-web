@@ -1,22 +1,28 @@
-import { FieldType, FormType } from "@/types/lib";
-import { Field } from "@/components/index";
-import { v4 } from "uuid";
+// src/components/forms/VaccineForm.tsx
+"use client";
+import React from "react";
+import Steps from "./steps";
+import Entities from "@/components/lib/entities";
 
-interface FormsProps {
-    formItems: FormType[];
-    isMobile: boolean;
+interface FormProps {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    entityList: any[];
+    step: number;
+    entityName: string;
+    loading: boolean;
+    error: string | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    form: (entity: any, i: number) => React.JSX.Element
+    onBack: () => void;
+    handleAdd: () => void;
+    handleRemove: (id: string | undefined) => void;
+    handleSubmit: () => Promise<void>;
 }
 
-export default function Form(props: FormsProps) {
+export default function Form({ entityList, step, entityName, loading, error, form, onBack, handleAdd, handleRemove, handleSubmit }: FormProps) {
     return (
-        <div style={{ display: "grid", gridTemplateColumns: props.isMobile ? "1fr" : "repeat(2, 1fr)", gap: "1rem" }}>
-            {props.formItems.map((item) => (
-                <div key={item.id} style={{ backgroundColor: "transparent", padding: "0.1rem", borderRadius: "0.5rem", borderColor: '#000', borderWidth: '1px', border: 'groove', boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                    {item.fields.map((field: FieldType) =>
-                        <Field key={v4()} field={field} />
-                    )}
-                </div>
-            ))}
-        </div>
+        <Steps onBack={onBack} onNext={handleSubmit} loading={loading} step={step} error={error} >
+            <Entities form={form} entityList={entityList} entityName={entityName} loading={loading} handleAdd={handleAdd} handleRemove={handleRemove} />
+        </Steps >
     );
 }

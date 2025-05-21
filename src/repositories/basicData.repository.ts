@@ -2,8 +2,14 @@ import { supabase } from '@/lib/client/supabase';
 import type { BasicDataType } from '@/types/index';
 
 export class BasicDataRepository {
-  static async create(data: BasicDataType) {
-    return supabase.from('basic_data').insert(data);
+  static async create(basicData: BasicDataType) {
+    const { data, error } = await supabase.from('basic_data')
+      .upsert(basicData, { onConflict: 'pet_id' })
+      .select();
+
+    if (error) console.error('Upsert failed:', error);
+    else console.log('Upserted rows:', data);
+    return { data, error };
   }
 
   static async findByPetId(pet_id: string): Promise<BasicDataType | null> {

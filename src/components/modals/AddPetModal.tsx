@@ -1,10 +1,10 @@
 // components/modals/AddPetModal.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppContext } from "@/app/layout";
 import { PetNameForm, BasicDataForm, VaccineForm, MedicineForm, LabTestForm, ConditionForm, SurgeryForm } from "@/components/forms/index";
-import { BasicDataType, PetStep, type PetType } from "@/types/index";
+import { BasicDataType, InitialStepsState, PetStep, VaccineDataType, type PetType } from "@/types/index";
 import type { Dispatch, SetStateAction } from "react";
 import { } from "@/components/forms/PetNameForm";
 import Modal from "../lib/modal";
@@ -17,12 +17,17 @@ interface AddPetModalProps {
 
 export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
     const { session, storedOwnerPets, setStoredOwnerPets, setStoredPet } = useAppContext();
-    const [step, setStep] = useState(1);
-    //const [pet, setPet] = useState<PetType>(EmptyPet);
+    const [step, setStep] = useState(0);
+    //const [pet, setPet] = useState<PetType>(Empty.Pet());
     const [pet, setPet] = useState<PetType>({ id: 'S937', name: 'Cherry', image: '/pets/cherry.png', owner_id: '6c006265-400d-493a-b226-a5712b0e4b4e' });
-    const [basicData, setBasicData] = useState<BasicDataType>(Empty.BasicData);
+    const [basicData, setBasicData] = useState<BasicDataType>(Empty.BasicData());
+    const [vaccinesData, setVaccinesData] = useState<VaccineDataType[]>([Empty.VaccineData()]);
     //const [stepStates, setStepStates] = useState<StepsStateType[]>([]);
-    const [stepStates, setStepStates] = useState<StepsStateType[]>([{ number: 0, state: 0 }]);
+    const [stepStates, setStepStates] = useState<StepsStateType[]>(InitialStepsState);
+
+    useEffect(() => {
+        console.log(stepStates)
+    }, [stepStates, setStepStates]);
 
     // Validar sesión
     if (!session?.db?.user?.id) {
@@ -55,11 +60,11 @@ export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
     const renderStep = () => {
         switch (step) {
             case PetStep.Name:
-                return <PetNameForm ownerId={ownerId} pet={pet} setPet={setPet} onNext={next} stepStates={stepStates} setStepStates={setStepStates} />;
+                return <PetNameForm ownerId={ownerId} pet={pet} setPet={setPet} onNext={next} onBack={back} stepStates={stepStates} setStepStates={setStepStates} />;
             case PetStep.BasicData:
-                return <BasicDataForm petId={pet.id!} basicData={basicData} setBasicData={setBasicData} onNext={next} stepStates={stepStates} setStepStates={setStepStates} />;
+                return <BasicDataForm petId={pet.id!} basicData={basicData} setBasicData={setBasicData} onNext={next} onBack={back} stepStates={stepStates} setStepStates={setStepStates} />;
             case PetStep.Vaccines:
-                return <VaccineForm petId={pet.id!} onNext={next} />;
+                return <VaccineForm petId={pet.id!} vaccinesData={vaccinesData} setVaccinesData={setVaccinesData} onNext={next} onBack={back} stepStates={stepStates} setStepStates={setStepStates} />;
             case PetStep.Medicines:
                 return <MedicineForm petId={pet.id!} onNext={next} />;
             case PetStep.LabTests:
@@ -94,28 +99,26 @@ export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
         }
     }
 
+
+    const skipForm = (show: boolean) => {
+        if (!show) {
+            return <div></div>;
+        }
+        else {
+            return (
+                <div className="tooltip-container" style={{ float: 'right' }}>
+                    <a onClick={skipHandler} style={{ fontSize: '18px' }} >
+                        Agregar después
+                    </a>
+                </div>
+            );
+        }
+    }
+
     return (
-        <Modal title={stepTitle()} setShowModal={setShowAddPetModal} maxWidth="1000px">
-            <div className="space-y-4">{renderStep()}</div>
-            <div className="mt-4 flex justify-between">
-                {step > 0 && (
-                    <button
-                        type="button"
-                        onClick={back}
-                        className="btn-secondary ml-auto"
-                    >
-                        Atrás
-                    </button>
-                )}
-                {step >= 2 && (
-                    <div className="tooltip-container" style={{ float: 'right' }}>
-                        <a onClick={skipHandler} >
-                            Saltar
-                        </a>
-                        <span className="tooltip-text" style={{ border: 'groove', color: '#000', fontWeight: 'normal', borderRadius: '20px' }}>No te preocupes puedes agregar esta información más tarde.</span>
-                    </div>
-                )}
-            </div>
+
+        <Modal title={stepTitle()} setShowModal={setShowAddPetModal} maxWidth="1000px" skipForm={skipForm(step > 2)}>
+            {renderStep()}
         </Modal>
     );
 }

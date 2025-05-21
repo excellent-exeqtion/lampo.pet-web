@@ -29,7 +29,10 @@ export interface StepsStateType {
 }
 
 export enum StepStateEnum {
-  Saved,
-  Skipped,
-  Error,
+  NotInitialize = 0,
+  Initialize = 1,
+  Saved = 2,
+  Modified = 3,
+  Skipped = 4,
+  Error = 5,
 }

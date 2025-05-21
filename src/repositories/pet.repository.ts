@@ -3,8 +3,14 @@ import { supabase } from "@/lib/client/supabase";
 import { PetType } from "@/types/index";
 
 export class PetRepository {
-static async create(data: PetType) {
-    return supabase.from('pets').insert(data);
+  static async create(pet: PetType) {
+    const { data, error } = await supabase.from('pets')
+      .upsert(pet, { onConflict: 'id' })
+      .select();
+
+    if (error) console.error('Upsert failed:', error);
+    else console.log('Upserted rows:', data);
+    return { data, error };
   }
 
   /** Busca la mascota por ID */

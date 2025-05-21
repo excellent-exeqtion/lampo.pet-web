@@ -6,6 +6,16 @@ export class ConditionRepository {
         return supabase.from('conditions').insert(condition);
     }
 
+    static async createAll(conditions: ConditionDataType[]) {
+        const { data, error } = await supabase
+            .from('conditions')
+            .upsert(conditions, { onConflict: 'id' })
+            .select();
+
+        if (error) console.error('Upsert failed:', error);
+        else console.log('Upserted rows:', data);
+    }
+
     static async findByPet(pet_id: string): Promise<ConditionDataType[] | null> {
         const { data, error } = await supabase.from('conditions').select('*').eq('pet_id', pet_id);
         if (error) throw new Error(error.message);

@@ -1,3 +1,5 @@
+import { StepStateEnum } from "./lib";
+
 export interface PetType {
     id: string;
     name: string;
@@ -144,3 +146,13 @@ export enum PetStep {
     Conditions = 5,
     Surgeries = 6
 }
+
+export const InitialStepsState = [
+    { number: PetStep.Name, state: StepStateEnum.NotInitialize },
+    { number: PetStep.BasicData, state: StepStateEnum.NotInitialize },
+    { number: PetStep.Vaccines, state: StepStateEnum.NotInitialize },
+    { number: PetStep.Medicines, state: StepStateEnum.NotInitialize },
+    { number: PetStep.LabTests, state: StepStateEnum.NotInitialize },
+    { number: PetStep.Conditions, state: StepStateEnum.NotInitialize },
+    { number: PetStep.Surgeries, state: StepStateEnum.NotInitialize },
+];

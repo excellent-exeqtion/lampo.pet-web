@@ -2,20 +2,28 @@ import React, { useState, useEffect, Dispatch } from 'react';
 import { BasicDataRepository } from '@/repos/basicData.repository';
 import { InitialBasicDataType, PetStep as PetStep, type BasicDataType } from '@/types/index';
 import { StepsStateType, StepStateEnum } from '@/types/lib';
-import { Dates, Steps } from '@/utils/index';
+import { Dates, Step } from '@/utils/index';
 import { petTypes, genders, weightUnits, breedOptions, foodOptions, weightConditionOptions, sizeOptions } from '@/data/petdata';
-import { Empty } from '@/data/index';
+import Steps from "../lib/steps";
 
 interface BasicDataFormProps {
   petId: string;
   basicData: BasicDataType;
   setBasicData: (basicData: BasicDataType) => void;
+  onBack: () => void;
   onNext: () => void;
   stepStates: StepsStateType[];
   setStepStates: Dispatch<React.SetStateAction<StepsStateType[]>>;
 }
 
-export default function BasicDataForm({ petId, basicData, setBasicData, onNext, stepStates, setStepStates }: BasicDataFormProps) {
+export default function BasicDataForm({ petId, basicData, setBasicData, onNext, onBack, stepStates, setStepStates }: BasicDataFormProps) {
+  const step = PetStep.BasicData;
+  const setState = (stepState: StepStateEnum, stepError: string | null = null) => {
+    Step.ChangeState(stepStates, setStepStates, step, stepState, stepError);
+  }
+  const stateEq = (stepState: StepStateEnum) => {
+    return stepStates.find(x => x.number == step)?.state == stepState;
+  }
   const initials = (basicData: BasicDataType, fetch: boolean = false): InitialBasicDataType => {
 
     const initialPetType = petTypes.filter(t => t == basicData.pet_type).length > 0 || (basicData.pet_type == '' && !fetch) ? basicData.pet_type : 'Otro';
@@ -39,21 +47,28 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   const [formData, setFormData] = useState<Partial<BasicDataType>>({ ...basicData, pet_id: petId, pet_type: initial.petType, main_food: initial.food, race: initial.race });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [weight, setWeight] = useState<number>(parseInt(basicData.weight.split(' ')[0]));
+  const [weight, setWeight] = useState<number>(parseInt(basicData.weight.split(' ')[0]) ?? 0);
   const [weightUnit, setWeightUnit] = useState<string>(basicData.weight.split(' ')[1]);
   const [otherPetType, setOtherPetType] = useState<string>(initial.otherPetType);
   const [otherFood, setOtherFood] = useState<string>(initial.otherFood);
   const [otherRace, setOtherRace] = useState<string>(initial.otherRace);
 
+
   // Reset breed when pet type changes
   useEffect(() => {
     setFormData(fd => ({ ...fd, race: initial.race ? initial.race : '' }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.pet_type]);
+
+  /*
+  useEffect(() => {
+    setState(StepStateEnum.Modified);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData]);*/
 
   useEffect(() => {
     const fetch = async () => {
-      if (JSON.stringify(basicData) == JSON.stringify(Empty.BasicData())) {
+      if (stateEq(StepStateEnum.NotInitialize)) {
         const basicDataSaved = await BasicDataRepository.findByPetId(petId);
         if (basicDataSaved) {
           setBasicData(basicDataSaved);
@@ -65,38 +80,38 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
           setOtherRace(initial.race);
           setOtherFood(initial.food);
         }
+        setState(StepStateEnum.Initialize);
       }
     };
     fetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [petId]);
+  }, [petId, formData]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setError(null);
     setLoading(true);
-    const step = stepStates.find(x => x.number == PetStep.BasicData);
     try {
-      if (step?.state != StepStateEnum.Saved) {
+      if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
         const finalFood = formData.main_food === 'Otro' ? otherFood.trim() : formData.main_food;
         const finalPetType = formData.pet_type === 'Otro' ? otherPetType.trim() : formData.pet_type;
         const finalRace = formData.race === 'Otro' ? otherRace.trim() : formData.race;
-        const finalWeigth = `${weight} ${weightUnit}`;
+        const finalWeigth = `${weight ?? 0} ${weightUnit}`;
         const dataToSave: BasicDataType = {
           ...(formData as BasicDataType),
           main_food: finalFood || '',
-          weight: finalWeigth || '',
+          weight: finalWeigth || '0 Kg',
           pet_type: finalPetType || '',
           race: finalRace || '',
         };
-        await BasicDataRepository.create(dataToSave);
+        const { error: basicDataErr } = await BasicDataRepository.create(dataToSave);
+        if (basicDataErr) throw new Error(basicDataErr?.message || "Error creando mascota");
         setBasicData(dataToSave);
-        Steps.ChangeState(stepStates, setStepStates, PetStep.BasicData, StepStateEnum.Saved);
+        setState(StepStateEnum.Saved);
       }
       onNext();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      Steps.ChangeState(stepStates, setStepStates, PetStep.BasicData, StepStateEnum.Error, err.message);
+      setState(StepStateEnum.Error, err.message);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -104,7 +119,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: '1000px', margin: '0 auto' }}>
+    <Steps onBack={onBack} onNext={handleSubmit} loading={loading} step={step} error={error}>
       {/* Sección: Información básica */}
       <fieldset>
         <legend>Información básica</legend>
@@ -161,8 +176,8 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                 type="number"
                 min="0"
                 className="w-2/3"
-                value={weight}
-                onChange={e => setWeight(parseInt(e.target.value))}
+                value={weight ?? 0}
+                onChange={e => setWeight(parseInt(e.target.value) ?? 0)}
                 required
               />
               <select
@@ -408,11 +423,6 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
           </label>
         </div>
       </fieldset>
-
-      {error && <p className="text-error mt-4">{error}</p>}
-      <button type="submit" className="contrast" disabled={loading} style={{ marginTop: '1rem' }}>
-        {loading ? 'Guardando…' : 'Siguiente'}
-      </button>
-    </form>
+    </Steps>
   );
 }

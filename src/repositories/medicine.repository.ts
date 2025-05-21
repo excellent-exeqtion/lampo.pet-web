@@ -6,6 +6,16 @@ export class MedicineRepository {
         return supabase.from('medicines').insert(medicine);
     }
 
+    static async createAll(medicines: MedicineDataType[]) {
+        const { data, error } = await supabase
+            .from('medicines')
+            .upsert(medicines, { onConflict: 'id' })
+            .select();
+
+        if (error) console.error('Upsert failed:', error);
+        else console.log('Upserted rows:', data);
+    }
+
     static async findByPet(pet_id: string): Promise<MedicineDataType[] | null> {
         const { data, error } = await supabase.from('medicines').select('*').eq('pet_id', pet_id);
         if (error) throw new Error(error.message);

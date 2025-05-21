@@ -6,6 +6,16 @@ export class SurgeryRepository {
         return supabase.from('surgeries').insert(surgery);
     }
 
+    static async createAll(surgeries: SurgeryDataType[]) {
+        const { data, error } = await supabase
+            .from('surgeries')
+            .upsert(surgeries, { onConflict: 'id' })
+            .select();
+
+        if (error) console.error('Upsert failed:', error);
+        else console.log('Upserted rows:', data);
+    }
+
     static async findByPet(pet_id: string): Promise<SurgeryDataType[] | null> {
         const { data, error } = await supabase.from('surgeries').select('*').eq('pet_id', pet_id);
         if (error) throw new Error(error.message);

@@ -21,7 +21,7 @@ export function BasicData(): BasicDataType {
         pet_id: '',
         pet_type: '',
         gender: '',
-        weight: '',
+        weight: '0 Kg',
         race: '',
         has_allergies: false,
         weight_condition: '',

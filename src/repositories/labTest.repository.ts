@@ -6,6 +6,16 @@ export class LabTestRepository {
         return supabase.from('lab_tests').insert(test);
     }
 
+    static async createAll(tests: LabTestDataType[]) {
+        const { data, error } = await supabase
+            .from('lab_tests')
+            .upsert(tests, { onConflict: 'id' })
+            .select();
+
+        if (error) console.error('Upsert failed:', error);
+        else console.log('Upserted rows:', data);
+    }
+
     static async findByPet(pet_id: string): Promise<LabTestDataType[] | null> {
         const { data, error } = await supabase.from('lab_tests').select('*').eq('pet_id', pet_id);
         if (error) throw new Error(error.message);

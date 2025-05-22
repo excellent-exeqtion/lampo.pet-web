@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from "react";
 import { useAppContext } from "@/app/layout";
 import { PetNameForm, BasicDataForm, VaccineForm, MedicineForm, LabTestForm, ConditionForm, SurgeryForm } from "@/components/forms/index";
-import { BasicDataType, InitialStepsState, PetStep, VaccineDataType, type PetType } from "@/types/index";
+import { BasicDataType, ConditionDataType, InitialStepsState, LabTestDataType, MedicineDataType, PetStep, SurgeryDataType, VaccineDataType, type PetType } from "@/types/index";
 import type { Dispatch, SetStateAction } from "react";
 import { } from "@/components/forms/PetNameForm";
 import Modal from "../lib/modal";
@@ -22,6 +22,10 @@ export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
     const [pet, setPet] = useState<PetType>({ id: 'S937', name: 'Cherry', image: '/pets/cherry.png', owner_id: '6c006265-400d-493a-b226-a5712b0e4b4e' });
     const [basicData, setBasicData] = useState<BasicDataType>(Empty.BasicData());
     const [vaccinesData, setVaccinesData] = useState<VaccineDataType[]>([Empty.VaccineData()]);
+    const [conditionsData, setConditionsData] = useState<ConditionDataType[]>([Empty.ConditionData()]);
+    const [medicinesData, setMedicinesData] = useState<MedicineDataType[]>([Empty.MedicineData()]);
+    const [labTestsData, setLabTestsData] = useState<LabTestDataType[]>([Empty.LabTestData()]);
+    const [surgeriesData, setSurgeriesData] = useState<SurgeryDataType[]>([Empty.SurgeryData()]);
     //const [stepStates, setStepStates] = useState<StepsStateType[]>([]);
     const [stepStates, setStepStates] = useState<StepsStateType[]>(InitialStepsState);
 
@@ -66,13 +70,13 @@ export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
             case PetStep.Vaccines:
                 return <VaccineForm petId={pet.id!} vaccinesData={vaccinesData} setVaccinesData={setVaccinesData} onNext={next} onBack={back} stepStates={stepStates} setStepStates={setStepStates} />;
             case PetStep.Medicines:
-                return <MedicineForm petId={pet.id!} onNext={next} />;
+                return <MedicineForm petId={pet.id!} medicinesData={medicinesData} setMedicinesData={setMedicinesData} onNext={next} onBack={back} stepStates={stepStates} setStepStates={setStepStates} />;
             case PetStep.LabTests:
-                return <LabTestForm petId={pet.id!} onNext={next} />;
+                return <LabTestForm petId={pet.id!} labTestsData={labTestsData} setLabTestsData={setLabTestsData} onNext={next} onBack={back} stepStates={stepStates} setStepStates={setStepStates} />;
             case PetStep.Conditions:
-                return <ConditionForm petId={pet.id!} onNext={next} />;
+                return <ConditionForm petId={pet.id!} conditionsData={conditionsData} setConditionsData={setConditionsData} onNext={next} onBack={back} stepStates={stepStates} setStepStates={setStepStates} />;
             case PetStep.Surgeries:
-                return <SurgeryForm petId={pet.id!} onNext={finalize} />;
+                return <SurgeryForm petId={pet.id!} surgeriesData={surgeriesData} setSurgeriesData={setSurgeriesData} onNext={finalize} onBack={back} stepStates={stepStates} setStepStates={setStepStates} />;
             default:
                 return null;
         }

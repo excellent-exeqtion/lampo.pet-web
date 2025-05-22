@@ -14,6 +14,7 @@ export class SurgeryRepository {
 
         if (error) console.error('Upsert failed:', error);
         else console.log('Upserted rows:', data);
+        return { data, error };
     }
 
     static async findByPet(pet_id: string): Promise<SurgeryDataType[] | null> {

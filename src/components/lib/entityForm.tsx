@@ -99,6 +99,7 @@ export default function EntityForm<T extends { id?: string }>({
     <Form<T>
       entityList={list}
       step={step}
+      totalSteps={stepStates.length}
       entityName={entityName}
       submitLoading={submitLoading}
       loadLoading={loadLoading}

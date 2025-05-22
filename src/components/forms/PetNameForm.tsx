@@ -95,7 +95,7 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
   };
 
   return (
-    <Steps onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} error={error}>
+    <Steps onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={stepStates.length} error={error}>
       <div className="grid grid-cols-1 gap-4" style={{ display: 'flow' }}>
         <label>
           Nombre

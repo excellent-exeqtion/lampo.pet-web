@@ -120,7 +120,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   };
 
   return (
-    <Steps onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading}  step={step} error={error}>
+    <Steps onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={stepStates.length} error={error}>
       {/* Sección: Información básica */}
       <fieldset>
         <legend>Información básica</legend>

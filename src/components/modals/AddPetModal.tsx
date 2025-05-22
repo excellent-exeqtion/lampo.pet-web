@@ -57,11 +57,11 @@ export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
   // Estados por entidad
   const [pet, setPet] = useState<PetType>(Empty.Pet());
   const [basicData, setBasicData] = useState<BasicDataType>(Empty.BasicData());
-  const [vaccinesData, setVaccinesData] = useState<VaccineDataType[]>([Empty.VaccineData()]);
-  const [medicinesData, setMedicinesData] = useState<MedicineDataType[]>([Empty.MedicineData()]);
-  const [labTestsData, setLabTestsData] = useState<LabTestDataType[]>([Empty.LabTestData()]);
-  const [conditionsData, setConditionsData] = useState<ConditionDataType[]>([Empty.ConditionData()]);
-  const [surgeriesData, setSurgeriesData] = useState<SurgeryDataType[]>([Empty.SurgeryData()]);
+  const [vaccinesData, setVaccinesData] = useState<VaccineDataType[]>([]);
+  const [medicinesData, setMedicinesData] = useState<MedicineDataType[]>([]);
+  const [labTestsData, setLabTestsData] = useState<LabTestDataType[]>([]);
+  const [conditionsData, setConditionsData] = useState<ConditionDataType[]>([]);
+  const [surgeriesData, setSurgeriesData] = useState<SurgeryDataType[]>([]);
 
   const [stepStates, setStepStates] = useState<StepsStateType[]>(InitialStepsState);
 

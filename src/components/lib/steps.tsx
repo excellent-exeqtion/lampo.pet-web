@@ -4,6 +4,7 @@ import React from 'react';
 interface StepsProps {
   children: React.ReactNode;
   step: number;
+  totalSteps: number;
   submitLoading: boolean;
   loadLoading: boolean;
   error: string | null;
@@ -11,7 +12,7 @@ interface StepsProps {
   onBack: () => void;
 }
 
-export default function Steps({ children, submitLoading, loadLoading, step, error, onNext, onBack }: StepsProps) {
+export default function Steps({ children, submitLoading, loadLoading, step, totalSteps, error, onNext, onBack }: StepsProps) {
 
   return (
     <React.Fragment>
@@ -40,7 +41,7 @@ export default function Steps({ children, submitLoading, loadLoading, step, erro
             className="btn-primary"
             style={{ float: 'right' }}
           >
-            {submitLoading ? "Creando…" : "Siguiente"}
+            {submitLoading ? "Creando…" : (totalSteps - 1 == step ? "Finalizar" : "Siguiente")}
           </button>
         </div>
       </div>

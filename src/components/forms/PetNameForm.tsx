@@ -28,21 +28,24 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
   }
 
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadLoading, setLoadLoading] = useState(true);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [savedData, setSavedData] = useState<PetType>(Empty.Pet());
 
   useEffect(() => {
     const fetch = async () => {
       if (stateEq(StepStateEnum.NotInitialize) && pet.id == '') {
         setState(StepStateEnum.Initialize);
+        setLoadLoading(false);
       }
-      if (stateEq(StepStateEnum.NotInitialize)) {
+      else if (stateEq(StepStateEnum.NotInitialize)) {
         const petSaved = await PetRepository.findById(pet.id);
         if (petSaved) {
           setPet(petSaved);
           setSavedData(petSaved);
         }
         setState(StepStateEnum.Initialize);
+        setLoadLoading(false);
       }
     };
     fetch();
@@ -65,7 +68,7 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
   // Paso 0: crear mascota
   const handleSubmit = async () => {
     setError(null);
-    setLoading(true);
+    setSubmitLoading(false);
     try {
       console.log(stepStates);
       if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
@@ -88,18 +91,19 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
       setState(StepStateEnum.Error, err.message);
       setError(err.message);
     } finally {
-      setLoading(false);
+      setSubmitLoading(true);
     }
   };
 
   return (
-    <Steps onBack={onBack} onNext={handleSubmit} loading={loading} step={step} error={error}>
+    <Steps onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} error={error}>
       <div className="grid grid-cols-1 gap-4" style={{ display: 'flow' }}>
         <label>
           Nombre
           <input
             type="text"
             value={pet.name}
+            disabled={loadLoading}
             onChange={(e) => setPet({ ...pet, name: e.target.value })}
             required
           />
@@ -109,6 +113,7 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
           <input
             type="text"
             value={pet.image ?? "/pets/pet.png"}
+            disabled={loadLoading}
             onChange={(e) => setPet({ ...pet, image: e.target.value })}
           />
         </label>

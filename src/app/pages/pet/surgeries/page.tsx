@@ -5,10 +5,10 @@ import { useAppContext } from "@/app/layout";
 import { FaCut } from "react-icons/fa";
 import { v4 } from "uuid";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { DataNotFound, Form, Loading, Title } from "@/components/index";
+import { DataNotFound, Display, Loading, Title } from "@/components/index";
 import { Dates } from "@/utils/index";
 import { FormType } from "@/types/lib";
-import { SurgeryRepository } from "@/repos/surgery.repository";
+import { SurgeryRepository } from "@/repos/index";
 import { SurgeryDataType } from "@/types/index";
 
 export default function SurgeriesPage() {
@@ -22,7 +22,7 @@ export default function SurgeriesPage() {
 
         const fetchData = async () => {
             try {
-                const surgeries = await SurgeryRepository.findByPet(selectedPet.id);
+                const surgeries = await new SurgeryRepository().findByParentId(selectedPet.id);
                 setPetSurgeries(surgeries);
 
             } catch (err) {
@@ -55,7 +55,7 @@ export default function SurgeriesPage() {
                 ]
             });
         });
-        return <Form formItems={formItems} isMobile={isMobile} />;
+        return <Display formItems={formItems} isMobile={isMobile} />;
     };
 
     return (

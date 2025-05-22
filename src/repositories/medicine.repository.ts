@@ -1,12 +1,13 @@
 import { supabase } from '@/lib/client/supabase';
 import type { MedicineDataType } from '@/types/index';
+import { FormRepository } from '@/types/lib';
 
-export default class MedicineRepository {
+export default class MedicineRepository implements FormRepository<MedicineDataType> {
     static async create(medicine: MedicineDataType) {
         return supabase.from('medicines').insert(medicine);
     }
 
-    static async createAll(medicines: MedicineDataType[]) {
+    async createAll(medicines: MedicineDataType[]) {
         const { data, error } = await supabase
             .from('medicines')
             .upsert(medicines, { onConflict: 'id' })
@@ -17,7 +18,7 @@ export default class MedicineRepository {
         return { data, error };
     }
 
-    static async findByParentId(parent_id: string): Promise<MedicineDataType[] | null> {
+    async findByParentId(parent_id: string): Promise<MedicineDataType[] | null> {
         const { data, error } = await supabase.from('medicines').select('*').eq('pet_id', parent_id);
         if (error) throw new Error(error.message);
         if (!data) return null;
@@ -28,7 +29,7 @@ export default class MedicineRepository {
         return supabase.from('medicines').update(medicine).eq('id', medicine.id);
     }
 
-    static async delete(id: string) {
+    async delete(id: string) {
         await supabase.from('medicines').delete().eq('id', id);
     }
 }

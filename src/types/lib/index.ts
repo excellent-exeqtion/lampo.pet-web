@@ -1,4 +1,4 @@
-import { Session } from "@supabase/supabase-js";
+import { PostgrestError, Session } from "@supabase/supabase-js";
 
 export interface AppSession {
   db: Session;
@@ -46,6 +46,11 @@ export interface FieldConfig<T> {
 }
 
 export interface FormRepository<T> {
+  createAll: (conditions: T[]) => Promise<{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any[] | null;
+    error: PostgrestError | null;
+  }>;
   findByParentId: (parent_id: string) => Promise<T[] | null>;
   delete?: (id: string) => Promise<void>
 }

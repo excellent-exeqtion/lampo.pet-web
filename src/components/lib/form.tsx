@@ -8,7 +8,8 @@ interface FormProps<T> {
     entityList: Partial<T>[];
     step: number;
     entityName: string;
-    loading: boolean;
+    submitLoading: boolean;
+    loadLoading: boolean;
     error: string | null;
     form: (entity: T, i: number) => React.JSX.Element
     onBack: () => void;
@@ -17,10 +18,10 @@ interface FormProps<T> {
     handleSubmit: () => Promise<void>;
 }
 
-export default function Form<T>({ entityList, step, entityName, loading, error, form, onBack, handleAdd, handleRemove, handleSubmit }: FormProps<T>) {
+export default function Form<T>({ entityList, step, entityName, submitLoading, loadLoading, error, form, onBack, handleAdd, handleRemove, handleSubmit }: FormProps<T>) {
     return (
-        <Steps onBack={onBack} onNext={handleSubmit} loading={loading} step={step} error={error} >
-            <Entities form={form} entityList={entityList} entityName={entityName} loading={loading} handleAdd={handleAdd} handleRemove={handleRemove} />
+        <Steps onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} error={error} >
+            <Entities form={form} entityList={entityList} entityName={entityName} loadLoading={loadLoading} handleAdd={handleAdd} handleRemove={handleRemove} />
         </Steps >
     );
 }

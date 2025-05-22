@@ -9,6 +9,7 @@ interface EntityFieldsProps<T> {
   fieldsConfig: FieldConfig<T>[];
   item: T;
   index: number;
+  loadLoading: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateItem: (index: number, field: keyof T, value: any) => void;
 }
@@ -17,6 +18,7 @@ export function EntityFields<T extends object>({
   fieldsConfig,
   item,
   index,
+  loadLoading,
   updateItem,
 }: EntityFieldsProps<T>) {
   return (
@@ -28,6 +30,7 @@ export function EntityFields<T extends object>({
             type={type}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             value={(item[name] as any) ?? ""}
+            disabled={loadLoading}
             onChange={(e) =>
               updateItem(
                 index,

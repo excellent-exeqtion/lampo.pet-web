@@ -5,11 +5,11 @@ import { useAppContext } from "@/app/layout";
 import { FaSyringe } from "react-icons/fa";
 import { v4 } from "uuid";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { DataNotFound, Form, Loading, Title } from "@/components/index";
+import { DataNotFound, Display, Loading, Title } from "@/components/index";
 import { FormType } from "@/types/lib";
 import { Dates } from "@/utils/index";
 import { VaccineDataType } from "@/types/index";
-import { VaccineRepository } from "@/repos/vaccine.repository";
+import { VaccineRepository } from "@/repos/index";
 
 export default function VaccinesPage() {
   useRequireAuth();
@@ -22,7 +22,7 @@ export default function VaccinesPage() {
   
           const fetchData = async () => {
               try {
-                  const vaccines = await VaccineRepository.findByPet(selectedPet.id);
+                  const vaccines = await new VaccineRepository().findByParentId(selectedPet.id);
                   setPetVaccines(vaccines);
   
               } catch (err) {
@@ -57,7 +57,7 @@ export default function VaccinesPage() {
         ]
       });
     });
-    return <Form formItems={formItems} isMobile={isMobile} />;
+    return <Display formItems={formItems} isMobile={isMobile} />;
   };
 
   return (

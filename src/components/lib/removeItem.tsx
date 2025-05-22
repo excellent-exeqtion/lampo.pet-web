@@ -3,18 +3,18 @@ import { FaTrash } from "react-icons/fa";
 
 interface RemoveItemProps {
     id: string | undefined;
-    loading: boolean;
+    loadLoading: boolean;
     handleRemove: (id: string | undefined) => void;
 }
 
-export default function RemoveItem({ id, loading, handleRemove }: RemoveItemProps) {
+export default function RemoveItem({ id, loadLoading, handleRemove }: RemoveItemProps) {
     return (
         <div className="flex flex-wrap gap-2" style={{ marginTop: '26px', alignContent: 'center' }}>
             <button
                 type="button"
                 onClick={() => handleRemove(id)}
                 className="contrast"
-                disabled={loading}
+                disabled={loadLoading}
             >
                 <FaTrash />
             </button>

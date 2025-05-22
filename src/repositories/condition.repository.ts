@@ -7,7 +7,7 @@ export default class ConditionRepository implements FormRepository<ConditionData
         return supabase.from('conditions').insert(condition);
     }
 
-    static async createAll(conditions: ConditionDataType[]) {
+    async createAll(conditions: ConditionDataType[]) {
         const { data, error } = await supabase
             .from('conditions')
             .upsert(conditions, { onConflict: 'id' })

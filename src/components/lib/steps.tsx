@@ -4,13 +4,14 @@ import React from 'react';
 interface StepsProps {
   children: React.ReactNode;
   step: number;
-  loading: boolean;
+  submitLoading: boolean;
+  loadLoading: boolean;
   error: string | null;
   onNext: () => void;
   onBack: () => void;
 }
 
-export default function Steps({ children, loading, step, error, onNext, onBack }: StepsProps) {
+export default function Steps({ children, submitLoading, loadLoading, step, error, onNext, onBack }: StepsProps) {
 
   return (
     <React.Fragment><div className="space-y-4">
@@ -34,11 +35,11 @@ export default function Steps({ children, loading, step, error, onNext, onBack }
         <button
           type="button"
           onClick={onNext}
-          disabled={loading}
+          disabled={submitLoading || loadLoading}
           className="btn-primary"
           style={{ float: 'right' }}
         >
-          {loading ? "Creando…" : "Siguiente"}
+          {submitLoading ? "Creando…" : "Siguiente"}
         </button>
       </div>
     </div>

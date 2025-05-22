@@ -5,10 +5,10 @@ import { useAppContext } from "@/app/layout";
 import { FaPills } from "react-icons/fa";
 import { v4 } from "uuid";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { Loading, DataNotFound, Form, Title } from "@/components/index";
+import { Loading, DataNotFound, Display, Title } from "@/components/index";
 import { FormType } from "@/types/lib";
 import { MedicineDataType } from "@/types/index";
-import { MedicineRepository } from "@/repos/medicine.repository";
+import { MedicineRepository } from "@/repos/index";
 
 export default function MedicinesPage() {
     useRequireAuth();
@@ -21,7 +21,7 @@ export default function MedicinesPage() {
     
             const fetchData = async () => {
                 try {
-                    const medicines = await MedicineRepository.findByPet(selectedPet.id);
+                    const medicines = await new MedicineRepository().findByParentId(selectedPet.id);
                     setPetMedicines(medicines);
     
                 } catch (err) {
@@ -54,7 +54,7 @@ export default function MedicinesPage() {
                 ]
             });
         });
-        return <Form formItems={formItems} isMobile={isMobile} />;
+        return <Display formItems={formItems} isMobile={isMobile} />;
     };
 
     return (

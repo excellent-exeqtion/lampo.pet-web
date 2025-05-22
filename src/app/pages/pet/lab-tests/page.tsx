@@ -6,10 +6,10 @@ import { FaFlask } from "react-icons/fa";
 import { v4 } from "uuid";
 import { Dates } from "@/utils/index";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { Loading, DataNotFound, Form, Title } from "@/components/index";
+import { Loading, DataNotFound, Display, Title } from "@/components/index";
 import { FormType } from "@/types/lib";
 import { LabTestDataType } from "@/types/index";
-import { LabTestRepository } from "@/repos/labTest.repository";
+import { LabTestRepository } from "@/repos/index";
 
 export default function LabTestsPage() {
     useRequireAuth();
@@ -22,7 +22,7 @@ export default function LabTestsPage() {
 
         const fetchData = async () => {
             try {
-                const labTest = await LabTestRepository.findByPet(selectedPet.id);
+                const labTest = await new LabTestRepository().findByParentId(selectedPet.id);
                 setPetLabTests(labTest);
 
             } catch (err) {
@@ -56,7 +56,7 @@ export default function LabTestsPage() {
                 ]
             });
         });
-        return <Form formItems={formItems} isMobile={isMobile} />;
+        return <Display formItems={formItems} isMobile={isMobile} />;
     };
 
     return (

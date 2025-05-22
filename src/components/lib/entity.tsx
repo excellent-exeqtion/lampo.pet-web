@@ -10,11 +10,11 @@ interface EntityProps {
     id: string | undefined; 
     entityName: string;
     index: number;
-    loading: boolean;
+    loadLoading: boolean;
     handleRemove: (id: string | undefined) => void;
 }
 
-export default function Entity({ children, id, index, entityName, loading, handleRemove }: EntityProps) {
+export default function Entity({ children, id, index, entityName, loadLoading, handleRemove }: EntityProps) {
     return (
         <fieldset
             key={index}
@@ -24,7 +24,7 @@ export default function Entity({ children, id, index, entityName, loading, handl
                 {entityName} #{index + 1}
             </legend>
             {children}
-            <RemoveItem id={id} loading={loading} handleRemove={handleRemove} />
+            <RemoveItem id={id} loadLoading={loadLoading} handleRemove={handleRemove} />
         </fieldset>
     );
 }

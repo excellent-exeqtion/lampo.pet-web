@@ -5,9 +5,9 @@ import { useAppContext } from "@/app/layout";
 import { FaCloudSun } from "react-icons/fa";
 import { v4 } from "uuid";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { Loading, DataNotFound, Form, Title } from "@/components/index";
+import { Loading, DataNotFound, Title, Display } from "@/components/index";
 import { FormType } from "@/types/lib";
-import { ConditionRepository } from "@/repos/condition.repository";
+import { ConditionRepository } from "@/repos/index";
 import { ConditionDataType } from "@/types/index";
 
 export default function ConditionsPage() {
@@ -21,7 +21,7 @@ export default function ConditionsPage() {
 
         const fetchData = async () => {
             try {
-                const conditions = await ConditionRepository.findByPet(selectedPet.id);
+                const conditions = await new ConditionRepository().findByParentId(selectedPet.id);
                 setPetConditions(conditions);
 
             } catch (err) {
@@ -53,7 +53,7 @@ export default function ConditionsPage() {
                 ]
             });
         });
-        return <Form formItems={formItems} isMobile={isMobile} />;
+        return <Display formItems={formItems} isMobile={isMobile} />;
     };
 
     return (

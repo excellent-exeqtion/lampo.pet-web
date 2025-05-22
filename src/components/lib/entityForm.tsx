@@ -20,8 +20,6 @@ export interface EntityFormProps<T extends { id?: string }> {
   entityName: string;
   repository: FormRepository<T>;
   emptyFactory: (petId: string) => Partial<T>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  saveFn: (items: T[]) => Promise<{ error?: any }>;
   fieldsConfig: FieldConfig<T>[];
   onNext: () => void;
   onBack: () => void;
@@ -37,7 +35,6 @@ export default function EntityForm<T extends { id?: string }>({
   entityName,
   repository,
   emptyFactory,
-  saveFn,
   fieldsConfig,
   onNext,
   onBack,
@@ -49,7 +46,6 @@ export default function EntityForm<T extends { id?: string }>({
     error: loadError,
     setError: setLoadError,
     loading: loadLoading,
-    setLoading: setLoadLoading,
   } = useLoadEntities<T>(
     repository,
     petId,
@@ -74,16 +70,14 @@ export default function EntityForm<T extends { id?: string }>({
     loading: submitLoading,
     error: submitError,
   } = useEntitySubmit<T>(
+    repository,
     list,
     fieldsConfig,
-    saveFn,
     step,
     stepStates,
     setStepStates,
     loadError,
-    setLoadError,
-    loadLoading,
-    setLoadLoading
+    setLoadError
   );
 
   // 4) Renderizado de campos dinámicos
@@ -92,6 +86,7 @@ export default function EntityForm<T extends { id?: string }>({
       fieldsConfig={fieldsConfig}
       item={item}
       index={index}
+      loadLoading={loadLoading}
       updateItem={updateItem}
     />
   );
@@ -101,7 +96,8 @@ export default function EntityForm<T extends { id?: string }>({
       entityList={list}
       step={step}
       entityName={entityName}
-      loading={loadLoading || submitLoading}
+      submitLoading={submitLoading}
+      loadLoading={loadLoading}
       error={loadError || submitError}
       form={renderFields}
       onBack={onBack}

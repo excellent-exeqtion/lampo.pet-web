@@ -45,7 +45,8 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   const initial = initials(basicData);
   const [formData, setFormData] = useState<Partial<BasicDataType>>({ ...basicData, pet_id: petId, pet_type: initial.petType, main_food: initial.food, race: initial.race });
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadLoading, setLoadLoading] = useState(true);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [weight, setWeight] = useState<number>(parseInt(basicData.weight.split(' ')[0]) ?? 0);
   const [weightUnit, setWeightUnit] = useState<string>(basicData.weight.split(' ')[1]);
   const [otherPetType, setOtherPetType] = useState<string>(initial.otherPetType);
@@ -63,6 +64,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
 
   useEffect(() => {
     const fetch = async () => {
+      setLoadLoading(true);
       if (stateEq(StepStateEnum.NotInitialize)) {
         const basicDataSaved = await BasicDataRepository.findByPetId(petId);
         if (basicDataSaved) {
@@ -79,6 +81,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
         }
         setState(StepStateEnum.Initialize);
       }
+      setLoadLoading(false);
     };
     fetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,7 +89,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
 
   const handleSubmit = async () => {
     setError(null);
-    setLoading(true);
+    setSubmitLoading(false);
     try {
       if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
         const finalFood = formData.main_food === 'Otro' ? otherFood.trim() : formData.main_food;
@@ -112,12 +115,12 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
       setState(StepStateEnum.Error, err.message);
       setError(err.message);
     } finally {
-      setLoading(false);
+      setSubmitLoading(true);
     }
   };
 
   return (
-    <Steps onBack={onBack} onNext={handleSubmit} loading={loading} step={step} error={error}>
+    <Steps onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading}  step={step} error={error}>
       {/* Sección: Información básica */}
       <fieldset>
         <legend>Información básica</legend>
@@ -128,6 +131,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               id="pet_type"
               className="w-full"
               value={formData.pet_type}
+              disabled={loadLoading}
               onChange={e => {
                 const val = e.target.value;
                 if (val === 'Otro') {
@@ -149,6 +153,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                 type="text"
                 placeholder="Especifica el tipo"
                 className="w-full mt-2"
+                disabled={loadLoading}
                 onChange={e => setOtherPetType(e.target.value)}
               />
             )}
@@ -159,6 +164,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               id="gender"
               className="w-full"
               value={formData.gender}
+              disabled={loadLoading}
               onChange={e => setFormData({ ...formData, gender: e.target.value })}
               required
             >
@@ -174,6 +180,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                 type="number"
                 min="0"
                 className="w-2/3"
+                disabled={loadLoading}
                 value={weight ?? 0}
                 onChange={e => setWeight(parseInt(e.target.value) ?? 0)}
                 required
@@ -182,6 +189,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                 id="weight_unit"
                 className="w-1/3"
                 value={weightUnit}
+                disabled={loadLoading}
                 onChange={e => setWeightUnit(e.target.value)}
               >
                 {weightUnits.map(u => <option key={u} value={u}>{u}</option>)}
@@ -193,6 +201,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
             <select
               id="race"
               className="w-full"
+              disabled={loadLoading || !formData.pet_type}
               value={formData.race}
               onChange={e => {
                 const val = e.target.value;
@@ -205,7 +214,6 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                 }
               }}
               required
-              disabled={!formData.pet_type}
             >
               <option value="" disabled>{formData.pet_type ? 'Selecciona raza' : 'Selecciona primero tipo'}</option>
               {formData.pet_type && breedOptions[formData.pet_type].map(r => <option key={r} value={r}>{r}</option>)}
@@ -213,6 +221,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
             {formData.race === 'Otro' && (
               <input
                 value={otherRace}
+                disabled={loadLoading}
                 type="text"
                 placeholder="Especifica la raza"
                 className="w-full mt-2"
@@ -233,6 +242,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               id="main_food"
               className="w-full"
               value={formData.main_food}
+              disabled={loadLoading}
               onChange={e => {
                 const val = e.target.value;
                 if (val === 'Otro') {
@@ -251,6 +261,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
             {formData.main_food === 'Otro' && (
               <input
                 value={otherFood}
+                disabled={loadLoading}
                 type="text"
                 placeholder="Especifica la comida"
                 className="w-full mt-2"
@@ -264,6 +275,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               id="weight_condition"
               className="w-full"
               value={formData.weight_condition}
+              disabled={loadLoading}
               onChange={e => setFormData({ ...formData, weight_condition: e.target.value })}
             >
               <option value="" disabled>Selecciona condición</option>
@@ -276,6 +288,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               id="size"
               className="w-full"
               value={formData.size}
+              disabled={loadLoading}
               onChange={e => setFormData({ ...formData, size: e.target.value })}
             >
               <option value="" disabled>Selecciona tamaño</option>
@@ -288,6 +301,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                 id="lives_with_others"
                 type="checkbox"
                 checked={formData.lives_with_others}
+                disabled={loadLoading}
                 onChange={e => setFormData({ ...formData, lives_with_others: e.target.checked })}
               />
               Vive con otros
@@ -299,6 +313,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                 id="has_allergies"
                 type="checkbox"
                 checked={formData.has_allergies}
+                disabled={loadLoading}
                 onChange={e => setFormData({ ...formData, has_allergies: e.target.checked })}
               />
               Alergias
@@ -316,6 +331,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               id="has_vaccine"
               type="checkbox"
               checked={formData.has_vaccine}
+              disabled={loadLoading}
               onChange={e => setFormData({ ...formData, has_vaccine: e.target.checked })}
             />
             Tiene vacunas
@@ -329,6 +345,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                   type="text"
                   className="w-full"
                   value={formData.last_vaccine_name}
+                  disabled={loadLoading}
                   onChange={e => setFormData({ ...formData, last_vaccine_name: e.target.value })}
                 />
               </div>
@@ -339,6 +356,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                   type="date"
                   className="w-full"
                   value={formData.last_vaccine_date ? Dates.format(formData.last_vaccine_date) : ''}
+                  disabled={loadLoading}
                   onChange={e => setFormData({ ...formData, last_vaccine_date: e.target.valueAsDate || undefined })}
                 />
               </div>
@@ -357,6 +375,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               type="checkbox"
               checked={formData.is_castrated}
               onChange={e => setFormData({ ...formData, is_castrated: e.target.checked })}
+              disabled={loadLoading}
             />
             Castrado
           </label>
@@ -369,6 +388,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                 className="w-full"
                 value={formData.castration_date ? Dates.format(formData.castration_date) : ''}
                 onChange={e => setFormData({ ...formData, castration_date: e.target.valueAsDate || undefined })}
+                disabled={loadLoading}
               />
             </div>
           )}
@@ -377,6 +397,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               id="has_anti_flea"
               type="checkbox"
               checked={formData.has_anti_flea}
+              disabled={loadLoading}
               onChange={e => setFormData({ ...formData, has_anti_flea: e.target.checked })}
             />
             Antipulgas
@@ -389,6 +410,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                 type="date"
                 className="w-full"
                 value={formData.anti_flea_date ? Dates.format(formData.anti_flea_date) : ''}
+                disabled={loadLoading}
                 onChange={e => setFormData({ ...formData, anti_flea_date: e.target.valueAsDate || undefined })}
               />
             </div>
@@ -405,6 +427,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               id="uses_medicine"
               type="checkbox"
               checked={formData.uses_medicine}
+              disabled={loadLoading}
               onChange={e => setFormData({ ...formData, uses_medicine: e.target.checked })}
             />
             Usa medicina
@@ -414,6 +437,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               id="special_condition"
               type="checkbox"
               checked={formData.special_condition}
+              disabled={loadLoading}
               onChange={e => setFormData({ ...formData, special_condition: e.target.checked })}
             />
             Condición especial

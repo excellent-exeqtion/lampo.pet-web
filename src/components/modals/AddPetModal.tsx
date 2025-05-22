@@ -52,11 +52,10 @@ type StepConfig<T> = {
 
 export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
   const { session, storedOwnerPets, setStoredOwnerPets, setStoredPet } = useAppContext();
-  const [step, setStep] = useState<PetStep>(3);
+  const [step, setStep] = useState<PetStep>(PetStep.Name);
 
   // Estados por entidad
-  //const [pet, setPet] = useState<PetType>(Empty.Pet());
-  const [pet, setPet] = useState<PetType>({id: 'S937', owner_id:'6c006265-400d-493a-b226-a5712b0e4b4e', name: 'Cherry', image:'/pets/cherry.png'});
+  const [pet, setPet] = useState<PetType>(Empty.Pet());
   const [basicData, setBasicData] = useState<BasicDataType>(Empty.BasicData());
   const [vaccinesData, setVaccinesData] = useState<VaccineDataType[]>([Empty.VaccineData()]);
   const [medicinesData, setMedicinesData] = useState<MedicineDataType[]>([Empty.MedicineData()]);

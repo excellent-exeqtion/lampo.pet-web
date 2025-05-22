@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/client/supabase';
 import type { LabTestDataType } from '@/types/index';
 
-export class LabTestRepository {
+export default class LabTestRepository {
     static async create(test: LabTestDataType) {
         return supabase.from('lab_tests').insert(test);
     }

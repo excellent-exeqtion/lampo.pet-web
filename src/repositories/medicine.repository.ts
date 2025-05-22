@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/client/supabase';
 import type { MedicineDataType } from '@/types/index';
 
-export class MedicineRepository {
+export default class MedicineRepository {
     static async create(medicine: MedicineDataType) {
         return supabase.from('medicines').insert(medicine);
     }

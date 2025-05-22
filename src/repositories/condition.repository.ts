@@ -2,7 +2,7 @@ import { supabase } from '@/lib/client/supabase';
 import type { ConditionDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 
-export class ConditionRepository implements FormRepository<ConditionDataType> {
+export default class ConditionRepository implements FormRepository<ConditionDataType> {
     static async create(condition: ConditionDataType) {
         return supabase.from('conditions').insert(condition);
     }

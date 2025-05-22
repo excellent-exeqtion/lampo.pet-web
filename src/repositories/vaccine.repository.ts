@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/client/supabase';
 import type { VaccineDataType } from '@/types/index';
 
-export class VaccineRepository {
+export default class VaccineRepository {
     static async create(vaccine: VaccineDataType) {
         return supabase.from('vaccines').insert(vaccine);
     }

@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/client/supabase';
 import type { SurgeryDataType } from '@/types/index';
 
-export class SurgeryRepository {
+export default class SurgeryRepository {
     static async create(surgery: SurgeryDataType) {
         return supabase.from('surgeries').insert(surgery);
     }

@@ -8,6 +8,7 @@ import { Form } from "@/components/index";
 import { v4 } from "uuid";
 import { Step } from "@/utils/index";
 import { StepsStateType, StepStateEnum } from "@/types/lib";
+import { Empty } from "@/data/index";
 
 interface VaccineFormProps {
     petId: string;
@@ -42,13 +43,22 @@ export default function VaccineForm({ petId, vaccinesData, setVaccinesData, onNe
     const [vaccines, setVaccines] = useState<Partial<VaccineDataType>[]>(vaccinesData);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [savedData, setSavedData] = useState<VaccineDataType[]>([Empty.VaccineData()]);
     const entityName = 'vacuna';
+
+    useEffect(() => {
+        if (JSON.stringify(savedData) != JSON.stringify(vaccines) && !stateEq(StepStateEnum.NotInitialize)) {
+            setState(StepStateEnum.Modified);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [vaccines]);
 
     useEffect(() => {
         const fetch = async () => {
             if (stateEq(StepStateEnum.NotInitialize)) {
                 const vaccinesSaved = await VaccineRepository.findByPet(petId);
                 if (vaccinesSaved) {
+                    setSavedData(vaccinesSaved);
                     setVaccinesData(vaccinesSaved);
                     setVaccines(vaccinesSaved);
                 }
@@ -107,6 +117,7 @@ export default function VaccineForm({ petId, vaccinesData, setVaccinesData, onNe
                 // Enviar en paralelo o en secuencia según repositorio
                 const { error: vaccineErr } = await VaccineRepository.createAll(vaccines as VaccineDataType[]);
                 if (vaccineErr) throw new Error(vaccineErr?.message || "Error creando vacunas");
+                setSavedData(vaccines as VaccineDataType[]);
                 setState(StepStateEnum.Saved);
             }
             onNext();

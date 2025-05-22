@@ -3,9 +3,10 @@ interface AddItemProps {
     entityName: string;
     loading: boolean;
     handleAdd: () => void;
+    count: number;
 }
 
-export default function AddItem({ entityName, loading, handleAdd }: AddItemProps) {
+export default function AddItem({ entityName, loading, handleAdd, count }: AddItemProps) {
     return (
         <div className="flex flex-wrap gap-2">
             <button
@@ -14,7 +15,7 @@ export default function AddItem({ entityName, loading, handleAdd }: AddItemProps
                 className="contrast"
                 disabled={loading}
             >
-                Agregar otra {entityName}
+                Agregar {count == 0 ? '' : 'otra '} {entityName}
             </button>
         </div>
     );

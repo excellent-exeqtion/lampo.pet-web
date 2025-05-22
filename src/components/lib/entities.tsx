@@ -24,7 +24,7 @@ export default function Entities({ form, entityList, entityName, loading, handle
                 </Entity>
             ))}
 
-            <AddItem entityName={entityName} loading={loading} handleAdd={handleAdd} />
+            <AddItem entityName={entityName} loading={loading} handleAdd={handleAdd} count={entityList.length} />
         </div>
     );
 }

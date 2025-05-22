@@ -5,6 +5,7 @@ import { StepsStateType, StepStateEnum } from '@/types/lib';
 import { Dates, Step } from '@/utils/index';
 import { petTypes, genders, weightUnits, breedOptions, foodOptions, weightConditionOptions, sizeOptions } from '@/data/petdata';
 import Steps from "../lib/steps";
+import { Empty } from '@/data/index';
 
 interface BasicDataFormProps {
   petId: string;
@@ -25,14 +26,12 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
     return stepStates.find(x => x.number == step)?.state == stepState;
   }
   const initials = (basicData: BasicDataType, fetch: boolean = false): InitialBasicDataType => {
-
     const initialPetType = petTypes.filter(t => t == basicData.pet_type).length > 0 || (basicData.pet_type == '' && !fetch) ? basicData.pet_type : 'Otro';
     const initialFood = foodOptions.find(t => t == basicData.main_food) != null || (basicData.main_food == '' && !fetch) ? basicData.main_food : 'Otro';
     const initialRace = (breedOptions[initialPetType] ?? []).filter(t => t == basicData.race).length > 0 || (basicData.race == '' && !fetch) ? basicData.race : 'Otro';
-    const initialOtherPetType = initialPetType == 'Otro' ? basicData.pet_type : '';
-    const initialOtherFood = initialFood == 'Otro' ? basicData.main_food : '';
-    const initialOtherRace = initialRace == 'Otro' ? basicData.race : '';
-
+    const initialOtherPetType = initialPetType != 'Otro' && basicData.pet_type == 'Otro' ? '' : basicData.pet_type;
+    const initialOtherFood = initialFood != 'Otro' && basicData.main_food == 'Otro' ? '' : basicData.main_food;
+    const initialOtherRace = initialRace != 'Otro' && basicData.race == 'Otro' ? '' : basicData.race;
     return {
       petType: initialPetType,
       food: initialFood,
@@ -52,33 +51,31 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   const [otherPetType, setOtherPetType] = useState<string>(initial.otherPetType);
   const [otherFood, setOtherFood] = useState<string>(initial.otherFood);
   const [otherRace, setOtherRace] = useState<string>(initial.otherRace);
+  const [loadedWithApi, setLoadedWithApi] = useState<boolean>(false);
+  const [savedData, setSavedData] = useState<BasicDataType>(Empty.BasicData());
 
-
-  // Reset breed when pet type changes
   useEffect(() => {
-    setFormData(fd => ({ ...fd, race: initial.race ? initial.race : '' }));
+    if (JSON.stringify(savedData) != JSON.stringify(formData) && !stateEq(StepStateEnum.NotInitialize)) {
+      setState(StepStateEnum.Modified);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.pet_type]);
-
-  /*
-  useEffect(() => {
-    setState(StepStateEnum.Modified);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData]);*/
+  }, [formData, otherPetType, otherFood, otherRace, weight, weightUnit]);
 
   useEffect(() => {
     const fetch = async () => {
       if (stateEq(StepStateEnum.NotInitialize)) {
         const basicDataSaved = await BasicDataRepository.findByPetId(petId);
         if (basicDataSaved) {
+          setSavedData(basicDataSaved);
           setBasicData(basicDataSaved);
-          const initial = initials(basicDataSaved, true);
+          const initial = initials(basicDataSaved, loadedWithApi);
+          setLoadedWithApi(true);
           setFormData({ ...basicDataSaved, pet_id: petId, pet_type: initial.petType, main_food: initial.food, race: initial.race });
           setWeight(parseInt(basicDataSaved.weight.split(' ')[0]));
           setWeightUnit(basicDataSaved.weight.split(' ')[1]);
           setOtherPetType(initial.otherPetType);
-          setOtherRace(initial.race);
-          setOtherFood(initial.food);
+          setOtherRace(initial.otherRace);
+          setOtherFood(initial.otherFood);
         }
         setState(StepStateEnum.Initialize);
       }
@@ -105,6 +102,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
         };
         const { error: basicDataErr } = await BasicDataRepository.create(dataToSave);
         if (basicDataErr) throw new Error(basicDataErr?.message || "Error creando mascota");
+        setSavedData(dataToSave);
         setBasicData(dataToSave);
         setState(StepStateEnum.Saved);
       }
@@ -134,10 +132,10 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
                 const val = e.target.value;
                 if (val === 'Otro') {
                   setOtherPetType(initial.petType);
-                  setFormData({ ...formData, pet_type: 'Otro' });
+                  setFormData({ ...formData, pet_type: 'Otro', race: '' });
                 } else {
                   setOtherPetType(initial.petType);
-                  setFormData({ ...formData, pet_type: val });
+                  setFormData({ ...formData, pet_type: val, race: '' });
                 }
               }}
               required
@@ -249,7 +247,6 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
             >
               <option value="" disabled>Selecciona comida</option>
               {foodOptions.map(food => <option key={food} value={food}>{food}</option>)}
-              <option value="Otro">Otro</option>
             </select>
             {formData.main_food === 'Otro' && (
               <input

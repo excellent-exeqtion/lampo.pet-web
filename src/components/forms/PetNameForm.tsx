@@ -6,6 +6,7 @@ import { PetStep, PetType } from '@/types/index';
 import { StepsStateType, StepStateEnum } from '@/types/lib';
 import Steps from "../lib/steps";
 import { Step } from '@/utils/index';
+import { Empty } from '@/data/index';
 
 interface PetFormProps {
   ownerId: string;
@@ -28,6 +29,7 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [savedData, setSavedData] = useState<PetType>(Empty.Pet());
 
   useEffect(() => {
     const fetch = async () => {
@@ -38,6 +40,7 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
         const petSaved = await PetRepository.findById(pet.id);
         if (petSaved) {
           setPet(petSaved);
+          setSavedData(petSaved);
         }
         setState(StepStateEnum.Initialize);
       }
@@ -51,6 +54,13 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pet]);
 
+
+  useEffect(() => {
+    if (JSON.stringify(savedData) != JSON.stringify(pet) && !stateEq(StepStateEnum.NotInitialize)) {
+      setState(StepStateEnum.Modified);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pet]);
 
   // Paso 0: crear mascota
   const handleSubmit = async () => {
@@ -68,6 +78,7 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
         }
         const { error: petErr } = await PetRepository.create(newPet);
         if (petErr) throw new Error(petErr?.message || "Error creando mascota");
+        setSavedData(newPet);
         setState(StepStateEnum.Saved);
         setPet(newPet);
       }

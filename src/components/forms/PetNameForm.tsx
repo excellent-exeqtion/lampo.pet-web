@@ -36,7 +36,6 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
     const fetch = async () => {
       if (stateEq(StepStateEnum.NotInitialize) && pet.id == '') {
         setState(StepStateEnum.Initialize);
-        setLoadLoading(false);
       }
       else if (stateEq(StepStateEnum.NotInitialize)) {
         const petSaved = await PetRepository.findById(pet.id);
@@ -45,8 +44,8 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
           setSavedData(petSaved);
         }
         setState(StepStateEnum.Initialize);
-        setLoadLoading(false);
       }
+      setLoadLoading(false);
     };
     fetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps

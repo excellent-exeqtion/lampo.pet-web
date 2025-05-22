@@ -8,6 +8,7 @@ import { FieldConfig } from "@/types/lib";
  */
 export function forFields<T>(
   items: Partial<T>[],
+  entityName: string,
   fieldsConfig: FieldConfig<T>[]
 ): string | null {
   const missing: string[] = [];
@@ -17,7 +18,7 @@ export function forFields<T>(
       .filter(field => field.mandatory)
       .forEach(field => {
         if (!item[field.name]) {
-          missing.push(`${field.label} #${idx + 1}`);
+          missing.push(`${field.label} en ${entityName} #${idx + 1}`);
         }
       });
   });

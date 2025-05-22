@@ -10,10 +10,9 @@ interface ModalProps {
     setShowModal: Dispatch<SetStateAction<boolean>>;
     maxWidth?: string;
     dropdownRef?: React.RefObject<HTMLDivElement | null>;
-    skipForm?: React.JSX.Element;
 }
 
-export default function Modal({ children, title, description, setShowModal, maxWidth = "450px", dropdownRef, skipForm }: ModalProps) {
+export default function Modal({ children, title, description, setShowModal, maxWidth = "450px", dropdownRef }: ModalProps) {
     return (
         <div
             style={{
@@ -58,14 +57,6 @@ export default function Modal({ children, title, description, setShowModal, maxW
                 <h2 className="modal-title">{title}</h2>
                 <p className="description">{description}</p>
                 {children}
-                {skipForm &&
-                    <React.Fragment>
-                        <br />
-                        <br />
-                        <br />
-                    </React.Fragment>
-                }
-                {skipForm}
             </div>
         </div>
     );

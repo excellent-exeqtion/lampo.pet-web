@@ -52,5 +52,5 @@ export interface FormRepository<T> {
     error: PostgrestError | null;
   }>;
   findByParentId: (parent_id: string) => Promise<T[] | null>;
-  delete?: (id: string) => Promise<void>
+  delete: (id: string) => Promise<void>
 }

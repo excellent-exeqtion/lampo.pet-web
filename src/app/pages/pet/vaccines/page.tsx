@@ -24,7 +24,6 @@ export default function VaccinesPage() {
               try {
                   const vaccines = await new VaccineRepository().findByParentId(selectedPet.id);
                   setPetVaccines(vaccines);
-  
               } catch (err) {
                   console.error("Error loading medicines:", err);
                   // you might set an error state here

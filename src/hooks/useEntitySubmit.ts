@@ -9,6 +9,8 @@ import { FieldConfig } from '../types/lib/index';
 export function useEntitySubmit<T>(
     repository: FormRepository<T>,
     entities: Partial<T>[],
+    entityName: string,
+    setDataCallback: (data: T[]) => void,
     fieldConfig: FieldConfig<T>[],
     stepNumber: number,
     stepStates: StepsStateType[],
@@ -26,7 +28,7 @@ export function useEntitySubmit<T>(
 
     const submit = async (onNext: () => void) => {
         setSubmitting(false);
-        const validationError = Validations.forFields(entities, fieldConfig);
+        const validationError = Validations.forFields(entities, entityName, fieldConfig);
         if (validationError) {
             setError(validationError);
             return;
@@ -36,6 +38,7 @@ export function useEntitySubmit<T>(
             if (stateEq(StepStateEnum.Modified)) {
                 const { error: saveErr } = await repository.createAll(entities as T[]);
                 if (saveErr) throw new Error(saveErr.message);
+                setDataCallback(entities as T[]);
                 setState(StepStateEnum.Saved);
             }
             onNext();

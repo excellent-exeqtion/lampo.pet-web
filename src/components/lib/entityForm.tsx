@@ -58,10 +58,12 @@ export default function EntityForm<T extends { id?: string }>({
 
   // 2) Gestión de la lista en memoria (añadir, eliminar, editar)
   const { addItem, removeItem, updateItem } = useEntityList<T>(
+    repository,
     emptyFactory,
     petId,
     list,
-    setList
+    setList,
+    setLoadError
   );
 
   // 3) Envío y validación
@@ -72,6 +74,8 @@ export default function EntityForm<T extends { id?: string }>({
   } = useEntitySubmit<T>(
     repository,
     list,
+    entityName,
+    setData,
     fieldsConfig,
     step,
     stepStates,

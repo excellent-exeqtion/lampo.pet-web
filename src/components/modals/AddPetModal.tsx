@@ -80,7 +80,6 @@ export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
     setStoredPet(pet);
     setShowAddPetModal(false);
   };
-  const skipHandler = () => (step < totalSteps - 1 ? next() : finalize());
 
   // Configuración dinámica para los pasos que usan EntityForm
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -219,20 +218,7 @@ export default function AddPetModal({ setShowAddPetModal }: AddPetModalProps) {
   };
 
   return (
-    <Modal
-      title={stepTitle()}
-      setShowModal={setShowAddPetModal}
-      maxWidth="1000px"
-      skipForm={
-        step > PetStep.BasicData ? (
-          <div className="tooltip-container" style={{ float: "right" }}>
-            <a onClick={skipHandler} style={{ fontSize: 18 }}>
-              Agregar después
-            </a>
-          </div>
-        ) : undefined
-      }
-    >
+    <Modal title={stepTitle()} setShowModal={setShowAddPetModal}  maxWidth="1000px">
       {renderStep()}
     </Modal>
   );

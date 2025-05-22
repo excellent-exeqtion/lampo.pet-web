@@ -17,8 +17,8 @@ export class SurgeryRepository {
         return { data, error };
     }
 
-    static async findByPet(pet_id: string): Promise<SurgeryDataType[] | null> {
-        const { data, error } = await supabase.from('surgeries').select('*').eq('pet_id', pet_id);
+    static async findByParentId(parent_id: string): Promise<SurgeryDataType[] | null> {
+        const { data, error } = await supabase.from('surgeries').select('*').eq('pet_id', parent_id);
         if (error) throw new Error(error.message);
         if (!data) return null;
         return data;
@@ -29,6 +29,6 @@ export class SurgeryRepository {
     }
 
     static async delete(id: string) {
-        return supabase.from('surgeries').delete().eq('id', id);
+        await supabase.from('surgeries').delete().eq('id', id);
     }
 }

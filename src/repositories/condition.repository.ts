@@ -1,7 +1,8 @@
 import { supabase } from '@/lib/client/supabase';
 import type { ConditionDataType } from '@/types/index';
+import { FormRepository } from '@/types/lib';
 
-export class ConditionRepository {
+export class ConditionRepository implements FormRepository<ConditionDataType> {
     static async create(condition: ConditionDataType) {
         return supabase.from('conditions').insert(condition);
     }
@@ -17,8 +18,8 @@ export class ConditionRepository {
         return { data, error };
     }
 
-    static async findByPet(pet_id: string): Promise<ConditionDataType[] | null> {
-        const { data, error } = await supabase.from('conditions').select('*').eq('pet_id', pet_id);
+    async findByParentId(parent_id: string): Promise<ConditionDataType[] | null> {
+        const { data, error } = await supabase.from('conditions').select('*').eq('pet_id', parent_id);
         if (error) throw new Error(error.message);
         if (!data) return null;
         return data;
@@ -28,7 +29,7 @@ export class ConditionRepository {
         return supabase.from('conditions').update(condition).eq('id', condition.id);
     }
 
-    static async delete(id: string) {
-        return supabase.from('conditions').delete().eq('id', id);
+    async delete(id: string) {
+        await supabase.from('conditions').delete().eq('id', id);
     }
 }

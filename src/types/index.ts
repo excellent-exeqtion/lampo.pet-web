@@ -156,3 +156,8 @@ export const InitialStepsState = [
     { number: PetStep.Conditions, state: StepStateEnum.NotInitialize },
     { number: PetStep.Surgeries, state: StepStateEnum.NotInitialize },
 ];
+
+export interface FormRepository<T> {
+  findByPet: (pet_id: string) => Promise<T[] | null>;
+  delete?: (id: string) => Promise<void>
+}

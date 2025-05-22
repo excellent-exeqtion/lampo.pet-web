@@ -4,11 +4,10 @@
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { Step } from '@/utils/index';
-import { StepStateEnum, StepsStateType } from '@/types/lib';
+import { FormRepository, StepStateEnum, StepsStateType } from '@/types/lib';
 
 export function useLoadEntities<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  repository: { findByPet: (petId: string) => Promise<T[]>; delete?: (id: string) => Promise<any> },
+  repository: FormRepository<T>,
   petId: string,
   initialData: T[],
   setDataCallback: (data: T[]) => void,
@@ -30,7 +29,7 @@ export function useLoadEntities<T>(
   useEffect(() => {
     if (stateEq(StepStateEnum.NotInitialize)) {
       (async () => {
-        const saved = await repository.findByPet(petId);
+        const saved = await repository.findByParentId(petId);
         if (saved) {
           setSavedData(saved);
           setDataCallback(saved);

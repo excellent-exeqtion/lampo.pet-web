@@ -1,21 +1,25 @@
 // src/hooks/useEntitySubmit.ts
 "use client";
 
-import { useState } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { StepStateEnum, StepsStateType } from '@/types/lib';
-import { Step } from '@/utils/index';
+import { Step, Validations } from '@/utils/index';
+import { FieldConfig } from '../types/lib/index';
 
 export function useEntitySubmit<T>(
   entities: Partial<T>[],
-  validateFn: (items: Partial<T>[]) => string | null,
+  fieldConfig: FieldConfig<T>[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   saveFn: (items: T[]) => Promise<{ error?: any }>,
   stepNumber: number,
   stepStates: StepsStateType[],
-  setStepStates: React.Dispatch<React.SetStateAction<StepsStateType[]>>
+  setStepStates: React.Dispatch<React.SetStateAction<StepsStateType[]>>,
+  error: string | null,
+  setError: Dispatch<SetStateAction<string | null>>,
+  loading: boolean,
+  setLoading: Dispatch<SetStateAction<boolean>>
 ) {
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  setLoading(false);
 
   const setState = (state: StepStateEnum, err: string | null = null) => {
     Step.ChangeState(stepStates, setStepStates, stepNumber, state, err);
@@ -24,7 +28,7 @@ export function useEntitySubmit<T>(
     stepStates.find(x => x.number === stepNumber)?.state === state;
 
   const submit = async (onNext: () => void) => {
-    const validationError = validateFn(entities);
+    const validationError = Validations.forFields(entities, fieldConfig);
     if (validationError) {
       setError(validationError);
       return;
@@ -47,5 +51,5 @@ export function useEntitySubmit<T>(
     }
   };
 
-  return { submit, loading, error, setError };
+  return { submit, loading, error };
 }

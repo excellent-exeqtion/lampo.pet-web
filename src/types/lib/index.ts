@@ -36,3 +36,16 @@ export enum StepStateEnum {
   Skipped = 4,
   Error = 5,
 }
+
+export interface FieldConfig<T> {
+  label: string;
+  name: keyof T;
+  type: "text" | "date";
+  mandatory?: boolean;
+  className?: string;
+}
+
+export interface FormRepository<T> {
+  findByParentId: (parent_id: string) => Promise<T[] | null>;
+  delete?: (id: string) => Promise<void>
+}

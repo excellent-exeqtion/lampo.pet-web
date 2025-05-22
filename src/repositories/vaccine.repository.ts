@@ -17,8 +17,8 @@ export class VaccineRepository {
         return { data, error };
     }
 
-    static async findByPet(pet_id: string): Promise<VaccineDataType[] | null> {
-        const { data, error } = await supabase.from('vaccines').select('*').eq('pet_id', pet_id);
+    static async findByParent(parent_id: string): Promise<VaccineDataType[] | null> {
+        const { data, error } = await supabase.from('vaccines').select('*').eq('pet_id', parent_id);
         if (error) throw new Error(error.message);
         if (!data) return null;
         return data;
@@ -29,6 +29,6 @@ export class VaccineRepository {
     }
 
     static async delete(id: string) {
-        return supabase.from('vaccines').delete().eq('id', id);
+        await supabase.from('vaccines').delete().eq('id', id);
     }
 }

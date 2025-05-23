@@ -13,6 +13,7 @@ import Image from 'next/image'
 import { PetType } from "@/types/index";
 import Modal from "../lib/modal";
 import { Empty } from "@/data/index";
+import { CircularImage } from "@/components/index"
 
 interface ChangePetModalProps {
   setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
@@ -70,20 +71,11 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
           }}
         >
           <div style={{ display: "flex", alignItems: "center" }}>
-            <Image
-              loading={"lazy"}
-              src={selectedPet.image || '/pets/pet.png'}
-              alt={selectedPet.name ?? "Sin mascota"}
-              width="40" height="40"
-              style={{
-                width: "100%",
-                height: "auto",
-                borderRadius: "50%",
-                objectFit: "cover",
-                marginRight: "0.75rem",
-              }}
-            />
-            <span style={{ color: '#000' }}>
+            <CircularImage
+              src={selectedPet.image || "/pets/pet.png"}
+              width={60}
+              borderSize="3px" />
+            <span style={{ color: '#000', marginLeft: '10px' }}>
               {selectedPet.name ?? "Selecciona una mascota"}
             </span>
           </div>
@@ -120,20 +112,11 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
                   cursor: "pointer",
                 }}
               >
-                <Image
-                  loading={"lazy"}
-                  src={pet.image || '/pets/pet.png'}
-                  alt={pet.name}
-                  width="32" height="32"
-                  style={{
-                    width: "auto",
-                    height: "auto",
-                    borderRadius: "50%",
-                    objectFit: "cover",
-                    marginRight: "0.75rem",
-                  }}
-                />
-                <span style={{ color: '#000' }}>{pet.name}</span>
+                <CircularImage
+                  src={pet.image || "/pets/pet.png"}
+                  width={50}
+                  borderSize="3px" />
+                <span style={{ color: '#000', marginLeft: '8px' }}>{pet.name}</span>
               </li>
             ))}
             <li

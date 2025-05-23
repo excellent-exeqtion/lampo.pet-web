@@ -24,6 +24,7 @@ import { VeterinaryAccessType } from "@/types/index";
 import { isOwner, isVet } from "@/services/roleService";
 import { FaPencil } from "react-icons/fa6";
 import { Empty } from "@/data/index";
+import { CircularImage } from "@/components/index";
 
 export default function SideBar({
     menuOpen,
@@ -99,12 +100,9 @@ export default function SideBar({
                     }}
                 >
                     <div style={{ padding: "0 1rem 1rem", display: 'flex', alignItems: 'center' }}>
-                        <Image
-                            loading={"lazy"}
-                            src={selectedPet.image || '/pets/pet.png'}
-                            alt="profile"
-                            width="80" height="80" style={{ width: "auto", height: "auto", borderRadius: "50%", marginBottom: "0.5rem" }}
-                        />
+                        <CircularImage
+                            src={selectedPet.image!}
+                            width={80} />
                         <p style={{ marginLeft: '20px' }}><b>{selectedPet.name ?? 'Nombre de tu mascota'}</b></p>
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
@@ -147,12 +145,9 @@ export default function SideBar({
                     }}
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <Image
-                            loading={"lazy"}
-                            src={selectedPet.image! || '/pets/pet.png'}
-                            alt="profile"
-                            width="80" height="80" style={{ width: "auto", height: "auto", borderRadius: "50%" }}
-                        />
+                        <CircularImage
+                            src={selectedPet.image!}
+                            width={60} borderSize="3px"/>
                         <span style={{ fontSize: "1rem", fontWeight: "600" }}>{selectedPet.name}</span>
                     </div>
 

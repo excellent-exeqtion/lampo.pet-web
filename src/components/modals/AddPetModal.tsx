@@ -4,7 +4,7 @@
 import React, { useState, Dispatch, SetStateAction } from "react";
 import { useAppContext } from "@/app/layout";
 import Modal from "../lib/modal";
-import EntityForm from "../lib/entityForm";
+import { EntityForm } from "@/components/index";
 
 import { PetNameForm, BasicDataForm } from "@/components/forms";
 

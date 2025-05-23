@@ -8,7 +8,7 @@ import { useLoadEntities } from "@/hooks/useLoadEntities";
 import { useEntityList } from "@/hooks/useEntityList";
 import { useEntitySubmit } from "@/hooks/useEntitySubmit";
 import type { FormRepository, FieldConfig, StepsStateType } from "@/types/lib";
-import { EntityFields } from "@/components/lib/entityFields";
+import { EntityFields } from "@/components/index";
 
 export interface EntityFormProps<T extends { id?: string }> {
   petId: string;

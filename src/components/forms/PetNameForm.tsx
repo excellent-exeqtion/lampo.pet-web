@@ -9,7 +9,7 @@ import { StepsStateType, StepStateEnum } from '@/types/lib';
 import Steps from '../lib/steps';
 import { Step } from '@/utils/index';
 import { Empty } from '@/data/index';
-import Image from 'next/image';
+import { CircularImage } from "@/components/index";
 
 interface PetFormProps {
   ownerId: string;
@@ -42,7 +42,6 @@ export default function BasicDataForm({
   const [submitLoading, setSubmitLoading] = useState(false);
   const [savedData, setSavedData] = useState<PetType>(Empty.Pet());
   const [preview, setPreview] = useState<string>(pet.image || '/pets/pet.png');
-  const [hover, setHover] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -79,6 +78,7 @@ export default function BasicDataForm({
       setLoadLoading(false);
     };
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pet]);
 
   useEffect(() => {
@@ -88,6 +88,7 @@ export default function BasicDataForm({
     ) {
       setState(StepStateEnum.Modified);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pet]);
 
   const handleSubmit = async () => {
@@ -104,6 +105,7 @@ export default function BasicDataForm({
         setPet(newPet);
       }
       onNext();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setState(StepStateEnum.Error, err.message);
       setError(err.message);
@@ -135,50 +137,15 @@ export default function BasicDataForm({
         </label>
 
         {pet.image ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div
-              {...getRootProps()}
-              style={{
-                position: 'relative',
-                width: '128px',
-                height: '128px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                border: '3px solid #ccc',
-                cursor: 'pointer'
-              }}
-              onClick={open}
-              onMouseEnter={() => setHover(true)}
-              onMouseLeave={() => setHover(false)}
-            >
-              <input {...getInputProps()} />
-              <Image
-                src={preview}
-                alt="Foto de mascota"
-                fill
-                style={{ objectFit: 'cover' }}
-              />
-              {hover && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: 'rgba(255,255,255,0.6)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <span style={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
-                    Cambiar foto
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
+          <CircularImage
+            src={preview}
+            width={200}
+            getRootProps={getRootProps}
+            getInputProps={getInputProps}
+            onClick={open}
+            overlayText="Cambiar foto"
+            hoverEnabled={true}
+          />
         ) : (
           <div
             {...getRootProps()}

@@ -15,7 +15,7 @@ interface EntityFieldsProps<T> {
     updateItem: (index: number, field: keyof T, value: any) => void;
 }
 
-export function EntityFields<T extends object>({
+export default function EntityFields<T extends object>({
     fieldsConfig,
     item,
     index,

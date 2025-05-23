@@ -56,7 +56,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   const [otherRace, setOtherRace] = useState<string>(initial.otherRace);
   const [loadedWithApi, setLoadedWithApi] = useState<boolean>(false);
   const [savedData, setSavedData] = useState<BasicDataType>(Empty.BasicData());
-  const { isMobile } = useDeviceDetect();
+  const { isMobile, isDesktop, isTablet } = useDeviceDetect();
 
   // Estilo común de grid: en móvil siempre 2 columnas, en desktop auto-ajusta
   const sectionGridStyle: React.CSSProperties = {
@@ -66,6 +66,14 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
       ? "repeat(2, 1fr)"
       : "repeat(4, 1fr)"
   };
+  // Estilo común de grid: en móvil siempre 2 columnas, en desktop auto-ajusta
+  const tabletSectionGridStyle: React.CSSProperties = {
+    display: "grid",
+    gap: "1rem",
+    gridTemplateColumns: "repeat(2, 1fr)"
+  };
+
+
 
   useEffect(() => {
     if (JSON.stringify(savedData) != JSON.stringify(formData) && !stateEq(StepStateEnum.NotInitialize) && loadLoading == false) {
@@ -339,7 +347,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
       {/* Sección: Vacunación y procedimientos */}
       <fieldset>
         <legend><b>Vacunación y procedimientos</b></legend>
-        <div style={sectionGridStyle}>
+        <div style={isTablet ? tabletSectionGridStyle : sectionGridStyle}>
           <div style={{ gridColumn: 'span 2' }}>
             <label className="flex items-center gap-2" htmlFor="has_vaccine">
               <input
@@ -352,7 +360,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               Tiene vacunas
             </label>
           </div>
-          {!isMobile &&
+          {isDesktop &&
             <>
               <div>
                 <label className="flex items-center gap-2" htmlFor="is_castrated">
@@ -381,7 +389,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
             </>
           }
         </div>
-        <div style={sectionGridStyle}>
+        <div style={isTablet ? tabletSectionGridStyle : sectionGridStyle}>
           {formData.has_vaccine && (
             <>
               <div>
@@ -412,7 +420,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
             <>
               <div style={{ gridColumn: 'span 2' }}></div>
             </>}
-          {isMobile &&
+          {!isDesktop &&
             <>
               <div>
                 <label className="flex items-center gap-2" htmlFor="is_castrated">
@@ -487,7 +495,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
             />
             Usa medicina
           </label>
-          <label className="flex items-center gap-2" htmlFor="special_condition">
+          <label className="flex items-center gap-2" htmlFor="special_condition" style={{ whiteSpace: 'nowrap' }}>
             <input
               id="special_condition"
               type="checkbox"

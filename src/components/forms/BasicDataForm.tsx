@@ -56,7 +56,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   const [savedData, setSavedData] = useState<BasicDataType>(Empty.BasicData());
 
   useEffect(() => {
-    if (JSON.stringify(savedData) != JSON.stringify(formData) && !stateEq(StepStateEnum.NotInitialize)) {
+    if (JSON.stringify(savedData) != JSON.stringify(formData) && !stateEq(StepStateEnum.NotInitialize) && loadLoading == false) {
       setState(StepStateEnum.Modified);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

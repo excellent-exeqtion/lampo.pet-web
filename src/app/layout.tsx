@@ -118,7 +118,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         if (isOwner(appSession)) {
           // Obtener lista de mascotas (desde storage o API)
-          if (storedOwnerPets.length == 0) {
+          if (storedOwnerPets.length == 0 ) {
             pets = await PetRepository.findByOwnerId(ownerId ?? "");
             setStoredOwnerPets(pets);
           }
@@ -146,7 +146,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     })();
     return () => { isMounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appSession, ownerId, storedPet, storedOwnerPets, selectedPet]);
+  }, [appSession, ownerId, storedPet, storedOwnerPets, selectedPet, showEditPetModal]);
 
 
   // Nuevo handleLogout: fuerza recarga completa

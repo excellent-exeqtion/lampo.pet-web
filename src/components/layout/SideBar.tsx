@@ -1,6 +1,6 @@
 // app/components/modals/side-bar.tsx
 "use client";
-import React, { Dispatch, SetStateAction } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import {
     FaBars,
     FaCloudSun,
@@ -35,7 +35,8 @@ export default function SideBar({
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
     setShowEditPetModal: Dispatch<SetStateAction<boolean>>;
 }) {
-    const { isMobile, logout, selectedPet, session, storedVetAccess, setStoredVetAccess } = useAppContext();
+    const { isMobile, logout, storedPet, session, storedVetAccess, setStoredVetAccess } = useAppContext();
+    const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
 
     const menuData = (show: boolean, session: AppSession | null | undefined, vetAccess: VeterinaryAccessType): MenuType[] => [
@@ -50,12 +51,14 @@ export default function SideBar({
         { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner(session) },
         { label: "Agregar Consulta", icon: <FaCog />, url: "/pages/vet/diagnostic", show: isVet(session, vetAccess) }
     ];
+    useEffect(() => {
+        const menu = menuData(storedPet.id != "", session, storedVetAccess);
 
-    const menuItems = menuData(selectedPet != null, session, storedVetAccess);
-
-    if (selectedPet) {
-        menuItems.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner(session) });
-    }
+        if (storedPet) {
+            menu.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner(session) });
+        }
+        setMenuItems(menu);
+    }, [storedPet, session, storedVetAccess, setShowEditPetModal]);
 
     const goToLogin = () => {
         setStoredVetAccess(Empty.VetAccess());
@@ -63,12 +66,12 @@ export default function SideBar({
     }
 
     function item({ label, icon, url, show, showModal }: MenuType) {
-        if(showModal){
+        if (showModal) {
             return (
                 <li key={label} style={{ marginBottom: "0.5rem" }}>
-                        <a onClick={() => showModal(true)} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            {icon} {label}
-                        </a>
+                    <a onClick={() => showModal(true)} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        {icon} {label}
+                    </a>
                 </li>
             );
         }
@@ -78,9 +81,9 @@ export default function SideBar({
         else {
             return (
                 <li key={label} style={{ marginBottom: "0.5rem" }}>
-                        <Link href={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            {icon} {label}
-                        </Link>
+                    <Link href={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        {icon} {label}
+                    </Link>
                 </li>
             );
         }
@@ -101,9 +104,9 @@ export default function SideBar({
                 >
                     <div style={{ padding: "0 1rem 1rem", display: 'flex', alignItems: 'center' }}>
                         <CircularImage
-                            src={selectedPet.image!}
+                            src={storedPet.image || "/pets/pet.png"}
                             width={80} />
-                        <p style={{ marginLeft: '20px' }}><b>{selectedPet.name ?? 'Nombre de tu mascota'}</b></p>
+                        <p style={{ marginLeft: '20px' }}><b>{storedPet.name ?? 'Nombre de tu mascota'}</b></p>
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
@@ -146,9 +149,9 @@ export default function SideBar({
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <CircularImage
-                            src={selectedPet.image!}
-                            width={60} borderSize="3px"/>
-                        <span style={{ fontSize: "1rem", fontWeight: "600" }}>{selectedPet.name}</span>
+                            src={storedPet.image || "/pets/pet.png"}
+                            width={60} borderSize="3px" />
+                        <span style={{ fontSize: "1rem", fontWeight: "600" }}>{storedPet.name}</span>
                     </div>
 
                     <button

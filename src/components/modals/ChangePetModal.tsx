@@ -20,7 +20,7 @@ interface ChangePetModalProps {
 };
 
 export default function ChangePetModal({ setShowChangePetModal, setShowAddPetModal }: ChangePetModalProps) {
-  const { storedOwnerPets, selectedPet, setStoredPet: setStoredPetId, setStoredVetAccess } = useAppContext();
+  const { storedOwnerPets, storedPet, setStoredPet: setStoredPetId, setStoredVetAccess } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -71,11 +71,11 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
         >
           <div style={{ display: "flex", alignItems: "center" }}>
             <CircularImage
-              src={selectedPet.image || "/pets/pet.png"}
+              src={storedPet.image || "/pets/pet.png"}
               width={60}
               borderSize="3px" />
             <span style={{ color: '#000', marginLeft: '10px' }}>
-              {selectedPet.name ?? "Selecciona una mascota"}
+              {storedPet.name ?? "Selecciona una mascota"}
             </span>
           </div>
           {isOpen ? <FaChevronUp /> : <FaChevronDown />}

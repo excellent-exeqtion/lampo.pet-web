@@ -54,7 +54,7 @@ export default function Bubbles({
   showEditPetModal,
 }: BubblesProps) {
 
-  const { storedOwnerPets, session, storedVetAccess, selectedPet } = useAppContext();
+  const { storedOwnerPets, session, storedVetAccess, storedPet } = useAppContext();
   const [showChangePetBubble, setShowChangePetBubble] = useState(false);
 
   useEffect(() => {
@@ -134,7 +134,7 @@ export default function Bubbles({
       {showCodeModal && <PetCodeModal setShowCodeModal={setShowCodeModal} />}
       {showFeedbackModal && <FeedbackModal setShowFeedbackModal={setShowFeedbackModal} />}
       {showAddPetModal && <AddPetModal setShowAddPetModal={setShowAddPetModal} />}
-      {showEditPetModal && <AddPetModal editPet={selectedPet} setShowAddPetModal={setShowEditPetModal} />}
+      {showEditPetModal && <AddPetModal editPet={storedPet} setShowAddPetModal={setShowEditPetModal} />}
     </div>
   );
 }

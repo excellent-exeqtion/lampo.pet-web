@@ -10,6 +10,7 @@ import Steps from '../lib/steps';
 import { Step } from '@/utils/index';
 import { Empty } from '@/data/index';
 import { CircularImage } from "@/components/index";
+import { useAppContext } from '@/app/layout';
 
 interface PetFormProps {
   ownerId: string;
@@ -21,7 +22,7 @@ interface PetFormProps {
   setStepStates: Dispatch<React.SetStateAction<StepsStateType[]>>;
 }
 
-export default function BasicDataForm({
+export default function PetNameForm({
   ownerId,
   pet,
   setPet,
@@ -42,6 +43,7 @@ export default function BasicDataForm({
   const [submitLoading, setSubmitLoading] = useState(false);
   const [savedData, setSavedData] = useState<PetType>(Empty.Pet());
   const [preview, setPreview] = useState<string>(pet.image || '/pets/pet.png');
+  const { setStoredPet, setStoredOwnerPets } = useAppContext();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -70,6 +72,8 @@ export default function BasicDataForm({
         const petSaved = await PetRepository.findById(pet.id);
         if (petSaved) {
           setPet(petSaved);
+          setStoredPet(petSaved);
+          setStoredOwnerPets([]);
           setSavedData(petSaved);
           setPreview(petSaved.image || preview);
         }
@@ -78,7 +82,7 @@ export default function BasicDataForm({
       setLoadLoading(false);
     };
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pet]);
 
   useEffect(() => {
@@ -88,7 +92,7 @@ export default function BasicDataForm({
     ) {
       setState(StepStateEnum.Modified);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pet]);
 
   const handleSubmit = async () => {
@@ -101,11 +105,13 @@ export default function BasicDataForm({
         const { error: petErr } = await PetRepository.create(newPet);
         if (petErr) throw new Error(petErr.message);
         setSavedData(newPet);
+        setStoredPet(newPet);
+        setStoredOwnerPets([]);
         setState(StepStateEnum.Saved);
         setPet(newPet);
       }
       onNext();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setState(StepStateEnum.Error, err.message);
       setError(err.message);

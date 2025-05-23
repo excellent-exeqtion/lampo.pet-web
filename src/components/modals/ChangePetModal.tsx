@@ -9,7 +9,6 @@ import React, {
 } from "react";
 import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
 import { useAppContext } from "@/app/layout";
-import Image from 'next/image'
 import { PetType } from "@/types/index";
 import Modal from "../lib/modal";
 import { Empty } from "@/data/index";

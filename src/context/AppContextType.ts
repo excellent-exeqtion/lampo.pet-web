@@ -3,7 +3,6 @@ import { PetCodeType, PetType, VeterinaryAccessType } from "@/types/index";
 import { AppSession } from "@/types/lib";
 
 export interface AppContextType {
-  isMobile: boolean;
   session: AppSession | null;
   logout: () => object;
   selectedPet: PetType;

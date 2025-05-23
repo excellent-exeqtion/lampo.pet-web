@@ -10,11 +10,13 @@ import { Dates } from "@/utils/index";
 import { FormType } from "@/types/lib";
 import { SurgeryRepository } from "@/repos/index";
 import { SurgeryDataType } from "@/types/index";
+import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 
 export default function SurgeriesPage() {
     useRequireAuth();
 
-    const { isMobile, selectedPet } = useAppContext();
+    const { isMobile } = useDeviceDetect();
+    const { selectedPet, showEditPetModal } = useAppContext();
     const [petSurgeries, setPetSurgeries] = useState<SurgeryDataType[] | null>(null);
 
     useEffect(() => {
@@ -32,7 +34,7 @@ export default function SurgeriesPage() {
         };
 
         fetchData();
-    }, [selectedPet.id]);
+    }, [selectedPet.id, showEditPetModal]);
 
     const renderContent = (isMobile: boolean) => {
         if (petSurgeries == undefined) {

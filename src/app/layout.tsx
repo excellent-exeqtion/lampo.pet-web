@@ -19,9 +19,9 @@ import { geistMono, geistSans } from "@/styles/geist";
 import { usePathname, useRouter } from "next/navigation";
 import { isOwner, isVetWithoutUserSession } from "@/services/roleService";
 import { Empty } from "../data";
+import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 
 const AppContext = createContext<AppContextType>({
-  isMobile: false,
   session: { db: null! },
   logout: async () => { },
   selectedPet: Empty.Pet(),
@@ -44,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const isVetRoute = pathname?.startsWith("/pages/vet/");
 
+  const { isMobile } = useDeviceDetect();
   const rawSession = useRawSession(); // undefined | null | Session
 
   // Hydration detection
@@ -60,7 +61,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     else setAppSession({ db: rawSession });
   }, [rawSession]);
 
-  const [isMobile, setIsMobile] = useState(false);
   const [selectedPet, setSelectedPet] = useState<PetType>(Empty.Pet());
   const [menuOpen, setMenuOpen] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -167,14 +167,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     }
   };
 
-  // Detección de viewport
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= 767);
-    onResize();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
   // Cargando estado de sesión
   if (appSession === undefined) {
     return (
@@ -220,7 +212,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <style>{tooltipStyles}</style>
         <AppContext.Provider
           value={{
-            isMobile,
             session: appSession,
             logout: handleLogout,
             selectedPet,

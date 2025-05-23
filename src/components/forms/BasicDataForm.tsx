@@ -1,3 +1,4 @@
+// src/components/forms/BasicDataForm.tsx
 import React, { useState, useEffect, Dispatch } from 'react';
 import { BasicDataRepository } from '@/repos/basicData.repository';
 import { InitialBasicDataType, PetStep as PetStep, type BasicDataType } from '@/types/index';
@@ -6,6 +7,7 @@ import { Dates, Step } from '@/utils/index';
 import { petTypes, genders, weightUnits, breedOptions, foodOptions, weightConditionOptions, sizeOptions } from '@/data/petdata';
 import Steps from "../lib/steps";
 import { Empty } from '@/data/index';
+import { useDeviceDetect } from '@/hooks/useDeviceDetect';
 
 interface BasicDataFormProps {
   petId: string;
@@ -54,6 +56,16 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   const [otherRace, setOtherRace] = useState<string>(initial.otherRace);
   const [loadedWithApi, setLoadedWithApi] = useState<boolean>(false);
   const [savedData, setSavedData] = useState<BasicDataType>(Empty.BasicData());
+  const { isMobile } = useDeviceDetect();
+
+  // Estilo común de grid: en móvil siempre 2 columnas, en desktop auto-ajusta
+  const sectionGridStyle: React.CSSProperties = {
+    display: "grid",
+    gap: "1rem",
+    gridTemplateColumns: isMobile
+      ? "repeat(2, 1fr)"
+      : "repeat(4, 1fr)"
+  };
 
   useEffect(() => {
     if (JSON.stringify(savedData) != JSON.stringify(formData) && !stateEq(StepStateEnum.NotInitialize) && loadLoading == false) {
@@ -123,8 +135,8 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
     <Steps onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={stepStates.length} error={error}>
       {/* Sección: Información básica */}
       <fieldset>
-        <legend>Información básica</legend>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <legend><b>Información básica</b></legend>
+        <div style={sectionGridStyle}>
           <div>
             <label htmlFor="pet_type">Tipo de mascota</label>
             <select
@@ -234,8 +246,8 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
 
       {/* Sección: Alimentación y entorno */}
       <fieldset>
-        <legend>Alimentación y entorno</legend>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <legend><b>Alimentación y entorno</b></legend>
+        <div style={sectionGridStyle}>
           <div>
             <label htmlFor="main_food">Comida principal</label>
             <select
@@ -295,6 +307,8 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               {sizeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
             </select>
           </div>
+        </div>
+        <div style={sectionGridStyle}>
           <div>
             <label className="flex items-center gap-2" htmlFor="lives_with_others">
               <input
@@ -322,24 +336,56 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
         </div>
       </fieldset>
 
-      {/* Sección: Vacunación */}
+      {/* Sección: Vacunación y procedimientos */}
       <fieldset>
-        <legend>Vacunación</legend>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label className="flex items-center gap-2" htmlFor="has_vaccine">
-            <input
-              id="has_vaccine"
-              type="checkbox"
-              checked={formData.has_vaccine}
-              disabled={loadLoading}
-              onChange={e => setFormData({ ...formData, has_vaccine: e.target.checked })}
-            />
-            Tiene vacunas
-          </label>
+        <legend><b>Vacunación y procedimientos</b></legend>
+        <div style={sectionGridStyle}>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label className="flex items-center gap-2" htmlFor="has_vaccine">
+              <input
+                id="has_vaccine"
+                type="checkbox"
+                checked={formData.has_vaccine}
+                disabled={loadLoading}
+                onChange={e => setFormData({ ...formData, has_vaccine: e.target.checked })}
+              />
+              Tiene vacunas
+            </label>
+          </div>
+          {!isMobile &&
+            <>
+              <div>
+                <label className="flex items-center gap-2" htmlFor="is_castrated">
+                  <input
+                    id="is_castrated"
+                    type="checkbox"
+                    checked={formData.is_castrated}
+                    onChange={e => setFormData({ ...formData, is_castrated: e.target.checked })}
+                    disabled={loadLoading}
+                  />
+                  Castrado
+                </label>
+              </div>
+              <div>
+                <label className="flex items-center gap-2" htmlFor="has_anti_flea">
+                  <input
+                    id="has_anti_flea"
+                    type="checkbox"
+                    checked={formData.has_anti_flea}
+                    disabled={loadLoading}
+                    onChange={e => setFormData({ ...formData, has_anti_flea: e.target.checked })}
+                  />
+                  Antipulgas
+                </label>
+              </div>
+            </>
+          }
+        </div>
+        <div style={sectionGridStyle}>
           {formData.has_vaccine && (
             <>
               <div>
-                <label htmlFor="last_vaccine_name">Nombre última vacuna</label>
+                <label htmlFor="last_vaccine_name" style={{ whiteSpace: 'nowrap' }}>Nombre última vacuna</label>
                 <input
                   id="last_vaccine_name"
                   type="text"
@@ -362,66 +408,75 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               </div>
             </>
           )}
-        </div>
-      </fieldset>
-
-      {/* Sección: Procedimientos */}
-      <fieldset>
-        <legend>Procedimientos</legend>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label className="flex items-center gap-2" htmlFor="is_castrated">
-            <input
-              id="is_castrated"
-              type="checkbox"
-              checked={formData.is_castrated}
-              onChange={e => setFormData({ ...formData, is_castrated: e.target.checked })}
-              disabled={loadLoading}
-            />
-            Castrado
-          </label>
-          {formData.is_castrated && (
-            <div>
-              <label htmlFor="castration_date">Fecha de castración</label>
-              <input
-                id="castration_date"
-                type="date"
-                className="w-full"
-                value={formData.castration_date ? Dates.format(formData.castration_date) : ''}
-                onChange={e => setFormData({ ...formData, castration_date: e.target.valueAsDate || undefined })}
-                disabled={loadLoading}
-              />
-            </div>
-          )}
-          <label className="flex items-center gap-2" htmlFor="has_anti_flea">
-            <input
-              id="has_anti_flea"
-              type="checkbox"
-              checked={formData.has_anti_flea}
-              disabled={loadLoading}
-              onChange={e => setFormData({ ...formData, has_anti_flea: e.target.checked })}
-            />
-            Antipulgas
-          </label>
-          {formData.has_anti_flea && (
-            <div>
-              <label htmlFor="anti_flea_date">Fecha antipulgas</label>
-              <input
-                id="anti_flea_date"
-                type="date"
-                className="w-full"
-                value={formData.anti_flea_date ? Dates.format(formData.anti_flea_date) : ''}
-                disabled={loadLoading}
-                onChange={e => setFormData({ ...formData, anti_flea_date: e.target.valueAsDate || undefined })}
-              />
-            </div>
-          )}
+          {!formData.has_vaccine &&
+            <>
+              <div style={{ gridColumn: 'span 2' }}></div>
+            </>}
+          {isMobile &&
+            <>
+              <div>
+                <label className="flex items-center gap-2" htmlFor="is_castrated">
+                  <input
+                    id="is_castrated"
+                    type="checkbox"
+                    checked={formData.is_castrated}
+                    onChange={e => setFormData({ ...formData, is_castrated: e.target.checked })}
+                    disabled={loadLoading}
+                  />
+                  Castrado
+                </label>
+              </div>
+              <div>
+                <label className="flex items-center gap-2" htmlFor="has_anti_flea">
+                  <input
+                    id="has_anti_flea"
+                    type="checkbox"
+                    checked={formData.has_anti_flea}
+                    disabled={loadLoading}
+                    onChange={e => setFormData({ ...formData, has_anti_flea: e.target.checked })}
+                  />
+                  Antipulgas
+                </label>
+              </div>
+            </>
+          }
+          <div>
+            {formData.is_castrated && (
+              <div>
+                <label htmlFor="castration_date">Fecha de castración</label>
+                <input
+                  id="castration_date"
+                  type="date"
+                  className="w-full"
+                  value={formData.castration_date ? Dates.format(formData.castration_date) : ''}
+                  onChange={e => setFormData({ ...formData, castration_date: e.target.valueAsDate || undefined })}
+                  disabled={loadLoading}
+                />
+              </div>
+            )}
+          </div>
+          <div>
+            {formData.has_anti_flea && (
+              <div>
+                <label htmlFor="anti_flea_date">Fecha antipulgas</label>
+                <input
+                  id="anti_flea_date"
+                  type="date"
+                  className="w-full"
+                  value={formData.anti_flea_date ? Dates.format(formData.anti_flea_date) : ''}
+                  disabled={loadLoading}
+                  onChange={e => setFormData({ ...formData, anti_flea_date: e.target.valueAsDate || undefined })}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </fieldset>
 
       {/* Sección: Otros datos */}
       <fieldset>
-        <legend>Otros datos</legend>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <legend><b>Otros datos</b></legend>
+        <div style={sectionGridStyle}>
           <label className="flex items-center gap-2" htmlFor="uses_medicine">
             <input
               id="uses_medicine"

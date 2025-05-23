@@ -25,6 +25,7 @@ import { isOwner, isVet } from "@/services/roleService";
 import { FaPencil } from "react-icons/fa6";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index";
+import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 
 export default function SideBar({
     menuOpen,
@@ -35,7 +36,8 @@ export default function SideBar({
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
     setShowEditPetModal: Dispatch<SetStateAction<boolean>>;
 }) {
-    const { isMobile, logout, storedPet, session, storedVetAccess, setStoredVetAccess } = useAppContext();
+    const { isMobile } = useDeviceDetect()
+    const { logout, storedPet, session, storedVetAccess, setStoredVetAccess } = useAppContext();
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
 
@@ -179,13 +181,7 @@ export default function SideBar({
                     }}
                 >
                     <ul style={{ listStyle: "none", margin: 0, padding: "0.5rem 1rem" }}>
-                        {menuItems.map(({ label, icon, url }) => (
-                            <li key={label} style={{ marginBottom: "0.5rem" }}>
-                                <Link href={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem", whiteSpace: "nowrap" }}>
-                                    {icon} {label}
-                                </Link>
-                            </li>
-                        ))}
+                        {menuItems.map(({ label, icon, url, show, showModal }) => item({ label, icon, url, show, showModal }))}
                         {session && <li><button onClick={logout}>Cerrar sesión</button></li>}
                         {!session && <li><button onClick={goToLogin}>Iniciar sesión</button></li>}
                     </ul>

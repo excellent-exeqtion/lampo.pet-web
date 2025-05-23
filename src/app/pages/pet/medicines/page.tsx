@@ -9,29 +9,31 @@ import { Loading, DataNotFound, Display, Title } from "@/components/index";
 import { FormType } from "@/types/lib";
 import { MedicineDataType } from "@/types/index";
 import { MedicineRepository } from "@/repos/index";
+import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 
 export default function MedicinesPage() {
     useRequireAuth();
 
-    const { isMobile, selectedPet } = useAppContext();
-        const [petMedicines, setPetMedicines] = useState<MedicineDataType[] | null>(null);
-    
-        useEffect(() => {
-            if (!selectedPet.id) return;         // don't run if no pet selected
-    
-            const fetchData = async () => {
-                try {
-                    const medicines = await new MedicineRepository().findByParentId(selectedPet.id);
-                    setPetMedicines(medicines);
-    
-                } catch (err) {
-                    console.error("Error loading medicines:", err);
-                    // you might set an error state here
-                }
-            };
-    
-            fetchData();
-        }, [selectedPet.id]);
+    const { isMobile } = useDeviceDetect();
+    const { selectedPet, showEditPetModal } = useAppContext();
+    const [petMedicines, setPetMedicines] = useState<MedicineDataType[] | null>(null);
+
+    useEffect(() => {
+        if (!selectedPet.id) return;         // don't run if no pet selected
+
+        const fetchData = async () => {
+            try {
+                const medicines = await new MedicineRepository().findByParentId(selectedPet.id);
+                setPetMedicines(medicines);
+
+            } catch (err) {
+                console.error("Error loading medicines:", err);
+                // you might set an error state here
+            }
+        };
+
+        fetchData();
+    }, [selectedPet.id, showEditPetModal]);
 
     const renderContent = (isMobile: boolean) => {
         if (petMedicines == undefined) {

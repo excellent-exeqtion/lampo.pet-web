@@ -2,11 +2,13 @@
 "use client";
 import { useAppContext } from "@/app/layout";
 import { Title } from "@/components/index";
+import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import React, { FormEvent, useEffect, useState } from "react";
 import { FaCog } from "react-icons/fa";
 
 export default function SettingsPage() {
-    const { isMobile, selectedPet, setStoredPet, storedPet } = useAppContext();
+    const { isMobile } = useDeviceDetect();
+    const { selectedPet, setStoredPet, storedPet } = useAppContext();
 
     const [name, setName] = useState(selectedPet.name);
     const [image, setImage] = useState(selectedPet.image || "/pets/pet.png");

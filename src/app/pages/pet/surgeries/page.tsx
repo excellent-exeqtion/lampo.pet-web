@@ -18,7 +18,7 @@ export default function SurgeriesPage() {
     const [petSurgeries, setPetSurgeries] = useState<SurgeryDataType[] | null>(null);
 
     useEffect(() => {
-        if (!selectedPet?.id) return;         // don't run if no pet selected
+        if (!selectedPet.id) return;         // don't run if no pet selected
 
         const fetchData = async () => {
             try {
@@ -32,7 +32,7 @@ export default function SurgeriesPage() {
         };
 
         fetchData();
-    }, [selectedPet?.id]);
+    }, [selectedPet.id]);
 
     const renderContent = (isMobile: boolean) => {
         if (petSurgeries == undefined) {

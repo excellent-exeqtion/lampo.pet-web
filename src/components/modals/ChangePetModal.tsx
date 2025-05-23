@@ -12,6 +12,7 @@ import { useAppContext } from "@/app/layout";
 import Image from 'next/image'
 import { PetType } from "@/types/index";
 import Modal from "../lib/modal";
+import { Empty } from "@/data/index";
 
 interface ChangePetModalProps {
   setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
@@ -23,7 +24,6 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  console.log(storedOwnerPets)
   // close dropdown if you click outside
   useEffect(() => {
     const handleClickOutside = (ev: MouseEvent) => {
@@ -43,7 +43,7 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
     setStoredPetId(pet);
     setIsOpen(false);
     setShowChangePetModal(false);
-    setStoredVetAccess(null);
+    setStoredVetAccess(Empty.VetAccess());
   };
 
   const addPet = () => {
@@ -72,11 +72,11 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
           <div style={{ display: "flex", alignItems: "center" }}>
             <Image
               loading={"lazy"}
-              src={selectedPet?.image || '/pets/pet.png'}
-              alt={selectedPet?.name ?? "Sin mascota"}
+              src={selectedPet.image || '/pets/pet.png'}
+              alt={selectedPet.name ?? "Sin mascota"}
               width="40" height="40"
               style={{
-                width: "auto",
+                width: "100%",
                 height: "auto",
                 borderRadius: "50%",
                 objectFit: "cover",
@@ -84,7 +84,7 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
               }}
             />
             <span style={{ color: '#000' }}>
-              {selectedPet?.name ?? "Selecciona una mascota"}
+              {selectedPet.name ?? "Selecciona una mascota"}
             </span>
           </div>
           {isOpen ? <FaChevronUp /> : <FaChevronDown />}
@@ -108,7 +108,7 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
               listStyle: "none",
             }}
           >
-            {storedOwnerPets?.map((pet) => (
+            {storedOwnerPets.map((pet) => (
               <li
                 className="pet-selection"
                 key={pet.id}

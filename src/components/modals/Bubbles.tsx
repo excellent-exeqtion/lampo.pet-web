@@ -58,7 +58,7 @@ export default function Bubbles({
   const [showChangePetBubble, setShowChangePetBubble] = useState(false);
 
   useEffect(() => {
-    const show = (storedOwnerPets?.length ?? 0) > 0;
+    const show = (storedOwnerPets.length ?? 0) > 0;
     setShowChangePetBubble(show);
   }, [storedOwnerPets]);
 

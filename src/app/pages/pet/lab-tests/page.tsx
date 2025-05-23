@@ -14,11 +14,11 @@ import { LabTestRepository } from "@/repos/index";
 export default function LabTestsPage() {
     useRequireAuth();
 
-    const { isMobile, selectedPet } = useAppContext();
+    const { isMobile, selectedPet, showEditPetModal } = useAppContext();
     const [petLabTests, setPetLabTests] = useState<LabTestDataType[] | null>(null);
 
     useEffect(() => {
-        if (!selectedPet?.id) return;         // don't run if no pet selected
+        if (!selectedPet.id) return;         // don't run if no pet selected
 
         const fetchData = async () => {
             try {
@@ -32,7 +32,7 @@ export default function LabTestsPage() {
         };
 
         fetchData();
-    }, [selectedPet?.id]);
+    }, [selectedPet.id, showEditPetModal]);
 
     const renderContent = (isMobile: boolean) => {
         if (petLabTests == undefined) {

@@ -24,7 +24,7 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
         {
           method: 'POST',
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ owner_id: session?.db?.user.id, pet_id: selectedPet?.id }),
+          body: JSON.stringify({ owner_id: session?.db?.user.id, pet_id: selectedPet.id }),
         }
       );
 

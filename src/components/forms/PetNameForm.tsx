@@ -69,7 +69,6 @@ export default function PetNameForm({ ownerId, pet, setPet, onNext, onBack, step
     setError(null);
     setSubmitLoading(false);
     try {
-      console.log(stepStates);
       if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
         const newId = pet.id == '' ? await generateUniquePetId() : pet.id;
         const newPet = {

@@ -5,7 +5,7 @@ import "@picocss/pico";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { signIn, ownerSignUp, resetPassword } from "../../../services/authService";
+import { signIn, ownerSignUp, resetPassword } from "@/services/authService";
 import type { OwnerDataType } from "@/types/index";
 import { OwnerRepository } from "@/repos/owner.repository";
 import PlanSelection from "./components/PlanSelection";

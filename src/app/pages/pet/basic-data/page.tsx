@@ -15,12 +15,12 @@ import { v4 } from 'uuid';
 export default function BasicDataPage() {
   useRequireAuth();
 
-  const { isMobile, selectedPet } = useAppContext();
+  const { isMobile, selectedPet, showEditPetModal } = useAppContext();
   const [petData, setPetData] = useState<BasicDataType | null>(null);
   const [ownerData, setOwnerData] = useState<OwnerDataType | null>(null);
 
 useEffect(() => {
-  if (!selectedPet?.id) return;
+  if (!selectedPet.id) return;
 
   const fetchData = async () => {
     try {
@@ -34,7 +34,7 @@ useEffect(() => {
   };
 
   fetchData();
-}, [selectedPet?.id, selectedPet?.owner_id]); 
+}, [selectedPet.id, selectedPet.owner_id, showEditPetModal]); 
 
 
   if (petData === null || ownerData === null) {
@@ -60,12 +60,12 @@ useEffect(() => {
 
 
   const contactItems: FieldType[] = [
-    { label: "Nombre del contacto", show: true, value: ownerData?.name },
-    { label: "Teléfono", show: ownerData?.phone != null, value: ownerData?.phone },
-    { label: "Dirección", show: ownerData?.address != null, value: ownerData?.address },
-    { label: "Ciudad", show: true, value: ownerData?.city },
-    { label: "País", show: true, value: ownerData?.country },
-    { label: "Email", show: true, value: ownerData?.email },
+    { label: "Nombre del contacto", show: true, value: ownerData.name },
+    { label: "Teléfono", show: ownerData.phone != null, value: ownerData.phone },
+    { label: "Dirección", show: ownerData.address != null, value: ownerData.address },
+    { label: "Ciudad", show: true, value: ownerData.city },
+    { label: "País", show: true, value: ownerData.country },
+    { label: "Email", show: true, value: ownerData.email },
   ];
 
   return (

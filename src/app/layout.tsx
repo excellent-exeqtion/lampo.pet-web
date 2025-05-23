@@ -1,6 +1,6 @@
 // app/layout.tsx
 "use client";
-import React, { useState, useEffect, createContext, useContext } from "react";
+import React, { useState, useEffect, createContext, useContext, useMemo } from "react";
 import { Bubbles, SideBar, Loading } from "@/components/index";
 import { LoginPage } from "@/pages/index";
 
@@ -27,12 +27,13 @@ const AppContext = createContext<AppContextType>({
   selectedPet: Empty.Pet(),
   storedPet: Empty.Pet(),
   setStoredPet: () => { },
-  storedVetAccess: null,
+  storedVetAccess: Empty.VetAccess(),
   setStoredVetAccess: () => { },
-  storedPetCode: null,
+  storedPetCode: Empty.PetCode(),
   setStoredPetCode: () => { },
-  storedOwnerPets: null,
-  setStoredOwnerPets: () => { }
+  storedOwnerPets: [],
+  setStoredOwnerPets: () => { },
+  showEditPetModal: false
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -71,26 +72,30 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   // LocalStorage abstraction via hook
   const ownerId = appSession?.db.user?.id;
+  const emptyPet = useMemo(() => Empty.Pet(), []);
   const [storedPet, setStoredPet] = useLocalStorage<PetType>(
     `selectedPet`,
-    Empty.Pet()
+    emptyPet
   );
 
-  const [storedOwnerPets, setStoredOwnerPets] = useLocalStorage<PetType[] | null>(
+  const [storedOwnerPets, setStoredOwnerPets] = useLocalStorage<PetType[]>(
     `ownerPets-${ownerId}`,
-    null
+    []
   );
 
-  const [storedVetAccess, setStoredVetAccess] = useLocalStorage<VeterinaryAccessType | null>(
+  const emptyVetAccess = useMemo(() => Empty.VetAccess(), []);
+  const [storedVetAccess, setStoredVetAccess] = useLocalStorage<VeterinaryAccessType>(
     `vetAccess`,
-    null
+    emptyVetAccess
   );
 
-  const [storedPetCode, setStoredPetCode] = useLocalStorage<PetCodeType | null>(
+  const emptyPetCode = useMemo(() => Empty.PetCode(), []);
+  const [storedPetCode, setStoredPetCode] = useLocalStorage<PetCodeType>(
     `petCode`,
-    null
+    emptyPetCode
   );
- // REVISAR POR QUE SE ESTA LLAMANDO TANTO ESTE USE EFFECT
+
+  // REVISAR POR QUE SE ESTA LLAMANDO TANTO ESTE USE EFFECT
   // Cargar selectedPet usando PetRepository y storedPetId
   useEffect(() => {
     if (!isVetWithoutUserSession(appSession, storedVetAccess)) {
@@ -99,11 +104,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     let isMounted = true;
     (async () => {
       try {
-        let pets: PetType[] | null = [];
+        let pets: PetType[] = [];
         if (isVetWithoutUserSession(appSession, storedVetAccess)) {
 
           if (storedPet && !selectedPet) {
-            const petFound = await PetRepository.findById(storedPet?.id ?? "");
+            const petFound = await PetRepository.findById(storedPet.id);
             setSelectedPet(petFound);
           }
 
@@ -113,26 +118,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         if (isOwner(appSession)) {
           // Obtener lista de mascotas (desde storage o API)
-          pets = storedOwnerPets ?? await PetRepository.findByOwnerId(ownerId ?? "");
-          if (storedOwnerPets == null) {
+          if (storedOwnerPets.length == 0) {
+            pets = await PetRepository.findByOwnerId(ownerId ?? "");
             setStoredOwnerPets(pets);
+          }
+          else {
+            pets = storedOwnerPets;
           }
         }
 
         // Determinar ID a seleccionar: preferir el almacenado, si no existe usar la primera mascota
-        let initial_pet = null;
-        if (pets != undefined && pets != null && pets?.length > 0) initial_pet = pets[0];
-        const idToSelect = storedPet ?? initial_pet;
+        let initial_pet = Empty.Pet();
+        if (pets.length > 0) initial_pet = pets[0];
+        const petToSelect = (storedPet.id == '') ? initial_pet : storedPet;
 
         // Actualizar storage solo si es necesario
-        if (idToSelect && idToSelect !== storedPet) {
-          setStoredPet(idToSelect);
+        if (petToSelect && JSON.stringify(petToSelect) != JSON.stringify(storedPet)) {
+          setStoredPet(petToSelect);
         }
-        // Encontrar la mascota correspondiente
-        const pet = pets?.find(p => p.id === idToSelect?.id) ?? null;
         // Actualizar estado solo si cambia
-        if (isMounted && pet && pet.id !== selectedPet?.id) {
-          setSelectedPet(pet);
+        if (isMounted && petToSelect && petToSelect.id !== selectedPet.id) {
+          setSelectedPet(petToSelect);
         }
       } catch (err) {
         console.error("Error loading pets:", err);
@@ -226,6 +232,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             setStoredPetCode,
             storedOwnerPets,
             setStoredOwnerPets,
+            showEditPetModal
           }}
         >
           <div
@@ -261,3 +268,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+

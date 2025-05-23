@@ -9,10 +9,11 @@ export interface AppContextType {
   selectedPet: PetType;
   storedPet: PetType;
   setStoredPet: (value: PetType) => void;
-  storedVetAccess: VeterinaryAccessType | null;
-  setStoredVetAccess: (value: VeterinaryAccessType | null) => void;
-  storedPetCode: PetCodeType | null;
-  setStoredPetCode: (value: PetCodeType | null) => void;
-  storedOwnerPets: PetType[] | null;
-  setStoredOwnerPets: (value: PetType[] | null) => void;
+  storedVetAccess: VeterinaryAccessType;
+  setStoredVetAccess: (value: VeterinaryAccessType) => void;
+  storedPetCode: PetCodeType;
+  setStoredPetCode: (value: PetCodeType) => void;
+  storedOwnerPets: PetType[];
+  setStoredOwnerPets: (value: PetType[]) => void;
+  showEditPetModal: boolean;
 }

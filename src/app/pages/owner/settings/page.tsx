@@ -8,15 +8,15 @@ import { FaCog } from "react-icons/fa";
 export default function SettingsPage() {
     const { isMobile, selectedPet, setStoredPet, storedPet } = useAppContext();
 
-    const [name, setName] = useState(selectedPet?.name);
-    const [image, setImage] = useState(selectedPet?.image || "");
+    const [name, setName] = useState(selectedPet.name);
+    const [image, setImage] = useState(selectedPet.image || "/pets/pet.png");
     const [alert, setAlert] = useState<string | null>(null);
     const [formFailed, setFormFailed] = useState(false);
 
     useEffect(() => {
-        setName(storedPet?.name);
-        setImage(storedPet?.image ?? "");
-    }, [storedPet?.name, storedPet?.image]);
+        setName(storedPet.name);
+        setImage(storedPet.image ?? "");
+    }, [storedPet.name, storedPet.image]);
 
     if (selectedPet == null || selectedPet == undefined) {
         return <div></div>;
@@ -26,7 +26,7 @@ export default function SettingsPage() {
         e.preventDefault();
 
         const res = await fetch(
-            `${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/pets/${selectedPet?.id}`,
+            `${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/pets/${selectedPet.id}`,
             {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },

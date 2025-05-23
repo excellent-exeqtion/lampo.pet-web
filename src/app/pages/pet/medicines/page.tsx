@@ -17,7 +17,7 @@ export default function MedicinesPage() {
         const [petMedicines, setPetMedicines] = useState<MedicineDataType[] | null>(null);
     
         useEffect(() => {
-            if (!selectedPet?.id) return;         // don't run if no pet selected
+            if (!selectedPet.id) return;         // don't run if no pet selected
     
             const fetchData = async () => {
                 try {
@@ -31,7 +31,7 @@ export default function MedicinesPage() {
             };
     
             fetchData();
-        }, [selectedPet?.id]);
+        }, [selectedPet.id]);
 
     const renderContent = (isMobile: boolean) => {
         if (petMedicines == undefined) {

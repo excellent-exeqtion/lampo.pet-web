@@ -15,24 +15,17 @@ export function useLocalStorage<T>(
   initialValue: T,
   options?: { secret?: string }
 ): [T, (value: T | null) => void] {
-  const secret = options?.secret || "";//process.env.NEXT_PUBLIC_STORAGE_SECRET!;
+  const secret = options?.secret || (process.env.NEXT_PUBLIC_ENABLE_ENCRYPTION == 'false' ? '' : process.env.NEXT_PUBLIC_STORAGE_SECRET!);
   // Generar clave de storage hasheada si hay secreto
   const storageKey = secret
     ? CryptoJS.SHA256(key + secret).toString()
     : key;
-
-  // Estado para controlar hidratación (cliente montado)
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
 
   // Estado del valor almacenado
   const [storedValue, setStoredValue] = useState<T>(initialValue);
 
   // Al hidratar, leer de localStorage
   useEffect(() => {
-    if (!hydrated) return;
     try {
       const item = window.localStorage.getItem(storageKey);
       if (item === null) {
@@ -46,13 +39,14 @@ export function useLocalStorage<T>(
     } catch {
       setStoredValue(initialValue);
     }
-  }, [hydrated, storageKey, initialValue, secret]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey, secret]);
 
   /**
    * Setter que guarda en estado y en localStorage (o elimina si value es null).
    */
   const setValue = (value: T | null) => {
-    if (typeof window === "undefined" || !hydrated) {
+    if (typeof window === "undefined") {
       setStoredValue(value as T);
       return;
     }

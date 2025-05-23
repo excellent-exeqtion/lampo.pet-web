@@ -12,7 +12,7 @@ export function useRequireAuth() {
     // 1) Verifica sesión inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        router.replace("/login");
+        router.replace("/pages/login");
       }
     });
 
@@ -20,7 +20,7 @@ export function useRequireAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (!session) {
-          router.replace("/login");
+          router.replace("/pages/login");
         }
       }
     );

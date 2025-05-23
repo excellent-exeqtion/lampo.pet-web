@@ -13,11 +13,11 @@ import { ConditionDataType } from "@/types/index";
 export default function ConditionsPage() {
     useRequireAuth();
 
-    const { isMobile, selectedPet } = useAppContext();
+    const { isMobile, selectedPet, showEditPetModal } = useAppContext();
     const [petConditions, setPetConditions] = useState<ConditionDataType[] | null>(null);
 
     useEffect(() => {
-        if (!selectedPet?.id) return;         // don't run if no pet selected
+        if (!selectedPet.id) return;         // don't run if no pet selected
 
         const fetchData = async () => {
             try {
@@ -31,7 +31,7 @@ export default function ConditionsPage() {
         };
 
         fetchData();
-    }, [selectedPet?.id]);
+    }, [selectedPet.id, showEditPetModal]);
 
     const renderContent = (isMobile: boolean) => {
         if (petConditions == undefined) {

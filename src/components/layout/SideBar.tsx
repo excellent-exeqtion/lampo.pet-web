@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation";
 import { VeterinaryAccessType } from "@/types/index";
 import { isOwner, isVet } from "@/services/roleService";
 import { FaPencil } from "react-icons/fa6";
+import { Empty } from "@/data/index";
 
 export default function SideBar({
     menuOpen,
@@ -33,12 +34,10 @@ export default function SideBar({
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
     setShowEditPetModal: Dispatch<SetStateAction<boolean>>;
 }) {
- // REVISAR POR QUE SE ESTA LLAMANDO ESTE MODAL
-    console.log('SideBar')
     const { isMobile, logout, selectedPet, session, storedVetAccess, setStoredVetAccess } = useAppContext();
     const router = useRouter();
 
-    const menuData = (show: boolean, session: AppSession | null | undefined, vetAccess: VeterinaryAccessType | null): MenuType[] => [
+    const menuData = (show: boolean, session: AppSession | null | undefined, vetAccess: VeterinaryAccessType): MenuType[] => [
         { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner(session) },
         { label: "Datos básicos", icon: <FaUser />, url: "/pages/pet/basic-data", show },
         { label: "Vacunas", icon: <FaSyringe />, url: "/pages/pet/vaccines", show },
@@ -58,13 +57,19 @@ export default function SideBar({
     }
 
     const goToLogin = () => {
-        setStoredVetAccess(null);
+        setStoredVetAccess(Empty.VetAccess());
         router.push("/pages/login");
     }
 
     function item({ label, icon, url, show, showModal }: MenuType) {
         if(showModal){
-            showModal(true);
+            return (
+                <li key={label} style={{ marginBottom: "0.5rem" }}>
+                        <a onClick={() => showModal(true)} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            {icon} {label}
+                        </a>
+                </li>
+            );
         }
         else if (!show) {
             return <div key={v4()}></div>;
@@ -104,7 +109,7 @@ export default function SideBar({
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
-                            {menuItems.map(({ label, icon, url, show }) => item({ label, icon, url, show }))}
+                            {menuItems.map(({ label, icon, url, show, showModal }) => item({ label, icon, url, show, showModal }))}
                             {session && <li><button onClick={logout}>Cerrar sesión</button></li>}
                             {!session && <li><button onClick={goToLogin}>Iniciar sesión</button></li>}
                         </ul>

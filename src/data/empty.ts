@@ -147,3 +147,17 @@ export function Subscription(): SubscriptionType {
         updated_at: ''
     }
 };
+
+export function VetAccess(): VeterinaryAccessType {
+    return {
+        id: '',
+        pet_id: '',
+        pet_code_id: '',
+        vet_first_name: '',
+        vet_last_name: '',
+        professional_registration: '',
+        clinic_name: '',
+        city: '',
+        created_at: ''
+    }
+}

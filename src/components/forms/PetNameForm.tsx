@@ -1,7 +1,7 @@
 // src/components/forms/BasicDataForm.tsx
 import React, { Dispatch, useEffect, useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { FaCloudUploadAlt, FaTimes } from 'react-icons/fa';
+import { FaCloudUploadAlt } from 'react-icons/fa';
 import { PetRepository } from '@/repos/pet.repository';
 import { generateUniquePetId } from '@/utils/random';
 import { PetStep, PetType } from '@/types/index';
@@ -41,11 +41,9 @@ export default function BasicDataForm({
   const [loadLoading, setLoadLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [savedData, setSavedData] = useState<PetType>(Empty.Pet());
-
-  // Preview URL for display
   const [preview, setPreview] = useState<string>(pet.image || '/pets/pet.png');
+  const [hover, setHover] = useState(false);
 
-  // Drag & drop handler
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     const reader = new FileReader();
@@ -57,10 +55,12 @@ export default function BasicDataForm({
     reader.readAsDataURL(file);
   }, [pet, setPet]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: { 'image/*': [] },
     multiple: false,
+    noClick: true,
+    noKeyboard: true,
   });
 
   useEffect(() => {
@@ -79,6 +79,7 @@ export default function BasicDataForm({
       setLoadLoading(false);
     };
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pet]);
 
   useEffect(() => {
@@ -88,12 +89,8 @@ export default function BasicDataForm({
     ) {
       setState(StepStateEnum.Modified);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pet]);
-
-  const handleRemove = () => {
-    setPet({ ...pet, image: '' });
-    setPreview('/pets/pet.png');
-  };
 
   const handleSubmit = async () => {
     setError(null);
@@ -101,12 +98,7 @@ export default function BasicDataForm({
     try {
       if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
         const newId = pet.id || (await generateUniquePetId());
-        const newPet: PetType = {
-          id: newId,
-          name: pet.name,
-          image: pet.image,
-          owner_id: ownerId,
-        };
+        const newPet: PetType = { id: newId, name: pet.name, image: pet.image, owner_id: ownerId };
         const { error: petErr } = await PetRepository.create(newPet);
         if (petErr) throw new Error(petErr.message);
         setSavedData(newPet);
@@ -114,6 +106,7 @@ export default function BasicDataForm({
         setPet(newPet);
       }
       onNext();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setState(StepStateEnum.Error, err.message);
       setError(err.message);
@@ -132,8 +125,7 @@ export default function BasicDataForm({
       totalSteps={stepStates.length}
       error={error}
     >
-      <div className="grid grid-cols-1 gap-6" style={{ display: 'flow', marginBottom: '20px' }}>
-        {/* Nombre */}
+      <div style={{ display: 'grid', gap: '1rem' }}>
         <label>
           Nombre
           <input
@@ -142,29 +134,50 @@ export default function BasicDataForm({
             disabled={loadLoading}
             onChange={(e) => setPet({ ...pet, name: e.target.value })}
             required
-            className="mt-1 w-full border rounded px-3 py-2"
           />
         </label>
 
-        {/* Zona Drag & Drop o Preview */}
         {pet.image ? (
-          <div className="relative inline-block">
-            <div className="w-32 h-32 rounded-full border border-solid border-gray-300 overflow-hidden">
-              <Image
-                src={preview}
-                width={128}
-                height={128}
-                alt="Foto de mascota"
-                className="object-cover w-full h-full"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow"
-            >
-              <FaTimes className="w-4 h-4 text-gray-600" />
-            </button>
+          <div
+            {...getRootProps()}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
+            onClick={open}
+          >
+            <input {...getInputProps()} />
+            <Image
+              src={preview}
+              alt="Foto de mascota"
+              width={128}
+              height={128}
+              style={{
+                width: 128,
+                height: 128,
+                borderRadius: '50%',
+                border: '3px solid #ccc',
+                objectFit: 'cover',
+                display: 'block'
+              }}
+            />
+            {hover && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'rgba(255,255,255,0.6)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%'
+                }}
+              >
+                <span style={{ fontWeight: 'bold', color: '#333' }}>Cambiar foto</span>
+              </div>
+            )}
           </div>
         ) : (
           <div
@@ -174,17 +187,15 @@ export default function BasicDataForm({
               borderRadius: '4px',
               padding: '1.5rem',
               backgroundColor: isDragActive ? '#e8f0fe' : '#f5f5f5',
-              width: '100%',
+              textAlign: 'center',
+              cursor: 'pointer'
             }}
-            className="flex flex-col items-center justify-center cursor-pointer transition-all"
+            onClick={open}
           >
-            <input {...getInputProps()} disabled={loadLoading} />
-            <FaCloudUploadAlt
-              className="w-12 h-12"
-              style={{ color: isDragActive ? '#4285f4' : '#888' }}
-            />
-            <p className="mt-2 text-lg font-semibold text-gray-700">
-              <b>Selecciona o</b> arrastra una foto de tu mascota aquí
+            <input {...getInputProps()} />
+            <FaCloudUploadAlt style={{ fontSize: '2rem', color: isDragActive ? '#4285f4' : '#888' }} />
+            <p style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>
+              <b>Selecciona o</b> arrastra y suelta la foto de tu mascota aquí
             </p>
           </div>
         )}

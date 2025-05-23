@@ -10,11 +10,13 @@ import { Loading, DataNotFound, Display, Title } from "@/components/index";
 import { FormType } from "@/types/lib";
 import { LabTestDataType } from "@/types/index";
 import { LabTestRepository } from "@/repos/index";
+import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 
 export default function LabTestsPage() {
     useRequireAuth();
 
-    const { isMobile, selectedPet, showEditPetModal } = useAppContext();
+    const { isMobile } = useDeviceDetect();
+    const { selectedPet, showEditPetModal } = useAppContext();
     const [petLabTests, setPetLabTests] = useState<LabTestDataType[] | null>(null);
 
     useEffect(() => {

@@ -9,11 +9,13 @@ import { Loading, DataNotFound, Title, Display } from "@/components/index";
 import { FormType } from "@/types/lib";
 import { ConditionRepository } from "@/repos/index";
 import { ConditionDataType } from "@/types/index";
+import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 
 export default function ConditionsPage() {
     useRequireAuth();
 
-    const { isMobile, selectedPet, showEditPetModal } = useAppContext();
+    const { isMobile } = useDeviceDetect();
+    const { selectedPet, showEditPetModal } = useAppContext();
     const [petConditions, setPetConditions] = useState<ConditionDataType[] | null>(null);
 
     useEffect(() => {

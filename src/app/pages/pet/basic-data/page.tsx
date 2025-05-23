@@ -11,30 +11,32 @@ import { BasicDataRepository } from "@/repos/basicData.repository";
 import { BasicDataType, OwnerDataType } from "@/types/index";
 import { OwnerRepository } from "@/repos/owner.repository";
 import { v4 } from 'uuid';
+import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 
 export default function BasicDataPage() {
   useRequireAuth();
 
-  const { isMobile, selectedPet, showEditPetModal } = useAppContext();
+  const { isMobile } = useDeviceDetect();
+  const { selectedPet, showEditPetModal } = useAppContext();
   const [petData, setPetData] = useState<BasicDataType | null>(null);
   const [ownerData, setOwnerData] = useState<OwnerDataType | null>(null);
 
-useEffect(() => {
-  if (!selectedPet.id) return;
+  useEffect(() => {
+    if (!selectedPet.id) return;
 
-  const fetchData = async () => {
-    try {
-      const basicData = await BasicDataRepository.findByPetId(selectedPet.id);
-      setPetData(basicData);
-      const owner = await OwnerRepository.findById(selectedPet.owner_id);
-      setOwnerData(owner);
-    } catch (err) {
-      console.error("Error cargando datos básicos o dueño:", err);
-    }
-  };
+    const fetchData = async () => {
+      try {
+        const basicData = await BasicDataRepository.findByPetId(selectedPet.id);
+        setPetData(basicData);
+        const owner = await OwnerRepository.findById(selectedPet.owner_id);
+        setOwnerData(owner);
+      } catch (err) {
+        console.error("Error cargando datos básicos o dueño:", err);
+      }
+    };
 
-  fetchData();
-}, [selectedPet.id, selectedPet.owner_id, showEditPetModal]); 
+    fetchData();
+  }, [selectedPet.id, selectedPet.owner_id, showEditPetModal]);
 
 
   if (petData === null || ownerData === null) {
@@ -82,7 +84,7 @@ useEffect(() => {
       <section>
         {<Title icon={<FaUser />} title="Datos de contacto" />}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
-          {contactItems.map((item) => 
+          {contactItems.map((item) =>
             <BasicField key={v4()} item={item} />
           )}
         </div>

@@ -10,28 +10,30 @@ import { FormType } from "@/types/lib";
 import { Dates } from "@/utils/index";
 import { VaccineDataType } from "@/types/index";
 import { VaccineRepository } from "@/repos/index";
+import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 
 export default function VaccinesPage() {
   useRequireAuth();
 
-  const { isMobile, selectedPet, showEditPetModal } = useAppContext();
-      const [petVaccines, setPetVaccines] = useState<VaccineDataType[] | null>(null);
-  
-      useEffect(() => {
-          if (!selectedPet.id) return;         // don't run if no pet selected
-  
-          const fetchData = async () => {
-              try {
-                  const vaccines = await new VaccineRepository().findByParentId(selectedPet.id);
-                  setPetVaccines(vaccines);
-              } catch (err) {
-                  console.error("Error loading medicines:", err);
-                  // you might set an error state here
-              }
-          };
-  
-          fetchData();
-      }, [selectedPet.id, showEditPetModal]);
+  const { isMobile } = useDeviceDetect();
+  const { selectedPet, showEditPetModal } = useAppContext();
+  const [petVaccines, setPetVaccines] = useState<VaccineDataType[] | null>(null);
+
+  useEffect(() => {
+    if (!selectedPet.id) return;         // don't run if no pet selected
+
+    const fetchData = async () => {
+      try {
+        const vaccines = await new VaccineRepository().findByParentId(selectedPet.id);
+        setPetVaccines(vaccines);
+      } catch (err) {
+        console.error("Error loading medicines:", err);
+        // you might set an error state here
+      }
+    };
+
+    fetchData();
+  }, [selectedPet.id, showEditPetModal]);
 
   const renderContent = (isMobile: boolean) => {
     if (petVaccines == undefined) {
@@ -61,7 +63,7 @@ export default function VaccinesPage() {
 
   return (
     <main style={{ padding: isMobile ? "2rem 1rem" : "2rem" }}>
-      {<Title icon={ <FaSyringe />} title="Vacunas" />}
+      {<Title icon={<FaSyringe />} title="Vacunas" />}
       {renderContent(isMobile)}
     </main>
   );

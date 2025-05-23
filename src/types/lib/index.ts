@@ -1,4 +1,5 @@
 import { PostgrestError, Session } from "@supabase/supabase-js";
+import { Dispatch, SetStateAction } from "react";
 
 export interface AppSession {
   db: Session;
@@ -19,6 +20,7 @@ export interface MenuType {
   label: string;
   icon: React.JSX.Element,
   url: string;
+  showModal?: Dispatch<SetStateAction<boolean>>,
   show: boolean;
 }
 

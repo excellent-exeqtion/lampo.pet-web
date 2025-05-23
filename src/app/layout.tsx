@@ -18,13 +18,14 @@ import { AppContextType } from "@/context/AppContextType";
 import { geistMono, geistSans } from "@/styles/geist";
 import { usePathname, useRouter } from "next/navigation";
 import { isOwner, isVetWithoutUserSession } from "@/services/roleService";
+import { Empty } from "../data";
 
 const AppContext = createContext<AppContextType>({
   isMobile: false,
   session: { db: null! },
   logout: async () => { },
-  selectedPet: null,
-  storedPet: null,
+  selectedPet: Empty.Pet(),
+  storedPet: Empty.Pet(),
   setStoredPet: () => { },
   storedVetAccess: null,
   setStoredVetAccess: () => { },
@@ -59,19 +60,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   }, [rawSession]);
 
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedPet, setSelectedPet] = useState<PetType | null>(null);
+  const [selectedPet, setSelectedPet] = useState<PetType>(Empty.Pet());
   const [menuOpen, setMenuOpen] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showVetModal, setShowVetModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showChangePetModal, setShowChangePetModal] = useState(false);
   const [showAddPetModal, setShowAddPetModal] = useState(false);
+  const [showEditPetModal, setShowEditPetModal] = useState(false);
 
   // LocalStorage abstraction via hook
   const ownerId = appSession?.db.user?.id;
-  const [storedPet, setStoredPet] = useLocalStorage<PetType | null>(
+  const [storedPet, setStoredPet] = useLocalStorage<PetType>(
     `selectedPet`,
-    null
+    Empty.Pet()
   );
 
   const [storedOwnerPets, setStoredOwnerPets] = useLocalStorage<PetType[] | null>(
@@ -88,7 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     `petCode`,
     null
   );
-
+ // REVISAR POR QUE SE ESTA LLAMANDO TANTO ESTE USE EFFECT
   // Cargar selectedPet usando PetRepository y storedPetId
   useEffect(() => {
     if (!isVetWithoutUserSession(appSession, storedVetAccess)) {
@@ -138,7 +140,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     })();
     return () => { isMounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, appSession, ownerId, storedPet, storedOwnerPets, selectedPet]);
+  }, [appSession, ownerId, storedPet, storedOwnerPets, selectedPet]);
 
 
   // Nuevo handleLogout: fuerza recarga completa
@@ -153,7 +155,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         setStoredOwnerPets(null);
         setStoredVetAccess(null);
       }
-      setSelectedPet(null);
+      setSelectedPet(Empty.Pet());
       // Redirigir y recargar para asegurar estado limpio
       window.location.href = "/";
     }
@@ -237,7 +239,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               marginLeft: '2%'
             }}
           >
-            <SideBar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+            <SideBar menuOpen={menuOpen} setMenuOpen={setMenuOpen} setShowEditPetModal={setShowEditPetModal} />
             <Bubbles
               setShowCodeModal={setShowCodeModal}
               showCodeModal={showCodeModal}
@@ -249,6 +251,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               showFeedbackModal={showFeedbackModal}
               showAddPetModal={showAddPetModal}
               setShowAddPetModal={setShowAddPetModal}
+              showEditPetModal={showEditPetModal}
+              setShowEditPetModal={setShowEditPetModal}
             />
             <main style={{ padding: "1rem" }}>{children}</main>
           </div>

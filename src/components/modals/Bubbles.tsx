@@ -21,6 +21,8 @@ interface BubblesProps {
   showChangePetModal: boolean;
   setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
   showAddPetModal: boolean;
+  setShowEditPetModal: Dispatch<SetStateAction<boolean>>;
+  showEditPetModal: boolean;
 }
 
 const bubbleStyleBase: React.CSSProperties = {
@@ -48,9 +50,11 @@ export default function Bubbles({
   showChangePetModal,
   setShowAddPetModal,
   showAddPetModal,
+  setShowEditPetModal,
+  showEditPetModal,
 }: BubblesProps) {
 
-  const { storedOwnerPets, session, storedVetAccess } = useAppContext();
+  const { storedOwnerPets, session, storedVetAccess, selectedPet } = useAppContext();
   const [showChangePetBubble, setShowChangePetBubble] = useState(false);
 
   useEffect(() => {
@@ -130,6 +134,7 @@ export default function Bubbles({
       {showCodeModal && <PetCodeModal setShowCodeModal={setShowCodeModal} />}
       {showFeedbackModal && <FeedbackModal setShowFeedbackModal={setShowFeedbackModal} />}
       {showAddPetModal && <AddPetModal setShowAddPetModal={setShowAddPetModal} />}
+      {showEditPetModal && <AddPetModal editPet={selectedPet} setShowAddPetModal={setShowEditPetModal} />}
     </div>
   );
 }

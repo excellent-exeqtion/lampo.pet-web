@@ -172,7 +172,7 @@ export default function LoginPage() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <Image src="/logo.png" alt="Lampo" width={150} height={48} style={{ marginBottom: '10px' }} />
+          <Image loading={"lazy"} src="/logo.png" alt="Lampo" width="150" height="48" style={{ width:"auto", height:"auto", marginBottom: '10px' }} />
           <h1>{isRegistering ? "Regístrate" : "Inicia sesión"}</h1>
         </div>
 

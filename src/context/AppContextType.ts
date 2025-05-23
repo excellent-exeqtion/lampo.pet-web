@@ -6,9 +6,9 @@ export interface AppContextType {
   isMobile: boolean;
   session: AppSession | null;
   logout: () => object;
-  selectedPet: PetType | null;
-  storedPet: PetType | null;
-  setStoredPet: (value: PetType | null) => void;
+  selectedPet: PetType;
+  storedPet: PetType;
+  setStoredPet: (value: PetType) => void;
   storedVetAccess: VeterinaryAccessType | null;
   setStoredVetAccess: (value: VeterinaryAccessType | null) => void;
   storedPetCode: PetCodeType | null;

@@ -1,12 +1,11 @@
 // app/components/modals/side-bar.tsx
 "use client";
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import {
     FaBars,
     FaCloudSun,
     FaCog,
     FaCut,
-    FaEdit,
     FaFlask,
     FaHome,
     FaPills,
@@ -23,23 +22,21 @@ import { v4 } from 'uuid';
 import { useRouter } from "next/navigation";
 import { VeterinaryAccessType } from "@/types/index";
 import { isOwner, isVet } from "@/services/roleService";
+import { FaPencil } from "react-icons/fa6";
 
 export default function SideBar({
     menuOpen,
-    setMenuOpen
+    setMenuOpen,
+    setShowEditPetModal
 }: {
     menuOpen: boolean;
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
+    setShowEditPetModal: Dispatch<SetStateAction<boolean>>;
 }) {
-    const { isMobile, logout, selectedPet, session, storedVetAccess, setStoredVetAccess, storedPetCode, storedPet } = useAppContext();
+ // REVISAR POR QUE SE ESTA LLAMANDO ESTE MODAL
+    console.log('SideBar')
+    const { isMobile, logout, selectedPet, session, storedVetAccess, setStoredVetAccess } = useAppContext();
     const router = useRouter();
-    const [name, setName] = useState(selectedPet?.name);
-    const [image, setImage] = useState(selectedPet?.image);
-
-    useEffect(() => {
-        setName(storedPet?.name);
-        setImage(storedPet?.image);
-    }, [storedPet?.name, storedPet?.image]);
 
     const menuData = (show: boolean, session: AppSession | null | undefined, vetAccess: VeterinaryAccessType | null): MenuType[] => [
         { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner(session) },
@@ -56,8 +53,8 @@ export default function SideBar({
 
     const menuItems = menuData(selectedPet != null, session, storedVetAccess);
 
-    if (storedPetCode) {
-        menuItems.push({ label: 'Editar Mascota', icon: <FaEdit />, url: `/pages/vet/${storedPetCode.code}`, show: isVet(session, storedVetAccess) });
+    if (selectedPet) {
+        menuItems.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner(session) });
     }
 
     const goToLogin = () => {
@@ -65,23 +62,26 @@ export default function SideBar({
         router.push("/pages/login");
     }
 
-    function item({ label, icon, url, show }: MenuType) {
-        if (!show) {
+    function item({ label, icon, url, show, showModal }: MenuType) {
+        if(showModal){
+            showModal(true);
+        }
+        else if (!show) {
             return <div key={v4()}></div>;
         }
         else {
             return (
                 <li key={label} style={{ marginBottom: "0.5rem" }}>
-                    <Link href={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        {icon} {label}
-                    </Link>
+                        <Link href={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            {icon} {label}
+                        </Link>
                 </li>
             );
         }
     }
 
     return (
-        <React.Fragment>
+        <>
             {!isMobile && (
                 <aside
                     style={{
@@ -95,13 +95,12 @@ export default function SideBar({
                 >
                     <div style={{ padding: "0 1rem 1rem", display: 'flex', alignItems: 'center' }}>
                         <Image
-                            src={image ?? '/pets/pet.png'}
+                            loading={"lazy"}
+                            src={selectedPet.image || '/pets/pet.png'}
                             alt="profile"
-                            width={80}
-                            height={80}
-                            style={{ width: "80px", height: "80px", borderRadius: "50%", marginBottom: "0.5rem" }}
+                            width="80" height="80" style={{ width: "auto", height: "auto", borderRadius: "50%", marginBottom: "0.5rem" }}
                         />
-                        <p style={{ marginLeft: '20px' }}><b>{name ?? 'Nombre de tu mascota'}</b></p>
+                        <p style={{ marginLeft: '20px' }}><b>{selectedPet.name ?? 'Nombre de tu mascota'}</b></p>
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
@@ -110,9 +109,17 @@ export default function SideBar({
                             {!session && <li><button onClick={goToLogin}>Iniciar sesión</button></li>}
                         </ul>
                     </nav>
-                    <div style={{ display: "flex", justifyContent: "space-around", marginTop: "1rem" }}>
-                        <Image src="/others/google-play-badge-logo.svg" alt="Google Play" width={120} height={100} />
-                        <Image src="/others/download-on-the-app-store-apple-logo.svg" alt="App Store" width={120} height={100} />
+                    <div style={{ display: "flow", justifyContent: "space-around", marginTop: "1rem" }}>
+                        <Image
+                            loading={"lazy"}
+                            src="/others/play-store.png" alt="Google Play"
+                            width="120" height="100" style={{ width: "220px", height: "auto" }} />
+                        <br />
+                        <br />
+                        <Image
+                            loading={"lazy"}
+                            src="/others/app-store.png" alt="App Store"
+                            width="120" height="100" style={{ width: "220px", height: "auto" }} />
                     </div>
                 </aside>
             )}
@@ -136,14 +143,14 @@ export default function SideBar({
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <Image
-                            src={image ?? '/pets/pet.png'}
+                            loading={"lazy"}
+                            src={selectedPet.image! || '/pets/pet.png'}
                             alt="profile"
-                            width={80}
-                            height={80}
-                            style={{ width: "80px", height: "80px", borderRadius: "50%" }}
+                            width="80" height="80" style={{ width: "auto", height: "auto", borderRadius: "50%" }}
                         />
-                        <span style={{ fontSize: "1rem", fontWeight: "600" }}>{name}</span>
+                        <span style={{ fontSize: "1rem", fontWeight: "600" }}>{selectedPet.name}</span>
                     </div>
+
                     <button
                         onClick={() => setMenuOpen(!menuOpen)}
                         style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer" }}
@@ -181,6 +188,6 @@ export default function SideBar({
                     </ul>
                 </nav>
             )}
-        </React.Fragment>
+        </>
     );
 }

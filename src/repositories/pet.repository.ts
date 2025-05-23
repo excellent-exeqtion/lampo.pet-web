@@ -14,7 +14,7 @@ export class PetRepository {
   }
 
   /** Busca la mascota por ID */
-  static async findById(id: string): Promise<PetType | null> {
+  static async findById(id: string): Promise<PetType> {
     const { data, error } = await supabase
       .from("pets")
       .select("*")

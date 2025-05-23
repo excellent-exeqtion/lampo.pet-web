@@ -79,7 +79,6 @@ export default function BasicDataForm({
       setLoadLoading(false);
     };
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pet]);
 
   useEffect(() => {
@@ -89,7 +88,6 @@ export default function BasicDataForm({
     ) {
       setState(StepStateEnum.Modified);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pet]);
 
   const handleSubmit = async () => {
@@ -106,7 +104,6 @@ export default function BasicDataForm({
         setPet(newPet);
       }
       onNext();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setState(StepStateEnum.Error, err.message);
       setError(err.message);
@@ -125,7 +122,7 @@ export default function BasicDataForm({
       totalSteps={stepStates.length}
       error={error}
     >
-      <div style={{ display: 'grid', gap: '1rem' }}>
+      <div style={{ display: 'grid', gap: '1rem', marginBottom: '30px' }}>
         <label>
           Nombre
           <input
@@ -138,46 +135,49 @@ export default function BasicDataForm({
         </label>
 
         {pet.image ? (
-          <div
-            {...getRootProps()}
-            onMouseEnter={() => setHover(true)}
-            onMouseLeave={() => setHover(false)}
-            style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
-            onClick={open}
-          >
-            <input {...getInputProps()} />
-            <Image
-              src={preview}
-              alt="Foto de mascota"
-              width={128}
-              height={128}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div
+              {...getRootProps()}
               style={{
-                width: 128,
-                height: 128,
+                position: 'relative',
+                width: '128px',
+                height: '128px',
                 borderRadius: '50%',
+                overflow: 'hidden',
                 border: '3px solid #ccc',
-                objectFit: 'cover',
-                display: 'block'
+                cursor: 'pointer'
               }}
-            />
-            {hover && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: 'rgba(255,255,255,0.6)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%'
-                }}
-              >
-                <span style={{ fontWeight: 'bold', color: '#333' }}>Cambiar foto</span>
-              </div>
-            )}
+              onClick={open}
+              onMouseEnter={() => setHover(true)}
+              onMouseLeave={() => setHover(false)}
+            >
+              <input {...getInputProps()} />
+              <Image
+                src={preview}
+                alt="Foto de mascota"
+                fill
+                style={{ objectFit: 'cover' }}
+              />
+              {hover && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'rgba(255,255,255,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <span style={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
+                    Cambiar foto
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div
@@ -193,9 +193,11 @@ export default function BasicDataForm({
             onClick={open}
           >
             <input {...getInputProps()} />
-            <FaCloudUploadAlt style={{ fontSize: '2rem', color: isDragActive ? '#4285f4' : '#888' }} />
+            <FaCloudUploadAlt
+              style={{ fontSize: '2rem', color: isDragActive ? '#4285f4' : '#888' }}
+            />
             <p style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>
-              <b>Selecciona o</b> arrastra y suelta la foto de tu mascota aquí
+              <b>Selecciona o</b> arrastra y suelta la foto aquí
             </p>
           </div>
         )}

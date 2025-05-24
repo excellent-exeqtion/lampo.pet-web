@@ -4,7 +4,7 @@
 import { FormRepository } from '@/types/lib';
 import { Dispatch, SetStateAction } from 'react';
 
-export function useEntityList<T extends { id?: string }>(
+export function useEntityList<T extends { id: string | undefined }>(
     repository: FormRepository<T>, 
     emptyFactory: (petId: string) => Partial<T>,
     petId: string,

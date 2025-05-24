@@ -393,7 +393,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
           {formData.has_vaccine && (
             <>
               <div>
-                <label htmlFor="last_vaccine_name" style={{ whiteSpace: 'nowrap' }}>Nombre última vacuna</label>
+                <label htmlFor="last_vaccine_name">Nombre última vacuna</label>
                 <input
                   id="last_vaccine_name"
                   type="text"
@@ -495,7 +495,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
             />
             Usa medicina
           </label>
-          <label className="flex items-center gap-2" htmlFor="special_condition" style={{ whiteSpace: 'nowrap' }}>
+          <label className="flex items-center gap-2" htmlFor="special_condition">
             <input
               id="special_condition"
               type="checkbox"

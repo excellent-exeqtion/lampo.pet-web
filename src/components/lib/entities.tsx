@@ -12,14 +12,13 @@ interface EntitiesProps {
     entityName: string;
     loadLoading: boolean;
     handleAdd: () => void;
-    handleRemove: (id: string | undefined) => void;
 }
-export default function Entities({ form, entityList, entityName, loadLoading, handleAdd, handleRemove }: EntitiesProps) {
+export default function Entities({ form, entityList, entityName, loadLoading, handleAdd }: EntitiesProps) {
 
     return (
         <div className="grid grid-cols-1 gap-6" style={{ display: 'flow' }}>
             {entityList.map((item, i: number) => (
-                <Entity key={i.toString()} id={item.id} index={i} entityName={entityName} loadLoading={loadLoading} handleRemove={handleRemove} >
+                <Entity key={i.toString()} index={i} entityName={entityName} >
                     {form(item, i)}
                 </Entity>
             ))}

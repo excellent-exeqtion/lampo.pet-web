@@ -3,12 +3,11 @@
 
 import React from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { Form } from "@/components/index";
+import { EntityFields, Form } from "@/components/index";
 import { useLoadEntities } from "@/hooks/useLoadEntities";
 import { useEntityList } from "@/hooks/useEntityList";
 import { useEntitySubmit } from "@/hooks/useEntitySubmit";
 import type { FormRepository, FieldConfig, StepsStateType } from "@/types/lib";
-import { EntityFields } from "@/components/index";
 
 export interface EntityFormProps<T extends { id?: string }> {
   petId: string;
@@ -25,7 +24,7 @@ export interface EntityFormProps<T extends { id?: string }> {
   onBack: () => void;
 }
 
-export default function EntityForm<T extends { id?: string }>({
+export default function EntityForm<T extends { id: string | undefined }>({
   petId,
   data,
   setData,
@@ -92,6 +91,7 @@ export default function EntityForm<T extends { id?: string }>({
       index={index}
       loadLoading={loadLoading}
       updateItem={updateItem}
+      handleRemove={removeItem}
     />
   );
 
@@ -107,7 +107,6 @@ export default function EntityForm<T extends { id?: string }>({
       form={renderFields}
       onBack={onBack}
       handleAdd={addItem}
-      handleRemove={removeItem}
       handleSubmit={() => submit(onNext)}
     />
   );

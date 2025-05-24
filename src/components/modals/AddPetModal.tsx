@@ -1,7 +1,7 @@
 // src/components/modals/AddPetModal.tsx
 "use client";
 
-import React, { useState, Dispatch, SetStateAction } from "react";
+import React, { useState, Dispatch, SetStateAction, useEffect } from "react";
 import { useAppContext } from "@/app/layout";
 import Modal from "../lib/modal";
 import { EntityForm } from "@/components/index";
@@ -28,7 +28,6 @@ import {
 } from "@/types/index";
 
 import type { StepsStateType, FieldConfig, FormRepository } from "@/types/lib";
-import { InitialStepsState } from "@/types/index";
 import { Empty } from "@/data/index";
 
 import {
@@ -41,6 +40,7 @@ import {
 
 interface AddPetModalProps {
     editPet?: PetType,
+    showAddPetModal: boolean;
     setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
 }
 
@@ -51,7 +51,7 @@ type StepConfig<T> = {
     fieldsConfig: FieldConfig<T>[];
 };
 
-export default function AddPetModal({ setShowAddPetModal, editPet }: AddPetModalProps) {
+export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetModal }: AddPetModalProps) {
     const { session, storedOwnerPets, setStoredOwnerPets, setStoredPet } = useAppContext();
     const [step, setStep] = useState<PetStep>(PetStep.Name);
 
@@ -63,8 +63,13 @@ export default function AddPetModal({ setShowAddPetModal, editPet }: AddPetModal
     const [labTestsData, setLabTestsData] = useState<LabTestDataType[]>([]);
     const [conditionsData, setConditionsData] = useState<ConditionDataType[]>([]);
     const [surgeriesData, setSurgeriesData] = useState<SurgeryDataType[]>([]);
+    const [stepStates, setStepStates] = useState<StepsStateType[]>(Empty.Steps());
 
-    const [stepStates, setStepStates] = useState<StepsStateType[]>(InitialStepsState);
+
+    useEffect(() => {
+        console.log(Empty.Steps());
+        setStepStates(Empty.Steps());
+    }, [showAddPetModal])
 
     // Validar sesión
     if (!session?.db?.user?.id) return null;
@@ -79,6 +84,7 @@ export default function AddPetModal({ setShowAddPetModal, editPet }: AddPetModal
         setStoredOwnerPets([...(storedOwnerPets ?? []), pet]);
         setStoredPet(pet);
         setShowAddPetModal(false);
+        setStepStates(Empty.Steps());
     };
 
     // Configuración dinámica para los pasos que usan EntityForm

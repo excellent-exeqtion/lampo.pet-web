@@ -44,7 +44,7 @@ export function useLoadEntities<T>(
     }, [petId]);
 
     useEffect(() => {
-        if (JSON.stringify(savedData) !== JSON.stringify(list) && !stateEq(StepStateEnum.NotInitialize)) {
+        if (JSON.stringify(savedData) !== JSON.stringify(list) && !stateEq(StepStateEnum.NotInitialize) && loading == false) {
             setState(StepStateEnum.Modified);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

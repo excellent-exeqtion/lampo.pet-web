@@ -25,6 +25,7 @@ export default function Modal({ children, title, description, setShowModal, maxW
                 zIndex: 2000,
             }}
         >
+
             <div
                 ref={dropdownRef}
                 style={{
@@ -37,27 +38,27 @@ export default function Modal({ children, title, description, setShowModal, maxW
                 }}
             >
 
-                {/* Close button */}
-                <button
-                    onClick={() => setShowModal(false)}
-                    style={{
-                        position: "absolute",
-                        top: "0.5rem",
-                        right: "0.5rem",
-                        background: "none",
-                        border: "none",
-                        fontSize: "1rem",
-                        cursor: "pointer",
-                        color: '#000'
-                    }}
-                    aria-label="Cerrar modal"
-                >
-                    <FaTimes />
-                </button>
-                <h2 className="modal-title">{title}</h2>
-                <p className="description">{description}</p>
-                {children}
-            </div>
-        </div>
+                    {/* Close button */}
+                    <button
+                        onClick={() => setShowModal(false)}
+                        style={{
+                            position: "absolute",
+                            top: "0.5rem",
+                            right: "0.5rem",
+                            background: "none",
+                            border: "none",
+                            fontSize: "1rem",
+                            cursor: "pointer",
+                            color: '#000'
+                        }}
+                        aria-label="Cerrar modal"
+                    >
+                        <FaTimes />
+                    </button>
+                    <h2 className="modal-title">{title}</h2>
+                    <p className="description">{description}</p>
+                    {children}
+                </div>
+        </div >
     );
 }

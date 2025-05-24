@@ -1,4 +1,5 @@
-import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType } from "../types";
+import { StepsStateType, StepStateEnum } from "@/types/lib";
+import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType, PetStep } from "@/types/index";
 
 export function Pet(): PetType { return { id: '', name: '', image: '', owner_id: '' } };
 
@@ -160,4 +161,16 @@ export function VetAccess(): VeterinaryAccessType {
         city: '',
         created_at: ''
     }
+}
+
+export function Steps(): StepsStateType[] {
+    return [
+            { number: PetStep.Name, state: StepStateEnum.NotInitialize },
+            { number: PetStep.BasicData, state: StepStateEnum.NotInitialize },
+            { number: PetStep.Vaccines, state: StepStateEnum.NotInitialize },
+            { number: PetStep.Medicines, state: StepStateEnum.NotInitialize },
+            { number: PetStep.LabTests, state: StepStateEnum.NotInitialize },
+            { number: PetStep.Conditions, state: StepStateEnum.NotInitialize },
+            { number: PetStep.Surgeries, state: StepStateEnum.NotInitialize }
+    ];
 }

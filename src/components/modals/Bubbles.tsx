@@ -133,8 +133,8 @@ export default function Bubbles({
       {showVetModal && <VeterinaryModal setShowVetModal={setShowVetModal} />}
       {showCodeModal && <PetCodeModal setShowCodeModal={setShowCodeModal} />}
       {showFeedbackModal && <FeedbackModal setShowFeedbackModal={setShowFeedbackModal} />}
-      {showAddPetModal && <AddPetModal setShowAddPetModal={setShowAddPetModal} />}
-      {showEditPetModal && <AddPetModal editPet={storedPet} setShowAddPetModal={setShowEditPetModal} />}
+      {showAddPetModal && <AddPetModal showAddPetModal={showAddPetModal} setShowAddPetModal={setShowAddPetModal} />}
+      {showEditPetModal && <AddPetModal editPet={storedPet} showAddPetModal={showAddPetModal} setShowAddPetModal={setShowEditPetModal} />}
     </div>
   );
 }

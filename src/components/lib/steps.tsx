@@ -15,9 +15,11 @@ interface StepsProps {
 export default function Steps({ children, submitLoading, loadLoading, step, totalSteps, error, onNext, onBack }: StepsProps) {
 
   return (
-    <React.Fragment>
+    <>
       <div className="space-y-4">
-        {children}
+        <div style={{ maxHeight: '500px', overflowY: 'auto', padding: '1rem', marginBottom: '1rem' }}>
+          {children}
+        </div>
         {error && (
           <p className="text-error">
             {error}
@@ -45,6 +47,6 @@ export default function Steps({ children, submitLoading, loadLoading, step, tota
           </button>
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 }

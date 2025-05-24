@@ -67,7 +67,6 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
 
 
     useEffect(() => {
-        console.log(Empty.Steps());
         setStepStates(Empty.Steps());
     }, [showAddPetModal])
 

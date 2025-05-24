@@ -45,11 +45,12 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   };
 
   const initial = initials(basicData);
+  console.log(basicData)
   const [formData, setFormData] = useState<Partial<BasicDataType>>({ ...basicData, pet_id: petId, pet_type: initial.petType, main_food: initial.food, race: initial.race });
   const [error, setError] = useState<string | null>(null);
   const [loadLoading, setLoadLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [weight, setWeight] = useState<number>(parseInt(basicData.weight.split(' ')[0]) ?? 0);
+  const [weight, setWeight] = useState<number>(parseFloat(basicData.weight.split(' ')[0]) ?? 0);
   const [weightUnit, setWeightUnit] = useState<string>(basicData.weight.split(' ')[1]);
   const [otherPetType, setOtherPetType] = useState<string>(initial.otherPetType);
   const [otherFood, setOtherFood] = useState<string>(initial.otherFood);
@@ -93,7 +94,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
           const initial = initials(basicDataSaved, loadedWithApi);
           setLoadedWithApi(true);
           setFormData({ ...basicDataSaved, pet_id: petId, pet_type: initial.petType, main_food: initial.food, race: initial.race });
-          setWeight(parseInt(basicDataSaved.weight.split(' ')[0]));
+          setWeight(parseFloat(basicDataSaved.weight.split(' ')[0]));
           setWeightUnit(basicDataSaved.weight.split(' ')[1]);
           setOtherPetType(initial.otherPetType);
           setOtherRace(initial.otherRace);
@@ -115,11 +116,11 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
         const finalFood = formData.main_food === 'Otro' ? otherFood.trim() : formData.main_food;
         const finalPetType = formData.pet_type === 'Otro' ? otherPetType.trim() : formData.pet_type;
         const finalRace = formData.race === 'Otro' ? otherRace.trim() : formData.race;
-        const finalWeigth = `${weight ?? 0} ${weightUnit}`;
+        const finalWeight = `${weight ?? 0} ${weightUnit}`;
         const dataToSave: BasicDataType = {
           ...(formData as BasicDataType),
           main_food: finalFood || '',
-          weight: finalWeigth || '0 Kg',
+          weight: finalWeight || '0 Kg',
           pet_type: finalPetType || '',
           race: finalRace || '',
         };
@@ -198,11 +199,12 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
               <input
                 id="weight"
                 type="number"
+                pattern="^\d+(?:\.\d{1,2})?$"
                 min="0"
                 className="w-2/3"
                 disabled={loadLoading}
                 value={weight ?? 0}
-                onChange={e => setWeight(parseInt(e.target.value) ?? 0)}
+                onChange={e => setWeight(parseFloat(e.target.value) ?? 0)}
                 required
               />
               <select

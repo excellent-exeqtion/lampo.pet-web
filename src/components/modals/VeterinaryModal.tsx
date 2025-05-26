@@ -4,6 +4,8 @@ import React, { Dispatch, SetStateAction, useState } from "react";
 import { useRouter } from "next/navigation";
 import { veterinaryStyles } from "../../styles/veterinary";
 import Modal from "../lib/modal";
+import { useAppContext } from "../layout/ClientAppProvider";
+import { postFetch, getFetch } from "@/services/apiService";
 
 interface VeterinaryModalProps {
   setShowVetModal: Dispatch<SetStateAction<boolean>>;
@@ -19,6 +21,7 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { setStoredPet, setStoredOwnerPets } = useAppContext();
 
   const handleSubmit = async () => {
     setError("");
@@ -30,26 +33,31 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/vet/use-code`,
+      const codeResponse = await postFetch(
+        '/api/vet/use-code',
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            code: sanitizedCode,
-            firstName,
-            lastName,
-            registration,
-            clinicName,
-            city,
-          }),
+          code: sanitizedCode,
+          firstName,
+          lastName,
+          registration,
+          clinicName,
+          city
         }
       );
-      const data = await res.json();
+      const codeData = await codeResponse.json();
 
-      if (!res.ok || data.error) {
-        setError(data.error || "Código inválido o expirado.");
+      if (!codeResponse.ok || codeData.error) {
+        setError(codeData.error || "Código inválido o expirado.");
       } else {
+        const petResponse = await getFetch(`/api/pets/${codeData.pet_id}`);
+
+        if (!petResponse.ok) {
+          setError("No se encontró la mascota.");
+        }
+        const petData = await petResponse.json();
+
+        setStoredPet(petData)
+        setStoredOwnerPets([]);
         setShowVetModal(false);
         router.push(`/pages/vet/${sanitizedCode}`);
       }

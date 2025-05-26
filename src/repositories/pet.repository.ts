@@ -1,9 +1,9 @@
-// lib/repositories/pet.repository.ts
+// src/repositories/pet.repository.ts
 import { supabase } from "@/lib/client/supabase";
 import { PetType } from "@/types/index";
 
-export class PetRepository {
-  static async create(pet: PetType) {
+export default class PetRepository {
+  static async upsert(pet: PetType) {
     const { data, error } = await supabase.from('pets')
       .upsert(pet, { onConflict: 'id' })
       .select();
@@ -37,12 +37,14 @@ export class PetRepository {
   static async updateById(
     id: string,
     updates: Partial<Pick<PetType, "image" | "name">>
-  ): Promise<void> {
-    const { error } = await supabase
+  ): Promise<boolean> {
+    const { data, error } = await supabase
       .from("pets")
       .update(updates)
       .eq("id", id);
     if (error) throw new Error(error.message);
+    if(!data) return false;
+    return true;
   }
 
   /** Verifica que el usuario loggeado y la mascota seleccionada se encuentren en la base de datos  */

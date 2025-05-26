@@ -1,5 +1,5 @@
 // app/lib/codeGenerator.tsx
-import { PetRepository } from '@/repos/pet.repository';
+import { PetRepository } from '@/repos/index';
 import { customAlphabet } from "nanoid";
 
 // Define un alfabeto con dígitos y letras (mayúsculas + minúsculas)
@@ -28,6 +28,7 @@ export async function generateUniquePetId(): Promise<string> {
   let candidate: string;
   let exists: boolean;
 
+  //TODO: Cambiar a api
   do {
     candidate = randomPetId();
     exists = await PetRepository.existsById(candidate);

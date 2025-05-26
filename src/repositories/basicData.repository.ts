@@ -1,8 +1,9 @@
+// src/repositories/basicData.repository.ts
 import { supabase } from '@/lib/client/supabase';
 import type { BasicDataType } from '@/types/index';
 
-export class BasicDataRepository {
-  static async create(basicData: BasicDataType) {
+export default class BasicDataRepository {
+  static async upsert(basicData: BasicDataType) {
     const { data, error } = await supabase.from('basic_data')
       .upsert(basicData, { onConflict: 'pet_id' })
       .select();

@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { PlanVersionType } from "@/types/index";
-import { SubscriptionRepository } from "@/repos/subscription.repository";
-import { PlanRepository } from "@/repos/plan.repository";
+import { SubscriptionRepository, PlanRepository } from "@/repos/index";
 import { useAppContext } from "@/app/layout";
 import { useRouter } from "next/navigation";
 

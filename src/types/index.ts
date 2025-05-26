@@ -144,3 +144,13 @@ export enum PetStep {
     Conditions = 5,
     Surgeries = 6
 }
+
+export enum DisplayPage {
+    Layout = 0,
+    BasicData = 1,
+    Vaccines = 2,
+    Medicines = 3,
+    LabTests = 4,
+    Conditions = 5,
+    Surgeries = 6
+}

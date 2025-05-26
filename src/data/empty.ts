@@ -1,5 +1,6 @@
-import { StepsStateType, StepStateEnum } from "@/types/lib";
-import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType, PetStep } from "@/types/index";
+import { DisplayPageType, StepsStateType, StepStateEnum } from "@/types/lib";
+import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType, PetStep, DisplayPage } from "@/types/index";
+import { useRef } from "react";
 
 export function Pet(): PetType { return { id: '', name: '', image: '', owner_id: '' } };
 
@@ -165,12 +166,24 @@ export function VetAccess(): VeterinaryAccessType {
 
 export function Steps(): StepsStateType[] {
     return [
-            { number: PetStep.Name, state: StepStateEnum.NotInitialize },
-            { number: PetStep.BasicData, state: StepStateEnum.NotInitialize },
-            { number: PetStep.Vaccines, state: StepStateEnum.NotInitialize },
-            { number: PetStep.Medicines, state: StepStateEnum.NotInitialize },
-            { number: PetStep.LabTests, state: StepStateEnum.NotInitialize },
-            { number: PetStep.Conditions, state: StepStateEnum.NotInitialize },
-            { number: PetStep.Surgeries, state: StepStateEnum.NotInitialize }
+        { step: PetStep.Name, state: StepStateEnum.NotInitialize },
+        { step: PetStep.BasicData, state: StepStateEnum.NotInitialize },
+        { step: PetStep.Vaccines, state: StepStateEnum.NotInitialize },
+        { step: PetStep.Medicines, state: StepStateEnum.NotInitialize },
+        { step: PetStep.LabTests, state: StepStateEnum.NotInitialize },
+        { step: PetStep.Conditions, state: StepStateEnum.NotInitialize },
+        { step: PetStep.Surgeries, state: StepStateEnum.NotInitialize }
     ];
+}
+
+export function Pages(): DisplayPageType[] {
+    return [
+        { page: DisplayPage.Layout, ref: useRef(false) },
+        { page: DisplayPage.BasicData, ref: useRef(false) },
+        { page: DisplayPage.Vaccines, ref: useRef(false) },
+        { page: DisplayPage.Medicines, ref: useRef(false) },
+        { page: DisplayPage.LabTests, ref: useRef(false) },
+        { page: DisplayPage.Conditions, ref: useRef(false) },
+        { page: DisplayPage.Surgeries, ref: useRef(false) }
+    ].sort(x => x.page);
 }

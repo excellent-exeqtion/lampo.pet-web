@@ -1,7 +1,8 @@
+// src/repositories/owner.repository.ts
 import { supabase } from '@/lib/client/supabase';
 import type { OwnerDataType } from '@/types/index';
 
-export class OwnerRepository {
+export default class OwnerRepository {
     static async create(owner: OwnerDataType) {
         return supabase.from('owners').insert(owner);
     }

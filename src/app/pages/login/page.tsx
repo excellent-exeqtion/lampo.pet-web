@@ -7,7 +7,7 @@ import Image from "next/image";
 
 import { signIn, ownerSignUp, resetPassword } from "@/services/authService";
 import type { OwnerDataType } from "@/types/index";
-import { OwnerRepository } from "@/repos/owner.repository";
+import { OwnerRepository } from "@/repos/index";
 import PlanSelection from "./components/PlanSelection";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 

@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { SubscriptionType, PlanVersionType } from "@/types/index";
-import { SubscriptionRepository } from "@/repos/subscription.repository";
-import { PlanRepository } from "@/repos/plan.repository";
+import { PlanRepository, SubscriptionRepository } from "@/repos/index";
 
 interface PlanSelectionProps {
     /** Callback que recibe la suscripción creada */

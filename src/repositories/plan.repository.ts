@@ -1,8 +1,8 @@
-// repos/plan.repository.ts
+// src/repositories/plan.repository.ts
 import { supabase } from '@/lib/client/supabase';
 import { PlanVersionType } from '../types/index';
 
-export class PlanRepository {
+export default class PlanRepository {
   /**
    * Trae todas las versiones vigentes (effective_to IS NULL)
    */

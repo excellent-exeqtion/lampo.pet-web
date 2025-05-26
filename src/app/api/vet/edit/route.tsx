@@ -1,7 +1,6 @@
 // app/api/pets/[id]/route.tsx
 import { NextResponse } from "next/server";
-import { PetRepository } from "@/repos/pet.repository";
-import { PetCodeRepository } from "@/repos/petCode.repository";
+import { PetRepository, PetCodeRepository } from "@/repos/index";
 
 interface UpdateBody {
     code: string;

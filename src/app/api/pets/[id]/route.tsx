@@ -1,28 +1,42 @@
-// app/api/pets/[id]/route.tsx
-import { NextResponse } from "next/server";
-import { PetRepository } from "@/repos/pet.repository";
+// app/api/pets/[id]/route.ts (resumiendo lo anterior)
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { PetRepository } from "@/repos/index";
+import { ApiParams } from "@/types/lib";
+import { getWithErrorHandling, withValidationAndErrorHandling } from "@/services/apiService";
 
-interface UpdateBody {
-    code: string;
-    name?: string;
-    image?: string;
+const updatePetSchema = z.object({
+  name: z.string().optional(),
+  image: z.string().url().optional(),
+});
+
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  return getWithErrorHandling(
+    req,
+    async () => {
+      const { id } = params;
+      const pets = await PetRepository.findById(id)
+      return NextResponse.json(pets, { status: 200 })
+    });
 }
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const updates = (await req.json()) as UpdateBody;
 
-    // 2) Actualizar pet
-    const pet = await PetRepository.updateById(id, updates);
-    return NextResponse.json({ success: true, data: pet });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Error interno" },
-      { status: 500 }
-    );
-  }
+export async function PATCH(req: NextRequest, { params }: ApiParams) {
+  return withValidationAndErrorHandling(
+    "PATCH",
+    req,
+    updatePetSchema,
+    async (updates) => {
+      const updated = await PetRepository.updateById(params.id, updates);
+      if (!updated) {
+        return NextResponse.json(
+          { success: false, message: "Mascota no encontrada" },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(
+        { success: true, message: "Actualizado correctamente" },
+        { status: 200 }
+      );
+    }
+  );
 }

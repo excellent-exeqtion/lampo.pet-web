@@ -1,4 +1,5 @@
 "use client";
+import { putFetch } from "@/services/apiService";
 import { PetType } from "@/types/index";
 import React, { useState, FormEvent } from "react";
 
@@ -18,14 +19,7 @@ export default function PetEditForm({ code, pet, disabled = false }: Props) {
     e.preventDefault();
     if (disabled) return;
 
-    const res = await fetch(
-      `${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/vet/edit/${pet.id}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, name, image }),
-      }
-    );
+    const res = await putFetch(`/api/vet/edit/${pet.id}`, { code, name, image });
 
     // ← usar res.ok para determinar éxito
     const success = res.ok;

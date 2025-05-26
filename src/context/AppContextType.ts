@@ -1,11 +1,11 @@
 // app/data/context.tsx
 import { PetCodeType, PetType, VeterinaryAccessType } from "@/types/index";
-import { AppSession } from "@/types/lib";
+import { AppSession, DisplayPageType } from "@/types/lib";
 
 export interface AppContextType {
   session: AppSession | null;
+  didMountRef: DisplayPageType[];
   logout: () => object;
-  selectedPet: PetType;
   storedPet: PetType;
   setStoredPet: (value: PetType) => void;
   storedVetAccess: VeterinaryAccessType;

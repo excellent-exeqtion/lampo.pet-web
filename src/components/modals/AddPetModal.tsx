@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState, Dispatch, SetStateAction, useEffect } from "react";
-import { useAppContext } from "@/app/layout";
 import Modal from "../lib/modal";
 import { EntityForm } from "@/components/index";
 
@@ -25,6 +24,7 @@ import {
     LabTestDataType,
     ConditionDataType,
     SurgeryDataType,
+    DisplayPage,
 } from "@/types/index";
 
 import type { StepsStateType, FieldConfig, FormRepository } from "@/types/lib";
@@ -37,6 +37,7 @@ import {
     SurgeryRepository,
     VaccineRepository
 } from "@/repos/index";
+import { useAppContext } from "../layout/ClientAppProvider";
 
 interface AddPetModalProps {
     editPet?: PetType,
@@ -45,6 +46,7 @@ interface AddPetModalProps {
 }
 
 type StepConfig<T> = {
+    entityPage: number;
     entityName: string;
     repository: { new(): FormRepository<T> };
     emptyFactory: (petId: string) => T;
@@ -52,7 +54,7 @@ type StepConfig<T> = {
 };
 
 export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetModal }: AddPetModalProps) {
-    const { session, storedOwnerPets, setStoredOwnerPets, setStoredPet } = useAppContext();
+    const { session, storedOwnerPets, setStoredOwnerPets } = useAppContext();
     const [step, setStep] = useState<PetStep>(PetStep.Name);
 
     // Estados por entidad
@@ -81,7 +83,6 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
         if (!pet.id) return;
         pet.owner_id = ownerId;
         setStoredOwnerPets([...(storedOwnerPets ?? []), pet]);
-        setStoredPet(pet);
         setShowAddPetModal(false);
         setStepStates(Empty.Steps());
     };
@@ -90,6 +91,7 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stepConfigs: Partial<Record<PetStep, StepConfig<any>>> = {
         [PetStep.Vaccines]: {
+            entityPage: DisplayPage.Vaccines,
             entityName: "vacuna",
             repository: VaccineRepository,
             emptyFactory: emptyVaccine,
@@ -102,6 +104,7 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
             ],
         },
         [PetStep.Medicines]: {
+            entityPage: DisplayPage.Medicines,
             entityName: "medicina",
             repository: MedicineRepository,
             emptyFactory: emptyMedicine,
@@ -112,6 +115,7 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
             ],
         },
         [PetStep.LabTests]: {
+            entityPage: DisplayPage.LabTests,
             entityName: "prueba",
             repository: LabTestRepository,
             emptyFactory: emptyLabTest,
@@ -123,6 +127,7 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
             ],
         },
         [PetStep.Conditions]: {
+            entityPage: DisplayPage.Conditions,
             entityName: "condición",
             repository: ConditionRepository,
             emptyFactory: emptyCondition,
@@ -132,6 +137,7 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
             ],
         },
         [PetStep.Surgeries]: {
+            entityPage: DisplayPage.Surgeries,
             entityName: "cirugía",
             repository: SurgeryRepository,
             emptyFactory: emptySurgery,
@@ -171,7 +177,7 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
             case PetStep.BasicData:
                 return (
                     <BasicDataForm
-                        petId={pet.id!}
+                        pet={pet}
                         basicData={basicData}
                         setBasicData={setBasicData}
                         onNext={next}
@@ -190,6 +196,7 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
                 return (
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     <EntityForm<any>
+                        page={cfg.entityPage}
                         key={step}
                         petId={pet.id!}
                         data={items}

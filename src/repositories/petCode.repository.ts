@@ -1,11 +1,10 @@
-// lib/repositories/petCode.repository.ts
+// src/repositories/petCode.repository.ts
 
 import { supabase } from "@/lib/client/supabase";
 import { PetCodeType } from "@/types/index";
 import { Random } from "@/utils/index";
 
-
-export class PetCodeRepository {
+export default class PetCodeRepository {
   /** Busca un código activo */
   static async find(code: string): Promise<PetCodeType | null> {
     const { data, error } = await supabase

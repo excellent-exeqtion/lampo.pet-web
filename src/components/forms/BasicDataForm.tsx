@@ -1,16 +1,16 @@
 // src/components/forms/BasicDataForm.tsx
 import React, { useState, useEffect, Dispatch } from 'react';
-import { BasicDataRepository } from '@/repos/basicData.repository';
-import { InitialBasicDataType, PetStep as PetStep, type BasicDataType } from '@/types/index';
+import { InitialBasicDataType, PetStep as PetStep, PetType, type BasicDataType } from '@/types/index';
 import { StepsStateType, StepStateEnum } from '@/types/lib';
 import { Dates, Step } from '@/utils/index';
 import { petTypes, genders, weightUnits, breedOptions, foodOptions, weightConditionOptions, sizeOptions } from '@/data/petdata';
 import Steps from "../lib/steps";
 import { Empty } from '@/data/index';
 import { useDeviceDetect } from '@/hooks/useDeviceDetect';
+import { BasicDataRepository } from '@/repos/index';
 
 interface BasicDataFormProps {
-  petId: string;
+  pet: PetType;
   basicData: BasicDataType;
   setBasicData: (basicData: BasicDataType) => void;
   onBack: () => void;
@@ -19,13 +19,13 @@ interface BasicDataFormProps {
   setStepStates: Dispatch<React.SetStateAction<StepsStateType[]>>;
 }
 
-export default function BasicDataForm({ petId, basicData, setBasicData, onNext, onBack, stepStates, setStepStates }: BasicDataFormProps) {
+export default function BasicDataForm({ pet, basicData, setBasicData, onNext, onBack, stepStates, setStepStates }: BasicDataFormProps) {
   const step = PetStep.BasicData;
   const setState = (stepState: StepStateEnum, stepError: string | null = null) => {
     Step.ChangeState(stepStates, setStepStates, step, stepState, stepError);
   }
   const stateEq = (stepState: StepStateEnum) => {
-    return stepStates.find(x => x.number == step)?.state == stepState;
+    return stepStates.find(x => x.step == step)?.state == stepState;
   }
   const initials = (basicData: BasicDataType, fetch: boolean = false): InitialBasicDataType => {
     const initialPetType = petTypes.filter(t => t == basicData.pet_type).length > 0 || (basicData.pet_type == '' && !fetch) ? basicData.pet_type : 'Otro';
@@ -45,8 +45,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   };
 
   const initial = initials(basicData);
-  console.log(basicData)
-  const [formData, setFormData] = useState<Partial<BasicDataType>>({ ...basicData, pet_id: petId, pet_type: initial.petType, main_food: initial.food, race: initial.race });
+  const [formData, setFormData] = useState<Partial<BasicDataType>>({ ...basicData, pet_id: pet.id, pet_type: initial.petType, main_food: initial.food, race: initial.race });
   const [error, setError] = useState<string | null>(null);
   const [loadLoading, setLoadLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -84,29 +83,33 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
   }, [formData, otherPetType, otherFood, otherRace, weight, weightUnit]);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       setLoadLoading(true);
       if (stateEq(StepStateEnum.NotInitialize)) {
-        const basicDataSaved = await BasicDataRepository.findByPetId(petId);
+        setState(StepStateEnum.Initialize);
+        console.log(pet);
+        // 1) Datos básicos de la mascota
+        const resPet = await fetch(`/api/pets/basic-data/${pet.id}`);
+        if (!resPet.ok) throw new Error("Falló fetch basic-data");
+        const basicDataSaved: BasicDataType = await resPet.json();
         if (basicDataSaved) {
           setSavedData(basicDataSaved);
           setBasicData(basicDataSaved);
           const initial = initials(basicDataSaved, loadedWithApi);
           setLoadedWithApi(true);
-          setFormData({ ...basicDataSaved, pet_id: petId, pet_type: initial.petType, main_food: initial.food, race: initial.race });
+          setFormData({ ...basicDataSaved, pet_id: pet.id, pet_type: initial.petType, main_food: initial.food, race: initial.race });
           setWeight(parseFloat(basicDataSaved.weight.split(' ')[0]));
           setWeightUnit(basicDataSaved.weight.split(' ')[1]);
           setOtherPetType(initial.otherPetType);
           setOtherRace(initial.otherRace);
           setOtherFood(initial.otherFood);
         }
-        setState(StepStateEnum.Initialize);
       }
       setLoadLoading(false);
     };
-    fetch();
+    fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [petId, formData]);
+  }, [pet.id, formData]);
 
   const handleSubmit = async () => {
     setError(null);
@@ -124,7 +127,7 @@ export default function BasicDataForm({ petId, basicData, setBasicData, onNext, 
           pet_type: finalPetType || '',
           race: finalRace || '',
         };
-        const { error: basicDataErr } = await BasicDataRepository.create(dataToSave);
+        const { error: basicDataErr } = await BasicDataRepository.upsert(dataToSave);
         if (basicDataErr) throw new Error(basicDataErr?.message || "Error creando mascota");
         setSavedData(dataToSave);
         setBasicData(dataToSave);

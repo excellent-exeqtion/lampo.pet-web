@@ -1,8 +1,9 @@
 // app/components/modals/FeedbackModal.tsx
 "use client";
 import React, { Dispatch, SetStateAction, useState } from "react";
-import { useAppContext } from "@/app/layout";
+import { useAppContext } from "../layout/ClientAppProvider";
 import Modal from "../lib/modal";
+import { postFetch } from "@/services/apiService";
 
 interface FeedbackModalProps {
   setShowFeedbackModal: Dispatch<SetStateAction<boolean>>;
@@ -19,7 +20,7 @@ export default function FeedbackModal({ setShowFeedbackModal }: FeedbackModalPro
     setSending(true);
 
     try {
-      const res = await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/feedback`, {
+      const res = await postFetch(`/api/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ feedback, anonymous, userEmail: session?.db?.user.email }),

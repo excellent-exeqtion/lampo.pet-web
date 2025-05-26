@@ -1,93 +1,125 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/basic-data/page.tsx (server component)
 "use client";
 import React, { useEffect, useState } from "react";
-import { useAppContext } from "@/app/layout";
 import { FaUser } from "react-icons/fa";
 import { format } from "@/utils/dates";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { BasicField, Loading, Title } from "@/components/index";
 import { FieldType } from "@/types/lib";
-import { BasicDataRepository } from "@/repos/basicData.repository";
-import { BasicDataType, OwnerDataType } from "@/types/index";
-import { OwnerRepository } from "@/repos/owner.repository";
+import { BasicDataType, DisplayPage as DisplayPage, OwnerDataType } from "@/types/index";
 import { v4 } from 'uuid';
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
+import { getFetch } from "@/services/apiService";
+import { Empty } from "@/data/index";
+import { useAppContext } from "@/components/layout/ClientAppProvider";
 
 export default function BasicDataPage() {
+ // console.log('BasicDataPage')
+  const page = DisplayPage.BasicData;
   useRequireAuth();
 
   const { isMobile } = useDeviceDetect();
-  const { selectedPet, showEditPetModal } = useAppContext();
+  const { storedPet, showEditPetModal, didMountRef } = useAppContext();
   const [petData, setPetData] = useState<BasicDataType | null>(null);
   const [ownerData, setOwnerData] = useState<OwnerDataType | null>(null);
+  const [basicDataItems, setBasicDataItems] = useState<FieldType[]>([]);
+  const [contactItems, setContactItems] = useState<FieldType[]>([]);
 
   useEffect(() => {
-    if (!selectedPet.id) return;
+    if (!didMountRef[page].ref.current || petData == null || ownerData == null) {
+      setPetData(Empty.BasicData());
+      setOwnerData(Empty.OwnerData());
+      didMountRef[page].ref.current = true;
+      if (!storedPet.id) return;
 
-    const fetchData = async () => {
-      try {
-        const basicData = await BasicDataRepository.findByPetId(selectedPet.id);
-        setPetData(basicData);
-        const owner = await OwnerRepository.findById(selectedPet.owner_id);
-        setOwnerData(owner);
-      } catch (err) {
-        console.error("Error cargando datos básicos o dueño:", err);
-      }
-    };
+      const fetchData = async () => {
+        try {
+          // 1) Datos básicos de la mascota
+          const resPet = await getFetch(`/api/pets/basic-data/${storedPet.id}`);
+          if (!resPet.ok) throw new Error("Falló fetch basic-data");
+          const basicData: BasicDataType = await resPet.json();
+          setPetData(basicData);
 
-    fetchData();
-  }, [selectedPet.id, selectedPet.owner_id, showEditPetModal]);
+          // 2) Datos del dueño
+          const resOwner = await getFetch(`/api/owner/${storedPet.owner_id}`);
+          if (!resOwner.ok) throw new Error("Falló fetch owners");
+          const owner: OwnerDataType = await resOwner.json();
+          setOwnerData(owner);
+        } catch (err) {
+          console.error("Error cargando datos:", err);
+        }
+      };
+
+      fetchData();
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedPet.id, storedPet.owner_id, showEditPetModal]);
+
+  useEffect(() => {
+    if (petData) {
+      setBasicDataItems([
+        { label: "Tipo de mascota", show: true, value: petData.pet_type },
+        { label: "Género", show: true, value: petData.gender },
+        { label: "Peso", show: true, value: petData.weight },
+        { label: "Raza", show: true, value: petData.race },
+        { label: "Alergias", show: true, value: petData.has_allergies ? 'Si' : 'No' },
+        { label: "Condición de peso", show: true, value: petData.weight_condition },
+        { label: "Tamaño", show: true, value: petData.size },
+        { label: "Vive con otros", show: true, value: petData.lives_with_others ? 'Si' : 'No' },
+        { label: "Comida principal", show: true, value: petData.main_food },
+        { label: "Última vacuna", show: true, value: petData.has_vaccine ? (`${petData.last_vaccine_name} (${format(petData.last_vaccine_date)})`) : 'No tiene vacunas' },
+        { label: "Castrado", show: true, value: petData.is_castrated ? (`Sí (${format(petData.castration_date)})`) : 'No' },
+        { label: "Antipulgas", show: true, value: petData.has_anti_flea ? (`Sí (${format(petData.anti_flea_date)})`) : 'No' },
+        { label: "¿Usa medicina?", show: true, value: petData.uses_medicine ? 'Si' : 'No' },
+        { label: "Condición especial", show: true, value: petData.special_condition ? 'Si' : 'No' },
+      ])
+    }
+  }, [petData]);
 
 
-  if (petData === null || ownerData === null) {
-    return (<Loading />)
-  }
-
-  const basicDataItems: FieldType[] = [
-    { label: "Tipo de mascota", show: true, value: petData.pet_type },
-    { label: "Género", show: true, value: petData.gender },
-    { label: "Peso", show: true, value: petData.weight },
-    { label: "Raza", show: true, value: petData.race },
-    { label: "Alergias", show: true, value: petData.has_allergies ? 'Si' : 'No' },
-    { label: "Condición de peso", show: true, value: petData.weight_condition },
-    { label: "Tamaño", show: true, value: petData.size },
-    { label: "Vive con otros", show: true, value: petData.lives_with_others ? 'Si' : 'No' },
-    { label: "Comida principal", show: true, value: petData.main_food },
-    { label: "Última vacuna", show: true, value: petData.has_vaccine ? (`${petData.last_vaccine_name} (${format(petData.last_vaccine_date)})`) : 'No tiene vacunas' },
-    { label: "Castrado", show: true, value: petData.is_castrated ? (`Sí (${format(petData.castration_date)})`) : 'No' },
-    { label: "Antipulgas", show: true, value: petData.has_anti_flea ? (`Sí (${format(petData.anti_flea_date)})`) : 'No' },
-    { label: "¿Usa medicina?", show: true, value: petData.uses_medicine ? 'Si' : 'No' },
-    { label: "Condición especial", show: true, value: petData.special_condition ? 'Si' : 'No' },
-  ];
-
-
-  const contactItems: FieldType[] = [
-    { label: "Nombre del contacto", show: true, value: ownerData.name },
-    { label: "Teléfono", show: ownerData.phone != null, value: ownerData.phone },
-    { label: "Dirección", show: ownerData.address != null, value: ownerData.address },
-    { label: "Ciudad", show: true, value: ownerData.city },
-    { label: "País", show: true, value: ownerData.country },
-    { label: "Email", show: true, value: ownerData.email },
-  ];
+  useEffect(() => {
+    if (ownerData) {
+      setContactItems([
+        { label: "Nombre del contacto", show: true, value: ownerData.name },
+        { label: "Teléfono", show: ownerData.phone != null, value: ownerData.phone },
+        { label: "Dirección", show: ownerData.address != null, value: ownerData.address },
+        { label: "Ciudad", show: true, value: ownerData.city },
+        { label: "País", show: true, value: ownerData.country },
+        { label: "Email", show: true, value: ownerData.email },
+      ])
+    }
+  }, [ownerData]);
 
   return (
     <main style={{ padding: isMobile ? "4rem 1rem 2rem" : "2rem", fontSize: "0.9rem", marginTop: isMobile ? "3.5rem" : "0" }}>
       {/* Datos básicos en tres columnas */}
       <section style={{ marginBottom: "2rem" }}>
         {<Title icon={<FaUser />} title="Datos básicos" />}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
-          {basicDataItems.map((item) =>
-            <BasicField key={v4()} item={item} />
-          )}
-        </div>
+        {!petData &&
+          <Loading />
+        }
+        {petData &&
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+            {basicDataItems.map((item) =>
+              <BasicField key={v4()} item={item} />
+            )}
+          </div>
+        }
       </section>
       <section>
         {<Title icon={<FaUser />} title="Datos de contacto" />}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
-          {contactItems.map((item) =>
-            <BasicField key={v4()} item={item} />
-          )}
-        </div>
+        {!ownerData &&
+          <Loading />
+        }
+        {ownerData &&
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
+            {contactItems.map((item) =>
+              <BasicField key={v4()} item={item} />
+            )}
+          </div>
+        }
       </section>
     </main>
   );

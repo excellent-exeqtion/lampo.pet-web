@@ -16,7 +16,6 @@ import {
 } from "react-icons/fa";
 import Link from 'next/link';
 import Image from 'next/image';
-import { useAppContext } from "@/app/layout";
 import { AppSession, MenuType } from "@/types/lib";
 import { v4 } from 'uuid';
 import { useRouter } from "next/navigation";
@@ -26,6 +25,7 @@ import { FaPencil } from "react-icons/fa6";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
+import { useAppContext } from "./ClientAppProvider";
 
 export default function SideBar({
     menuOpen,
@@ -106,7 +106,7 @@ export default function SideBar({
                 >
                     <div style={{ padding: "0 1rem 1rem", display: 'flex', alignItems: 'center' }}>
                         <CircularImage
-                            src={storedPet.image || "/pets/pet.png"}
+                            src={storedPet.image || "/pets/pet.jpg"}
                             width={80} />
                         <p style={{ marginLeft: '20px' }}><b>{storedPet.name ?? 'Nombre de tu mascota'}</b></p>
                     </div>
@@ -151,7 +151,7 @@ export default function SideBar({
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <CircularImage
-                            src={storedPet.image || "/pets/pet.png"}
+                            src={storedPet.image || "/pets/pet.jpg"}
                             width={60} borderSize="3px" />
                         <span style={{ fontSize: "1rem", fontWeight: "600" }}>{storedPet.name}</span>
                     </div>

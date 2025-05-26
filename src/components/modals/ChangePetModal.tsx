@@ -8,7 +8,7 @@ import React, {
   useEffect,
 } from "react";
 import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
-import { useAppContext } from "@/app/layout";
+import { useAppContext } from "../layout/ClientAppProvider";
 import { PetType } from "@/types/index";
 import Modal from "../lib/modal";
 import { Empty } from "@/data/index";
@@ -20,7 +20,7 @@ interface ChangePetModalProps {
 };
 
 export default function ChangePetModal({ setShowChangePetModal, setShowAddPetModal }: ChangePetModalProps) {
-  const { storedOwnerPets, storedPet, setStoredPet: setStoredPetId, setStoredVetAccess } = useAppContext();
+  const { storedOwnerPets, storedPet, setStoredPet, setStoredVetAccess, didMountRef } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +40,10 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
   }, []);
 
   const handleSelect = (pet: PetType) => {
-    setStoredPetId(pet);
+    setStoredPet(pet);
+    didMountRef.forEach(p => {
+      p.ref.current = true;
+    })
     setIsOpen(false);
     setShowChangePetModal(false);
     setStoredVetAccess(Empty.VetAccess());
@@ -71,7 +74,7 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
         >
           <div style={{ display: "flex", alignItems: "center" }}>
             <CircularImage
-              src={storedPet.image || "/pets/pet.png"}
+              src={storedPet.image || "/pets/pet.jpg"}
               width={60}
               borderSize="3px" />
             <span style={{ color: '#000', marginLeft: '10px' }}>
@@ -112,7 +115,7 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
                 }}
               >
                 <CircularImage
-                  src={pet.image || "/pets/pet.png"}
+                  src={pet.image || "/pets/pet.jpg"}
                   width={50}
                   borderSize="3px" />
                 <span style={{ color: '#000', marginLeft: '8px' }}>{pet.name}</span>

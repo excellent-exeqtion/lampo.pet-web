@@ -1,12 +1,11 @@
 // app/vet/[code]/page.tsx
 "use client";
-import { PetRepository } from "@/repos/pet.repository";
-import { PetCodeRepository } from "@/repos/petCode.repository";
+import {  } from "@/repos/pet.repository";
 import PetEditForm from "./components/forms/PetEditForm";
 import { PetType } from "@/types/index";
-import { useAppContext } from "@/app/layout";
 import { useEffect, useState } from "react";
-import { VeterinaryAccessRepository } from "@/repos/veterinaryAccess.repository";
+import { PetRepository, PetCodeRepository, VeterinaryAccessRepository } from "@/repos/index";
+import { useAppContext } from "@/components/layout/ClientAppProvider";
 
 interface VetPageProps {
   params: Promise<{
@@ -24,7 +23,7 @@ export default function VetPage({ params }: VetPageProps) {
   const { setStoredPet: setStoredPetId, setStoredVetAccess, setStoredPetCode } = useAppContext();
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       const { code } = await params;
       setValidatedCode(code);
 
@@ -58,7 +57,7 @@ export default function VetPage({ params }: VetPageProps) {
         setMessage("Ocurrió un error al validar el código.");
       }
     }
-    fetch();
+    fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 

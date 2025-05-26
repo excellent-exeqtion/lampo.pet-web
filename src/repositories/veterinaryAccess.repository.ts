@@ -1,9 +1,9 @@
-// app/repos/veterinaryAccess.repository.ts
+// src/repositories/veterinaryAccess.repository.ts
 import { supabase } from "@/lib/client/supabase";
 import { VeterinaryAccessType } from "../types";
-import { PetCodeRepository } from "./petCode.repository";
+import PetCodeRepository from "./petCode.repository";
 
-export class VeterinaryAccessRepository {
+export default class VeterinaryAccessRepository {
     /** Registra un nuevo acceso de veterinario */
     static async create(access: Omit<
         VeterinaryAccessType,

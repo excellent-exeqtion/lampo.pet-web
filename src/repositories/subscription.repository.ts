@@ -1,9 +1,9 @@
-// repos/subscription.repository.ts
+// src/repositories/subscription.repository.ts
 import { supabase } from '@/lib/client/supabase';
 import { SubscriptionType } from '@/types/index';
 
 
-export class SubscriptionRepository {
+export default class SubscriptionRepository {
     /**
      * Crea una suscripción en estado pending
      */

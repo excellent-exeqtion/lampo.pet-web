@@ -5,12 +5,12 @@ import { getWithErrorHandling } from '@/services/apiService';
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { ownerId: string } }
+    context: { params: { ownerId: string } }
 ) {
     return getWithErrorHandling(
         req,
         async () => {
-            const { ownerId } = params;
+            const { ownerId } = context.params;
             const data = await OwnerRepository.findById(ownerId)
             return NextResponse.json(data);
         });

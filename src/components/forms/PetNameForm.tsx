@@ -10,7 +10,7 @@ import { Steps } from '@/utils/index';
 import { Empty } from '@/data/index';
 import { CircularImage } from "@/components/index";
 import { getFetch, postFetch } from '@/app/api';
-import { useAppContext } from '../layout/ClientAppProvider';
+import { useAppContext } from '../../context/ClientAppProvider';
 
 interface PetFormProps {
   ownerId: string;
@@ -43,7 +43,7 @@ export default function PetNameForm({
   const [submitLoading, setSubmitLoading] = useState(false);
   const [savedData, setSavedData] = useState<PetType>(Empty.Pet());
   const [preview, setPreview] = useState<string>(pet.image || '/pets/pet.jpg');
-  const { storageContext } = useAppContext();
+  const storage = usePetStorage();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -70,19 +70,19 @@ export default function PetNameForm({
         setState(StepStateEnum.Initialize);
       } else if (stateEq(StepStateEnum.NotInitialize)) {
         let petSaved: PetType = Empty.Pet();
-        if (!storageContext.storedPet.id) {
+        if (!storage.storedPet.id) {
           const response = await getFetch(`/api/pets/${pet.id}`);
           if (!response.ok) {
             throw new ApiError('Error al obtener la mascota');
           }
           petSaved = (await response.json())[0] as PetType;
 
-          storageContext.setStoredPet(petSaved);
-          const pets = storageContext.storedOwnerPets.filter((p: PetType) => p.id != petSaved.id);
-          storageContext.setStoredOwnerPets([...pets, petSaved]);
+          storage.setStoredPet(petSaved);
+          const pets = storage.storedOwnerPets.filter((p: PetType) => p.id != petSaved.id);
+          storage.setStoredOwnerPets([...pets, petSaved]);
         }
         else {
-          petSaved = storageContext.storedPet;
+          petSaved = storage.storedPet;
         }
         if (petSaved) {
           setPet(petSaved);
@@ -114,7 +114,7 @@ export default function PetNameForm({
       if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
         const newId = pet.id || (await generateUniquePetId());
         const newPet: PetType = { id: newId, name: pet.name, image: pet.image, owner_id: ownerId };
-        if (JSON.stringify(newPet) != JSON.stringify(storageContext.storedPet)) {
+        if (JSON.stringify(newPet) != JSON.stringify(storage.storedPet)) {
           const response = await postFetch('/api/pets', undefined, newPet);
           const result = await response.json();
           if (!response.ok) {
@@ -122,9 +122,9 @@ export default function PetNameForm({
           }
           const savedPet: PetType = result[0] as PetType;
           setSavedData(savedPet);
-          storageContext.setStoredPet(savedPet);
-          const pets = storageContext.storedOwnerPets.filter((p: PetType) => p.id != savedPet.id);
-          storageContext.setStoredOwnerPets([...pets, savedPet]);
+          storage.setStoredPet(savedPet);
+          const pets = storage.storedOwnerPets.filter((p: PetType) => p.id != savedPet.id);
+          storage.setStoredOwnerPets([...pets, savedPet]);
           setPet(savedPet);
         }
         setState(StepStateEnum.Saved);

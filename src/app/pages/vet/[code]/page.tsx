@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useAppContext } from "@/components/layout/ClientAppProvider";
+import { usePetStorage } from "@/context/PetStorageProvider";
 import PetEditForm from "./components/forms/PetEditForm";
 import { PetType } from "@/types/index";
 
@@ -14,7 +14,7 @@ export default function VetPage({ params }: VetPageProps) {
   const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState("");
 
-  const { storageContext } = useAppContext();
+  const storage = usePetStorage();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,10 +30,10 @@ export default function VetPage({ params }: VetPageProps) {
           return;
         }
 
-        storageContext.setStoredPetCode(data.codeRecord);
-        storageContext.setStoredPet(data.pet);
+        storage.setStoredPetCode(data.codeRecord);
+        storage.setStoredPet(data.pet);
         if (data.vetAccess) {
-          storageContext.setStoredVetAccess(data.vetAccess);
+          storage.setStoredVetAccess(data.vetAccess);
         }
 
         setPet(data.pet);

@@ -28,8 +28,8 @@ import {
 
 import type { StepsStateType, StepConfig } from "@/types/lib";
 import { Empty } from "@/data/index";
-
-import { useAppContext } from "../layout/ClientAppProvider";
+import { useSessionContext } from "@/context/SessionProvider";
+import { usePetStorage } from "@/context/PetStorageProvider";
 
 interface AddPetModalProps {
     editPet?: PetType,
@@ -39,7 +39,8 @@ interface AddPetModalProps {
 
 
 export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetModal }: AddPetModalProps) {
-    const { session, storageContext } = useAppContext();
+    const session = useSessionContext();
+    const storage = usePetStorage();
     const [step, setStep] = useState<PetStep>(PetStep.Name);
 
     // Estados por entidad
@@ -67,7 +68,7 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
     const finalize = () => {
         if (!pet.id) return;
         pet.owner_id = ownerId;
-        storageContext.setStoredOwnerPets([...(storageContext.storedOwnerPets ?? []), pet]);
+        storage.setStoredOwnerPets([...(storage.storedOwnerPets ?? []), pet]);
         setShowAddPetModal(false);
         setStepStates(Empty.Steps());
     };
@@ -77,8 +78,8 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
     const stepConfigs: Partial<Record<PetStep, StepConfig<any>>> = {
         [PetStep.Vaccines]: {
             entityName: "vacuna",
-            storedList: storageContext.storedVaccineData,
-            setStoredList: storageContext.setStoredVaccineData,
+            storedList: storage.storedVaccineData,
+            setStoredList: storage.setStoredVaccineData,
             emptyFactory: emptyVaccine,
             fieldsConfig: [
                 { label: "Nombre *", name: "name", type: "text", mandatory: true, className: "w-full" },
@@ -90,8 +91,8 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
         },
         [PetStep.Medicines]: {
             entityName: "medicina",
-            storedList: storageContext.storedMedicineData,
-            setStoredList: storageContext.setStoredMedicineData,
+            storedList: storage.storedMedicineData,
+            setStoredList: storage.setStoredMedicineData,
             emptyFactory: emptyMedicine,
             fieldsConfig: [
                 { label: "Nombre *", name: "name", type: "text", mandatory: true, className: "w-full" },
@@ -101,8 +102,8 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
         },
         [PetStep.LabTests]: {
             entityName: "prueba",
-            storedList: storageContext.storedLabTestData,
-            setStoredList: storageContext.setStoredLabTestData,
+            storedList: storage.storedLabTestData,
+            setStoredList: storage.setStoredLabTestData,
             emptyFactory: emptyLabTest,
             fieldsConfig: [
                 { label: "Nombre *", name: "name", type: "text", mandatory: true, className: "w-full" },
@@ -113,8 +114,8 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
         },
         [PetStep.Conditions]: {
             entityName: "condición",
-            storedList: storageContext.storedConditionData,
-            setStoredList: storageContext.setStoredConditionData,
+            storedList: storage.storedConditionData,
+            setStoredList: storage.setStoredConditionData,
             emptyFactory: emptyCondition,
             fieldsConfig: [
                 { label: "Condición *", name: "condition", type: "text", mandatory: true, className: "w-full" },
@@ -123,8 +124,8 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
         },
         [PetStep.Surgeries]: {
             entityName: "cirugía",
-            storedList: storageContext.storedSurgeryData,
-            setStoredList: storageContext.setStoredSurgeryData,
+            storedList: storage.storedSurgeryData,
+            setStoredList: storage.setStoredSurgeryData,
             emptyFactory: emptySurgery,
             fieldsConfig: [
                 { label: "Nombre *", name: "name", type: "text", mandatory: true, className: "w-full" },

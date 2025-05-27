@@ -4,18 +4,18 @@ import React from "react";
 import { FaFlask } from "react-icons/fa";
 import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
-import { useAppContext } from "@/components/layout/ClientAppProvider";
+import { usePetStorage } from "@/context/PetStorageProvider";
 
 export default function LabTestsPage() {
-    const {storageContext} = useAppContext();
+    const storage = usePetStorage();
     return (
         <PageComponent
-            parentId={storageContext.storedPet.id}
+            parentId={storage.storedPet.id}
             title="Exámenes de laboratorio"
             icon={<FaFlask />}
             apiUrl={'/api/pet/list/lab-tests/'}
-            storedList={storageContext.storedLabTestData}
-            setStoredList={storageContext.setStoredLabTestData}
+            storedList={storage.storedLabTestData}
+            setStoredList={storage.setStoredLabTestData}
             emptyMessage="No hay registro de resultados de laboratorio."
             mapItemToFields={FieldData.ForLabTests}
         />

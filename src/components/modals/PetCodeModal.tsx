@@ -2,8 +2,9 @@
 "use client";
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaShareAlt, FaCopy } from "react-icons/fa";
-import { useAppContext } from "../layout/ClientAppProvider";
 import ModalComponent from "../lib/modal";
+import { useSessionContext } from "@/context/SessionProvider";
+import { usePetStorage } from "@/context/PetStorageProvider";
 
 interface PetCodeModalProps {
   setShowCodeModal: Dispatch<SetStateAction<boolean>>;
@@ -14,7 +15,8 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const { session, storageContext } = useAppContext();
+  const session = useSessionContext();
+  const storage = usePetStorage();
 
   async function generar() {
     setError("");
@@ -24,7 +26,7 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
         {
           method: 'POST',
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ owner_id: session?.db?.user.id, pet_id: storageContext.storedPet.id }),
+          body: JSON.stringify({ owner_id: session?.db?.user.id, pet_id: storage.storedPet.id }),
         }
       );
 

@@ -4,18 +4,18 @@ import React from "react";
 import { FaCut } from "react-icons/fa";
 import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
-import { useAppContext } from "@/components/layout/ClientAppProvider";
+import { usePetStorage } from "@/context/PetStorageProvider";
 
 export default function SurgeriesPage() {
-    const { storageContext } = useAppContext();
+    const storage = usePetStorage();
     return (
         <PageComponent
-            parentId={storageContext.storedPet.id}
+            parentId={storage.storedPet.id}
             title="Cirugías"
             icon={<FaCut />}
             apiUrl={'/api/pet/list/surgeries/'}
-            storedList={storageContext.storedSurgeryData}
-            setStoredList={storageContext.setStoredSurgeryData}
+            storedList={storage.storedSurgeryData}
+            setStoredList={storage.setStoredSurgeryData}
             emptyMessage="No hay registro de cirugías."
             mapItemToFields={FieldData.ForSurgeries}
         />

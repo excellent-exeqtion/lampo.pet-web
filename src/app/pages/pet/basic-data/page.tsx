@@ -9,34 +9,34 @@ import { BasicDataType, OwnerDataType } from "@/types/index";
 import { v4 } from 'uuid';
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch } from "@/app/api";
-import { useAppContext } from "@/components/layout/ClientAppProvider";
 import { useSession } from "@/hooks/useSession";
+import { usePetStorage } from "@/context/PetStorageProvider";
 
 export default function BasicDataPage() {
   useSession();
 
   const { isMobile } = useDeviceDetect();
-  const { storageContext } = useAppContext();
+  const storage = usePetStorage();
   const [petData, setPetData] = useState<BasicDataType | null>(null);
   const [ownerData, setOwnerData] = useState<OwnerDataType | null>(null);
   const [basicDataItems, setBasicDataItems] = useState<FieldType[]>([]);
   const [contactItems, setContactItems] = useState<FieldType[]>([]);
 
   useEffect(() => {
-    if (!storageContext.storedPet.id) return;
+    if (!storage.storedPet.id) return;
 
     const fetchData = async () => {
       try {
-        if (!storageContext.storedBasicData.pet_id) {
+        if (!storage.storedBasicData.pet_id) {
           // 1) Datos básicos de la mascota
-          const resPet = await getFetch(`/api/pets/basic-data/${storageContext.storedPet.id}`);
+          const resPet = await getFetch(`/api/pets/basic-data/${storage.storedPet.id}`);
           if (!resPet.ok) throw new Error("Falló fetch basic-data");
           const basicData: BasicDataType = await resPet.json();
-          storageContext.setStoredBasicData(basicData);
+          storage.setStoredBasicData(basicData);
           setPetData(basicData);
         }
         else {
-          setPetData(storageContext.storedBasicData);
+          setPetData(storage.storedBasicData);
         }
       } catch (err) {
         console.error("Error cargando datos:", err);
@@ -45,23 +45,23 @@ export default function BasicDataPage() {
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageContext.storedBasicData]);
+  }, [storage.storedBasicData]);
 
 
   useEffect(() => {
-    if (!storageContext.storedPet.id) return;
+    if (!storage.storedPet.id) return;
 
     const fetchData = async () => {
       try {
-        if (!storageContext.storedOwnerData.owner_id) {
-          const resOwner = await getFetch(`/api/owners/${storageContext.storedPet.owner_id}`);
+        if (!storage.storedOwnerData.owner_id) {
+          const resOwner = await getFetch(`/api/owners/${storage.storedPet.owner_id}`);
           if (!resOwner.ok) throw new Error("Falló fetch owners");
           const owner: OwnerDataType = await resOwner.json();
-          storageContext.setStoredOwnerData(owner);
+          storage.setStoredOwnerData(owner);
           setOwnerData(owner);
         }
         else {
-          setOwnerData(storageContext.storedOwnerData);
+          setOwnerData(storage.storedOwnerData);
         }
       } catch (err) {
         console.error("Error cargando datos:", err);
@@ -70,7 +70,7 @@ export default function BasicDataPage() {
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageContext.storedOwnerData]);
+  }, [storage.storedOwnerData]);
 
   useEffect(() => {
     if (petData) {

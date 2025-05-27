@@ -4,8 +4,8 @@ import React, { Dispatch, SetStateAction, useState } from "react";
 import { useRouter } from "next/navigation";
 import { veterinaryStyles } from "../../styles/veterinary";
 import ModalComponent from "../lib/modal";
-import { useAppContext } from "../layout/ClientAppProvider";
 import { postFetch, getFetch } from "@/app/api";
+import { usePetStorage } from "@/context/PetStorageProvider";
 
 interface VeterinaryModalProps {
   setShowVetModal: Dispatch<SetStateAction<boolean>>;
@@ -21,7 +21,7 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { storageContext } = useAppContext();
+  const storage = usePetStorage();
 
   const handleSubmit = async () => {
     setError("");
@@ -57,8 +57,8 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
         }
         const petData = await petResponse.json();
 
-        storageContext.setStoredPet(petData)
-        storageContext.setStoredOwnerPets([]);
+        storage.setStoredPet(petData)
+        storage.setStoredOwnerPets([]);
         setShowVetModal(false);
         router.push(`/pages/vet/${sanitizedCode}`);
       }

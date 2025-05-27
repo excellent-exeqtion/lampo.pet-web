@@ -6,9 +6,9 @@ import { Dates, Steps } from '@/utils/index';
 import { petTypes, genders, weightUnits, breedOptions, foodOptions, weightConditionOptions, sizeOptions } from '@/data/petdata';
 import { Empty } from '@/data/index';
 import { useDeviceDetect } from '@/hooks/useDeviceDetect';
-import { useAppContext } from '../layout/ClientAppProvider';
 import { postFetch } from '@/app/api';
 import StepsComponent from '../lib/steps';
+import { usePetStorage } from '@/context/PetStorageProvider';
 
 interface BasicDataFormProps {
   pet: PetType;
@@ -58,7 +58,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   const [loadedWithApi, setLoadedWithApi] = useState<boolean>(false);
   const [savedData, setSavedData] = useState<BasicDataType>(Empty.BasicData());
   const { isMobile, isDesktop, isTablet } = useDeviceDetect();
-  const { storageContext } = useAppContext();
+  const storage = usePetStorage();
 
   // Estilo común de grid: en móvil siempre 2 columnas, en desktop auto-ajusta
   const sectionGridStyle: React.CSSProperties = {
@@ -90,14 +90,14 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
       if (stateEq(StepStateEnum.NotInitialize)) {
         setState(StepStateEnum.Initialize);
         let basicDataSaved: BasicDataType = Empty.BasicData();
-        if (!storageContext.storedBasicData.pet_id) {
+        if (!storage.storedBasicData.pet_id) {
           const petResponse = await fetch(`/api/pets/basic-data/${pet.id}`);
           if (!petResponse.ok) throw new Error("Falló fetch basic-data");
           basicDataSaved = await petResponse.json() as BasicDataType;
-          storageContext.setStoredBasicData(basicDataSaved);
+          storage.setStoredBasicData(basicDataSaved);
         }
         else {
-          basicDataSaved = storageContext.storedBasicData;
+          basicDataSaved = storage.storedBasicData;
         }
         if (basicDataSaved) {
           setSavedData(basicDataSaved);
@@ -140,7 +140,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
         if (!basicDataResponse.ok) throw new ApiError("Error actualizado datos básicos de la mascota");
         setSavedData(dataToSave);
         setBasicData(dataToSave);
-        storageContext.setStoredBasicData(dataToSave);
+        storage.setStoredBasicData(dataToSave);
         setState(StepStateEnum.Saved);
       }
       onNext();

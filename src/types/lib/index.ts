@@ -1,7 +1,15 @@
+import { StorageContextType } from "@/hooks/useAppStorage";
 import { PostgrestError, Session } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { Dispatch, SetStateAction } from "react";
 import { ZodObject } from "zod";
+
+export interface AppContextType {
+  session: AppSession | null;
+  logout: () => object;
+  storage: StorageContextType;
+  showEditPetModal: boolean;
+}
 
 export interface AppSession {
   db: Session;

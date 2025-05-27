@@ -1,6 +1,6 @@
 // app/components/modals/side-bar.tsx
 "use client";
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     FaBars,
     FaCloudSun,
@@ -25,17 +25,18 @@ import { FaPencil } from "react-icons/fa6";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
-import { useAppContext } from "./ClientAppProvider";
+import { useUI } from "@/context/UIProvider";
+import { useSessionContext } from "@/context/SessionProvider";
+import { usePetStorage } from "@/context/PetStorageProvider";
+import { handleLogout } from "@/services/authService";
 
-export default function SideBar({
-    setShowEditPetModal
-}: {
-    setShowEditPetModal: Dispatch<SetStateAction<boolean>>;
-}) {
-    const { isMobile, isTablet, isDesktop } = useDeviceDetect()
-    const { logout, storageContext, session } = useAppContext();
+export default function SideBar() {
+    const { isMobile, isTablet, isDesktop } = useDeviceDetect();
+    const session = useSessionContext();
+    const storage = usePetStorage();
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
+    const { setShowEditPetModal } = useUI();
 
     const menuData = (show: boolean, session: AppSession | null | undefined, vetAccess: VeterinaryAccessType): MenuType[] => [
         { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner(session) },
@@ -50,16 +51,16 @@ export default function SideBar({
         { label: "Agregar Consulta", icon: <FaCog />, url: "/pages/vet/diagnostic", show: isVet(session, vetAccess) }
     ];
     useEffect(() => {
-        const menu = menuData(storageContext.storedPet.id != "", session, storageContext.storedVetAccess);
+        const menu = menuData(storage.storedPet.id != "", session, storage.storedVetAccess);
 
-        if (storageContext.storedPet) {
+        if (storage.storedPet) {
             menu.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner(session) });
         }
         setMenuItems(menu);
-    }, [storageContext.storedPet, session, storageContext.storedVetAccess, setShowEditPetModal]);
+    }, [storage.storedPet, session, storage.storedVetAccess, setShowEditPetModal]);
 
     const goToLogin = () => {
-        storageContext.setStoredVetAccess(Empty.VetAccess());
+        storage.setStoredVetAccess(Empty.VetAccess());
         router.push("/pages/login");
     }
 
@@ -103,17 +104,17 @@ export default function SideBar({
                 >
                     <div style={{ padding: "0 1rem 1rem", display: 'flex', alignItems: 'center' }}>
                         <CircularImage
-                            src={storageContext.storedPet.image || "/pets/pet.jpg"}
+                            src={storage.storedPet.image || "/pets/pet.jpg"}
                             width={80}
                         />
                         <p style={{ marginLeft: '20px' }}>
-                            <b>{storageContext.storedPet.name ?? 'Nombre de tu mascota'}</b>
+                            <b>{storage.storedPet.name ?? 'Nombre de tu mascota'}</b>
                         </p>
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
                             {menuItems.map(item)}
-                            {session && <li><a style={{ background: "none", border: "none", color: '#d32f2f' }} onClick={logout}> <FaPowerOff style={{ marginRight: '1rem' }} />Cerrar sesión</a></li>}
+                            {session && <li><a style={{ background: "none", border: "none", color: '#d32f2f' }} onClick={() => handleLogout(storage)}> <FaPowerOff style={{ marginRight: '1rem' }} />Cerrar sesión</a></li>}
                             {!session && <li><button onClick={goToLogin}>Iniciar sesión</button></li>}
                         </ul>
                     </nav>
@@ -146,8 +147,8 @@ export default function SideBar({
                 >
                     {/* Foto y nombre */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                        <CircularImage src={storageContext.storedPet.image || "/pets/pet.jpg"} width={50} borderSize="2px" />
-                        <span style={{ fontSize: "1rem", textAlign: "center", padding: "0 4px" }}><b>{storageContext.storedPet.name}</b></span>
+                        <CircularImage src={storage.storedPet.image || "/pets/pet.jpg"} width={50} borderSize="2px" />
+                        <span style={{ fontSize: "1rem", textAlign: "center", padding: "0 4px" }}><b>{storage.storedPet.name}</b></span>
                     </div>
 
                     {/* Íconos con tooltip */}
@@ -186,7 +187,7 @@ export default function SideBar({
                     <div style={{ position: 'fixed', bottom: "0", marginBottom: "1rem" }}>
                         <div className="tooltip-container" style={{ cursor: "pointer" }}>
                             <button
-                                onClick={session ? logout : goToLogin}
+                                onClick={session ? () => handleLogout(storage) : goToLogin}
                                 style={{ background: "none", border: "none", fontSize: "1.75rem", color: '#d32f2f' }}
                             >
                                 {session ? <FaPowerOff /> : <FaBars />}

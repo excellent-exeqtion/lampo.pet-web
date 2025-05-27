@@ -1,7 +1,7 @@
 // layout
 export { default as SideBar } from "./layout/SideBar";
 export { default as Bubbles } from "./modals/Bubbles";
-export { default as ClientAppProvider } from "./layout/ClientAppProvider";
+export { default as ClientAppProvider } from "../context/ClientAppProvider";
 
 // lib
 export { default as AddItem } from "./lib/addItem";

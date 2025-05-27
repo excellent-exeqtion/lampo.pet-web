@@ -8,11 +8,11 @@ import React, {
   useEffect,
 } from "react";
 import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
-import { useAppContext } from "../layout/ClientAppProvider";
 import { PetType } from "@/types/index";
 import ModalComponent from "../lib/modal";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index"
+import { usePetStorage } from "@/context/PetStorageProvider";
 
 interface ChangePetModalProps {
   setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
@@ -20,7 +20,7 @@ interface ChangePetModalProps {
 };
 
 export default function ChangePetModal({ setShowChangePetModal, setShowAddPetModal }: ChangePetModalProps) {
-  const { storageContext } = useAppContext();
+  const storage = usePetStorage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -40,11 +40,11 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
   }, []);
 
   const handleSelect = (pet: PetType) => {
-    storageContext.setStoredPet(pet);
-    storageContext.resetPet();
+    storage.setStoredPet(pet);
+    storage.resetPet();
     setIsOpen(false);
     setShowChangePetModal(false);
-    storageContext.setStoredVetAccess(Empty.VetAccess());
+    storage.setStoredVetAccess(Empty.VetAccess());
   };
 
   const addPet = () => {
@@ -72,11 +72,11 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
         >
           <div style={{ display: "flex", alignItems: "center" }}>
             <CircularImage
-              src={storageContext.storedPet.image || "/pets/pet.jpg"}
+              src={storage.storedPet.image || "/pets/pet.jpg"}
               width={60}
               borderSize="3px" />
             <span style={{ color: '#000', marginLeft: '10px' }}>
-              {storageContext.storedPet.name ?? "Selecciona una mascota"}
+              {storage.storedPet.name ?? "Selecciona una mascota"}
             </span>
           </div>
           {isOpen ? <FaChevronUp /> : <FaChevronDown />}
@@ -100,7 +100,7 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
               listStyle: "none",
             }}
           >
-            {storageContext.storedOwnerPets.map((pet) => (
+            {storage.storedOwnerPets.map((pet: PetType) => (
               <li
                 className="pet-selection"
                 key={pet.id}

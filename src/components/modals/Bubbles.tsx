@@ -1,29 +1,16 @@
 // app/components/modals/Bubbles.tsx
 "use client"
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaShareAlt, FaCommentDots, FaUserMd, FaExchangeAlt } from "react-icons/fa";
 import FeedbackModal from "./FeedbackModal";
 import PetCodeModal from "./PetCodeModal";
 import VeterinaryModal from "./VeterinaryModal";
 import ChangePetModal from "./ChangePetModal";
 import AddPetModal from "./AddPetModal";
-import { useAppContext } from "../layout/ClientAppProvider";
 import { isOwner, isVet } from "@/utils/roles";
-
-interface BubblesProps {
-  setShowFeedbackModal: Dispatch<SetStateAction<boolean>>;
-  showFeedbackModal: boolean;
-  setShowVetModal: Dispatch<SetStateAction<boolean>>;
-  showVetModal: boolean;
-  setShowCodeModal: Dispatch<SetStateAction<boolean>>;
-  showCodeModal: boolean;
-  setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
-  showChangePetModal: boolean;
-  setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
-  showAddPetModal: boolean;
-  setShowEditPetModal: Dispatch<SetStateAction<boolean>>;
-  showEditPetModal: boolean;
-}
+import { useUI } from "@/context/UIProvider";
+import { usePetStorage } from "@/context/PetStorageProvider";
+import { useSessionContext } from "@/context/SessionProvider";
 
 const bubbleStyleBase: React.CSSProperties = {
   backgroundColor: "#ffffff",
@@ -39,28 +26,30 @@ const bubbleStyleBase: React.CSSProperties = {
   cursor: "pointer",
 };
 
-export default function Bubbles({
-  setShowFeedbackModal,
-  showFeedbackModal,
-  setShowVetModal,
-  showVetModal,
-  setShowCodeModal,
-  showCodeModal,
-  setShowChangePetModal,
-  showChangePetModal,
-  setShowAddPetModal,
-  showAddPetModal,
-  setShowEditPetModal,
-  showEditPetModal,
-}: BubblesProps) {
+export default function Bubbles() {
 
-  const { storageContext, session } = useAppContext();
+  const session = useSessionContext();
   const [showChangePetBubble, setShowChangePetBubble] = useState(false);
 
+  const storage = usePetStorage();
+
+  const { setShowFeedbackModal,
+    showFeedbackModal,
+    setShowVetModal,
+    showVetModal,
+    setShowCodeModal,
+    showCodeModal,
+    setShowChangePetModal,
+    showChangePetModal,
+    setShowAddPetModal,
+    showAddPetModal,
+    setShowEditPetModal,
+    showEditPetModal, } = useUI();
+
   useEffect(() => {
-    const show = (storageContext.storedOwnerPets.length ?? 0) > 0;
+    const show = (storage.storedOwnerPets.length ?? 0) > 0;
     setShowChangePetBubble(show);
-  }, [storageContext.storedOwnerPets]);
+  }, [storage.storedOwnerPets]);
 
   return (
     <div
@@ -87,7 +76,7 @@ export default function Bubbles({
       </div>
 
       {/* Vet Bubble */}
-      {isOwner(session) && !isVet(session, storageContext.storedVetAccess) &&
+      {isOwner(session) && !isVet(session, storage.storedVetAccess) &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowVetModal(true)}
@@ -101,7 +90,7 @@ export default function Bubbles({
       }
 
       {/* Code Bubble */}
-      {isOwner(session) && !isVet(session, storageContext.storedVetAccess) &&
+      {isOwner(session) && !isVet(session, storage.storedVetAccess) &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowCodeModal(true)}
@@ -134,7 +123,7 @@ export default function Bubbles({
       {showCodeModal && <PetCodeModal setShowCodeModal={setShowCodeModal} />}
       {showFeedbackModal && <FeedbackModal setShowFeedbackModal={setShowFeedbackModal} />}
       {showAddPetModal && <AddPetModal showAddPetModal={showAddPetModal} setShowAddPetModal={setShowAddPetModal} />}
-      {showEditPetModal && <AddPetModal editPet={storageContext.storedPet} showAddPetModal={showAddPetModal} setShowAddPetModal={setShowEditPetModal} />}
+      {showEditPetModal && <AddPetModal editPet={storage.storedPet} showAddPetModal={showAddPetModal} setShowAddPetModal={setShowEditPetModal} />}
     </div>
   );
 }

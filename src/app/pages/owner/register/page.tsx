@@ -4,9 +4,9 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { PlanVersionType } from "@/types/index";
 import { useRouter } from "next/navigation";
-import { useAppContext } from "@/components/layout/ClientAppProvider";
 import { useSession } from "@/hooks/useSession";
 import { getFetch, postFetch } from "@/app/api";
+import { useSessionContext } from "@/context/SessionProvider";
 
 export default function RegisterPage() {
     useSession();
@@ -16,7 +16,7 @@ export default function RegisterPage() {
         {}
     );
     const [loading, setLoading] = useState<boolean>(false);
-    const { session } = useAppContext();
+    const session = useSessionContext();
 
     useEffect(() => {
         async function load() {

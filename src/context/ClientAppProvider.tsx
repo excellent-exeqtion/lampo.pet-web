@@ -47,7 +47,6 @@ export default function ClientAppProvider({ children }: Props) {
         return null;
     }
 
-
     const gridCols = isMobile ? "1fr" : "300px 1fr";
 
     return (

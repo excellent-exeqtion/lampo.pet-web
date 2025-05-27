@@ -74,8 +74,8 @@ export default function LoginPage() {
       if (!loginResponse.ok || !loginJson.success) {
         setError(loginJson?.message || "Error iniciando sesión");
       } else {
-        router.refresh();
         router.push("/");
+        router.refresh();
       }
     }
 

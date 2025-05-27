@@ -3,33 +3,31 @@
 
 import { useState, useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { onAuthStateChange } from "@/services/authService";
 
 export function useSession(): Session | null | undefined {
-  const [appSession, setAppSession] = useState<Session | null | undefined>(undefined);
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
   useEffect(() => {
     const getCurrentSession = async () => {
       const res = await fetch("/api/auth/session");
       const json = await res.json();
-      setAppSession(json.session || null);
+      console.log(json.session);
+      setSession(json.session || null);
     };
 
     // 1. Obtiene sesión inicial
     getCurrentSession();
 
-    // 2. Escucha cambio de visibilidad de pestaña (útil si el usuario inicia/cierra sesión en otra tab)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        getCurrentSession();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    // 2) Nos suscribimos a cambios
+    const subscription = onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      subscription.unsubscribe();
     };
   }, []);
 
 
-  return appSession;
+  return session;
 }

@@ -54,7 +54,7 @@ export default function BasicDataPage() {
     const fetchData = async () => {
       try {
         if (!storageContext.storedOwnerData.owner_id) {
-          const resOwner = await getFetch(`/api/owner/${storageContext.storedPet.owner_id}`);
+          const resOwner = await getFetch(`/api/owners/${storageContext.storedPet.owner_id}`);
           if (!resOwner.ok) throw new Error("Falló fetch owners");
           const owner: OwnerDataType = await resOwner.json();
           storageContext.setStoredOwnerData(owner);

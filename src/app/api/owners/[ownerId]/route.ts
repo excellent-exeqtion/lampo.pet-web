@@ -1,4 +1,4 @@
-// src/app/api/owner/[ownerId]/route.ts
+// src/app/api/owners/[ownerId]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { OwnerRepository } from '@/repos/index'
 import { getWithErrorHandling } from '@/services/apiService';
@@ -11,7 +11,6 @@ export async function GET(
     return getWithErrorHandling(
         req,
         async () => {
-
             const { ownerId } = context.params;
             if (!ownerId) {
                 throw new QueryParamError(`Falta parámetro OwnerId`);

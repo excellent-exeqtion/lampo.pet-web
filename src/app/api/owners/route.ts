@@ -1,4 +1,4 @@
-// app/api/owner/route.ts
+// app/api/owners/route.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { OwnerRepository } from '@/repos/index';

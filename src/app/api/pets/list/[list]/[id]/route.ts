@@ -52,13 +52,13 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest,
-    { params }: { params: { id: string; list: string } }) {
+    { params }: { params: Promise<{ id: string; list: string }> }) {
     const step = getStep(req);
     return withErrorHandling(
         'DELETE',
         req,
         async () => {
-            const { id } = params;
+            const { id } = await params;
             console.log(step.repository)
             if (step.repository) {
                 const response = await step.repository.delete(id);

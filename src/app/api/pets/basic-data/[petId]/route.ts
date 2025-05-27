@@ -8,12 +8,12 @@ import { RepositoryError } from '@/types/lib';
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { petId: string } }
+    { params }: { params: Promise<{ petId: string }> }
 ) {
     return getWithErrorHandling(
         req,
         async () => {
-            const { petId } = params;
+            const { petId } = await params;
             const data = await BasicDataRepository.findByPetId(petId);
             return NextResponse.json(data);
         });

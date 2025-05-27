@@ -11,11 +11,11 @@ const updatePetSchema = z.object({
   image: z.string().url().optional(),
 });
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return getWithErrorHandling(
     req,
     async () => {
-      const { id } = params;
+      const { id } = await params;
       const pets = await PetRepository.findById(id)
       return NextResponse.json(pets, { status: 200 })
     });

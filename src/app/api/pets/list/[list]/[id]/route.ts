@@ -6,12 +6,12 @@ import { RepositoryError, StepsStateType, StepStateError } from '@/types/lib';
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string; list: string } }
+    { params }: { params: Promise<{ id: string; list: string }> }
 ) {
     return getWithErrorHandling(
         req,
         async () => {
-            const { id } = params;
+            const { id } = await params;
             const step = getStep(req);
             if (step.repository) {
                 try {

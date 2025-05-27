@@ -6,12 +6,12 @@ import { QueryParamError, RepositoryError } from '@/types/lib';
 
 export async function GET(
     req: NextRequest,
-    context: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     return getWithErrorHandling(
         req,
         async () => {
-            const { id } = context.params;
+            const { id } = await context.params;
             if (!id) {
                 throw new QueryParamError(`Falta parámetro OwnerId`);
             }

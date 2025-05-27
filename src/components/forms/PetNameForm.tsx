@@ -114,7 +114,7 @@ export default function PetNameForm({
       if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
         const newId = pet.id || (await generateUniquePetId());
         const newPet: PetType = { id: newId, name: pet.name, image: pet.image, owner_id: ownerId };
-        const response = await postFetch('/api/pets', newPet);
+        const response = await postFetch('/api/pets', undefined, newPet);
         const result = await response.json();
         if (!response.ok) {
           throw new Error('Error al guardar mascota');

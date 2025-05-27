@@ -4,10 +4,6 @@ import type { SurgeryDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 
 export default class SurgeryRepository implements FormRepository<SurgeryDataType> {
-    static async create(surgery: SurgeryDataType) {
-        return supabase.from('surgeries').insert(surgery);
-    }
-
     async createAll(surgeries: SurgeryDataType[]) {
         const { data, error } = await supabase
             .from('surgeries')
@@ -20,17 +16,20 @@ export default class SurgeryRepository implements FormRepository<SurgeryDataType
     }
 
     async findByParentId(parent_id: string): Promise<SurgeryDataType[] | null> {
-        const { data, error } = await supabase.from('surgeries').select('*').eq('pet_id', parent_id);
+        const { data, error } = await supabase.from('surgeries').select('*').eq('deleted', false).eq('pet_id', parent_id);
         if (error) throw new Error(error.message);
         if (!data) return null;
         return data;
     }
 
-    static async update(surgery: SurgeryDataType) {
-        return supabase.from('surgeries').update(surgery).eq('id', surgery.id);
-    }
-
     async delete(id: string) {
-        await supabase.from('surgeries').delete().eq('id', id);
+        try {
+            const currentTimestamp = new Date().toISOString();
+            await supabase.from('surgeries').update({ deleted: true, deleted_at: currentTimestamp }).eq('id', id);
+            return true;
+        }
+        catch {
+            return false;
+        }
     }
 }

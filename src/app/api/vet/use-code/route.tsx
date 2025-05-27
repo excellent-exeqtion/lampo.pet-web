@@ -1,7 +1,6 @@
 // app/api/vet/use-code/route.ts
 import { NextResponse } from "next/server";
-import { PetCodeRepository } from "@/repos/petCode.repository";
-import { VeterinaryAccessRepository } from "@/repos/veterinaryAccess.repository";
+import { PetCodeRepository, VeterinaryAccessRepository } from "@/repos/index";
 
 export async function POST(req: Request) {
   try {

@@ -4,11 +4,12 @@
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { Step } from '@/utils/index';
-import { FormRepository, StepStateEnum, StepsStateType } from '@/types/lib';
+import { StepStateEnum, StepsStateType } from '@/types/lib';
+import { getFetch } from '@/services/apiService';
 
 export function useLoadEntities<T>(
-    repository: FormRepository<T>,
-    petId: string,
+    id: string,
+    entityName: string,
     storedList: T[],
     setStoredList: (list: T[]) => void,
     initialData: T[],
@@ -27,6 +28,8 @@ export function useLoadEntities<T>(
     };
     const stateEq = (state: StepStateEnum) =>
         stepStates.find(x => x.step === stepNumber)?.state === state;
+    const getUrl = () =>
+        stepStates.find(x=> x.step == stepNumber)?.url;
 
     useEffect(() => {
         const fetch = async () => {
@@ -34,7 +37,8 @@ export function useLoadEntities<T>(
                 setState(StepStateEnum.Initialize);
                 let saved: T[] = [];
                 if (storedList.length == 0) {
-                    saved = await repository.findByParentId(petId) ?? [];
+                    const response = await getFetch(`${getUrl}${id}`);
+                    if(!response.ok) setError(`Fallo al obtener información de ${entityName}`);
                     setStoredList(saved);
                 }
                 else {
@@ -50,7 +54,7 @@ export function useLoadEntities<T>(
         }
         fetch();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [petId]);
+    }, [id]);
 
     useEffect(() => {
         if (JSON.stringify(savedData) !== JSON.stringify(list) && !stateEq(StepStateEnum.NotInitialize) && loading == false) {

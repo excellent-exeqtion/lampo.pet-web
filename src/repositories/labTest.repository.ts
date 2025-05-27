@@ -4,10 +4,6 @@ import type { LabTestDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 
 export default class LabTestRepository implements FormRepository<LabTestDataType> {
-    static async create(test: LabTestDataType) {
-        return supabase.from('lab_tests').insert(test);
-    }
-
     async createAll(tests: LabTestDataType[]) {
         const { data, error } = await supabase
             .from('lab_tests')
@@ -20,17 +16,20 @@ export default class LabTestRepository implements FormRepository<LabTestDataType
     }
 
     async findByParentId(parent_id: string): Promise<LabTestDataType[] | null> {
-        const { data, error } = await supabase.from('lab_tests').select('*').eq('pet_id', parent_id);
+        const { data, error } = await supabase.from('lab_tests').select('*').eq('deleted', false).eq('pet_id', parent_id);
         if (error) throw new Error(error.message);
         if (!data) return null;
         return data;
     }
 
-    static async update(test: LabTestDataType) {
-        return supabase.from('lab_tests').update(test).eq('id', test.id);
-    }
-
     async delete(id: string) {
-        await supabase.from('lab_tests').delete().eq('id', id);
+        try {
+            const currentTimestamp = new Date().toISOString();
+            await supabase.from('lab_tests').update({ deleted: true, deleted_at: currentTimestamp }).eq('id', id);
+            return true;
+        }
+        catch {
+            return false;
+        }
     }
 }

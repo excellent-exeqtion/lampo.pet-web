@@ -7,10 +7,10 @@ import { EntityFields, Form } from "@/components/index";
 import { useLoadEntities } from "@/hooks/useLoadEntities";
 import { useEntityList } from "@/hooks/useEntityList";
 import { useEntitySubmit } from "@/hooks/useEntitySubmit";
-import type { FormRepository, FieldConfig, StepsStateType } from "@/types/lib";
+import type { FieldConfig, StepsStateType } from "@/types/lib";
 
 export interface EntityFormProps<T extends { id?: string }> {
-  petId: string;
+  id: string;
   storedList: T[];
   setStoredList: (list: T[]) => void;
   data: T[];
@@ -19,15 +19,14 @@ export interface EntityFormProps<T extends { id?: string }> {
   stepStates: StepsStateType[];
   setStepStates: Dispatch<SetStateAction<StepsStateType[]>>;
   entityName: string;
-  repository: FormRepository<T>;
-  emptyFactory: (petId: string) => Partial<T>;
+  emptyFactory: (id: string) => Partial<T>;
   fieldsConfig: FieldConfig<T>[];
   onNext: () => void;
   onBack: () => void;
 }
 
 export default function EntityForm<T extends { id: string | undefined }>({
-  petId,
+  id,
   storedList,
   setStoredList,
   data,
@@ -36,7 +35,6 @@ export default function EntityForm<T extends { id: string | undefined }>({
   stepStates,
   setStepStates,
   entityName,
-  repository,
   emptyFactory,
   fieldsConfig,
   onNext,
@@ -50,8 +48,8 @@ export default function EntityForm<T extends { id: string | undefined }>({
     setError: setLoadError,
     loading: loadLoading,
   } = useLoadEntities<T>(
-    repository,
-    petId,
+    id,
+    entityName,
     storedList,
     setStoredList,
     data,
@@ -63,12 +61,12 @@ export default function EntityForm<T extends { id: string | undefined }>({
 
   // 2) Gestión de la lista en memoria (añadir, eliminar, editar)
   const { addItem, removeItem, updateItem } = useEntityList<T>(
-    repository,
     emptyFactory,
-    petId,
-    list,
+    id,
     setList,
-    setLoadError
+    setLoadError,
+    step,
+    stepStates
   );
 
   // 3) Envío y validación
@@ -77,7 +75,7 @@ export default function EntityForm<T extends { id: string | undefined }>({
     loading: submitLoading,
     error: submitError,
   } = useEntitySubmit<T>(
-    repository,
+    id,
     list,
     entityName,
     setStoredList,

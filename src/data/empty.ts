@@ -1,5 +1,7 @@
 import { StepsStateType, StepStateEnum } from "@/types/lib";
 import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType, PetStep } from "@/types/index";
+import { ConditionRepository, LabTestRepository, MedicineRepository, SurgeryRepository, VaccineRepository } from "../repositories";
+import { BasicDataTypeSchema, ConditionDataTypeSchema, LabTestDataTypeSchema, MedicineDataTypeSchema, PetTypeSchema, SurgeryDataTypeSchema, VaccineDataTypeSchema } from "@/schemas/validationSchemas";
 
 export function Pet(): PetType { return { id: '', name: '', image: '', owner_id: '' } };
 
@@ -165,12 +167,12 @@ export function VetAccess(): VeterinaryAccessType {
 
 export function Steps(): StepsStateType[] {
     return [
-        { step: PetStep.Name, state: StepStateEnum.NotInitialize },
-        { step: PetStep.BasicData, state: StepStateEnum.NotInitialize },
-        { step: PetStep.Vaccines, state: StepStateEnum.NotInitialize },
-        { step: PetStep.Medicines, state: StepStateEnum.NotInitialize },
-        { step: PetStep.LabTests, state: StepStateEnum.NotInitialize },
-        { step: PetStep.Conditions, state: StepStateEnum.NotInitialize },
-        { step: PetStep.Surgeries, state: StepStateEnum.NotInitialize }
+        { step: PetStep.Name, state: StepStateEnum.NotInitialize, schema: PetTypeSchema },
+        { step: PetStep.BasicData, state: StepStateEnum.NotInitialize, schema: BasicDataTypeSchema },
+        { step: PetStep.Vaccines, state: StepStateEnum.NotInitialize, schema: VaccineDataTypeSchema, url: '/api/pets/list/vaccines/', repository: new VaccineRepository() },
+        { step: PetStep.Medicines, state: StepStateEnum.NotInitialize, schema: MedicineDataTypeSchema, url: '/api/pets/list/medicines/', repository: new MedicineRepository() },
+        { step: PetStep.LabTests, state: StepStateEnum.NotInitialize, schema: LabTestDataTypeSchema, url: '/api/pets/list/lab-test/', repository: new LabTestRepository() },
+        { step: PetStep.Conditions, state: StepStateEnum.NotInitialize, schema: ConditionDataTypeSchema, url: '/api/pets/list/conditions/', repository: new ConditionRepository() },
+        { step: PetStep.Surgeries, state: StepStateEnum.NotInitialize, schema: SurgeryDataTypeSchema, url: '/api/pets/list/surgeries/', repository: new SurgeryRepository() }
     ];
 }

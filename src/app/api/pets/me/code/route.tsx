@@ -1,7 +1,6 @@
 // app/api/pets/me/code/route.ts
 import { NextResponse } from "next/server";
-import { PetRepository } from "@/repos/pet.repository";
-import { PetCodeRepository } from "@/repos/petCode.repository";
+import { PetRepository, PetCodeRepository } from "@/repos/index";
 
 export async function POST(req: Request) {
   try {

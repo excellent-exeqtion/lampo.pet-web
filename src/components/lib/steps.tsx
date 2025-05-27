@@ -43,7 +43,7 @@ export default function Steps({ children, submitLoading, loadLoading, step, tota
             className="btn-primary"
             style={{ float: 'right' }}
           >
-            {submitLoading ? "Creando…" : (totalSteps - 1 == step ? "Finalizar" : "Siguiente")}
+            {submitLoading ? "Guardando…" : (totalSteps - 1 == step ? "Finalizar" : "Siguiente")}
           </button>
         </div>
       </div>

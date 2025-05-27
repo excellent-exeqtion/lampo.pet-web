@@ -1,37 +1,41 @@
-import { ApiParams, QueryParamError, ValidationResult } from "@/types/lib";
+import { ApiParams, QueryParamError, RepositoryError, StepStateError, ValidationResult } from "@/types/lib";
 import { Strings } from "@/utils/index";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodSchema, ZodError } from "zod";
 
-export async function getFetch(url: string, params?: ApiParams | undefined) {
+export async function getFetch(url: string, params: ApiParams | undefined = undefined) {
+    return await methodFetch("GET", url, params);
+}
+
+export async function putFetch(url: string, params: ApiParams | undefined = undefined, payload: object | undefined = undefined) {
+    return await methodFetch("PUT", url, params, payload);
+}
+
+export async function postFetch(url: string, params: ApiParams | undefined = undefined, payload: object | undefined = undefined) {
+    return await methodFetch("POST", url, params, payload);
+}
+
+export async function patchFetch(url: string, params: ApiParams | undefined = undefined, payload: object | undefined = undefined) {
+    return await methodFetch("PATCH", url, params, payload);
+}
+
+export async function deleteFetch(url: string, params: ApiParams | undefined = undefined, payload: object | undefined = undefined) {
+    return await methodFetch("DELETE", url, params, payload);
+}
+
+async function methodFetch(method: string, url: string, params: ApiParams | undefined = undefined, payload: object | undefined = undefined) {
+    let parameters = "";
     if (params) {
-        return await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}${url}${Strings.fromParams(params)}`);
+        parameters = Strings.fromParams(params);
     }
-    else{
-        return await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}${url}`);
+    let body = undefined;
+    if (payload) {
+        body = JSON.stringify(payload);
     }
-}
-
-export async function putFetch(url: string, payload: object) {
-    return await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}${url}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-}
-
-export async function postFetch(url: string, payload: object) {
-    return await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}${url}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-}
-export async function patchFetch(url: string, params: ApiParams, payload: object) {
-    return await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}${url}${Strings.fromParams(params)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+    return await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}${url}${parameters}`, {
+        method: method,
+        headers: method == "GET" ? undefined : { 'Content-Type': 'application/json' },
+        body: body
     })
 }
 
@@ -86,7 +90,8 @@ export function getRequiredQueryParam(req: NextRequest, name: string): string {
 export async function withValidationAndErrorHandling<T>(
     method: string,
     req: NextRequest,
-    schema: ZodSchema<T>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    schema: ZodSchema<any>,
     handler: (data: T) => Promise<NextResponse>
 ): Promise<NextResponse> {
     try {
@@ -98,7 +103,7 @@ export async function withValidationAndErrorHandling<T>(
         return await handler(data);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-        console.error(`[${method}] Error en ${req.url} —`, err);
+        console.error(`[${method}] Error en ${req.url} —`, JSON.stringify(err));
         // 3) Falta de parámetro de query → 400
         if (err instanceof QueryParamError) {
             return NextResponse.json(
@@ -106,7 +111,22 @@ export async function withValidationAndErrorHandling<T>(
                 { status: 400 }
             )
         }
-        // 4) Cualquier otro error cae aquí
+        // 4) Falta de configuración en el step -> 500
+        if (err instanceof StepStateError) {
+            return NextResponse.json(
+                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { status: 500 }
+            )
+        }
+        // 5) Error con el patron repository -> 500
+        if (err instanceof RepositoryError) {
+            return NextResponse.json(
+                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { status: 500 }
+            )
+        }
+
+        // 6) Cualquier otro error cae aquí
         return NextResponse.json(
             { success: false, message: "Error interno del servidor" },
             { status: 500 }

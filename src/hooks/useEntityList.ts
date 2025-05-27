@@ -1,25 +1,28 @@
 // src/hooks/useEntityList.ts
 "use client";
 
-import { FormRepository } from '@/types/lib';
+import { deleteFetch } from '@/services/apiService';
+import { StepsStateType } from '@/types/lib';
 import { Dispatch, SetStateAction } from 'react';
 
 export function useEntityList<T extends { id: string | undefined }>(
-    repository: FormRepository<T>, 
-    emptyFactory: (petId: string) => Partial<T>,
-    petId: string,
-    list: Partial<T>[],
+    emptyFactory: (id: string) => Partial<T>,
+    id: string,
     setList: Dispatch<SetStateAction<Partial<T>[]>>,
-    setError: Dispatch<SetStateAction<string | null>>
+    setError: Dispatch<SetStateAction<string | null>>,
+    stepNumber: number,
+    stepStates: StepsStateType[]
 ) {
-    const addItem = () => setList(prev => [...prev, emptyFactory(petId)]);
+    const addItem = () => setList(prev => [...prev, emptyFactory(id)]);
     const removeItem = (id?: string) => {
-        if (id && repository) {
-            repository.delete(id);
+        const getUrl = () =>
+            stepStates.find(x => x.step == stepNumber)?.url;
+        if (id) {
+            deleteFetch(`${getUrl()}${id}`);
         }
         setList(prev => {
             const items = prev.filter(item => item.id !== id);
-            if(items.length == 0){
+            if (items.length == 0) {
                 setError('');
             }
             return items;

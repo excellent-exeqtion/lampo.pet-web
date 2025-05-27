@@ -60,6 +60,7 @@ export default function SettingsPage() {
     };
 
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, session]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -85,7 +86,7 @@ export default function SettingsPage() {
           email: userEmail
         };
 
-        const res = await putFetch('/api/owner', payload);
+        const res = await putFetch('/api/owner', undefined, payload);
         const json = await res.json();
 
         if (res.ok) {

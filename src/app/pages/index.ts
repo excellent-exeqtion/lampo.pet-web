@@ -8,3 +8,4 @@ export { default as SettingsPage } from "./owner/settings/page";
 export { default as UpgradePage } from "./owner/upgrade/page";
 export { default as VaccinesPage } from "./pet/vaccines/page";
 export { default as VetPage } from "./vet/[code]/page";
+export { default as OwnerSettings } from "./owner/settings/page";

@@ -2,12 +2,13 @@
 "use client";
 
 import { Dispatch, SetStateAction, useState } from 'react';
-import { FormRepository, StepStateEnum, StepsStateType } from '@/types/lib';
+import { StepStateEnum, StepsStateType } from '@/types/lib';
 import { Step, Validations } from '@/utils/index';
 import { FieldConfig } from '../types/lib/index';
+import { postFetch } from '@/services/apiService';
 
 export function useEntitySubmit<T>(
-    repository: FormRepository<T>,
+    id: string,
     entities: Partial<T>[],
     entityName: string,
     setStoredList: (list: T[]) => void,
@@ -26,6 +27,8 @@ export function useEntitySubmit<T>(
     };
     const stateEq = (state: StepStateEnum) =>
         stepStates.find(x => x.step === stepNumber)?.state === state;
+    const getUrl = () =>
+        stepStates.find(x => x.step === stepNumber)?.url;
 
     const submit = async (onNext: () => void) => {
         setSubmitting(false);
@@ -37,8 +40,8 @@ export function useEntitySubmit<T>(
         setError(null);
         try {
             if (stateEq(StepStateEnum.Modified)) {
-                const { error: saveErr } = await repository.createAll(entities as T[]);
-                if (saveErr) throw new Error(saveErr.message);
+                const basicDataResponse = await postFetch(`${getUrl()}${id}`, undefined, entities);
+                if (!basicDataResponse.ok) throw new Error(`Error actualizado ${entityName}.`);
                 setDataCallback(entities as T[]);
                 setStoredList(entities as T[]);
                 setState(StepStateEnum.Saved);

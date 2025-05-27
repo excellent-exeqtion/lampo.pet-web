@@ -306,7 +306,7 @@ export default function LoginPage() {
         >
           {loading
             ? isRegistering
-              ? "Creando..."
+              ? "Guardando..."
               : "Accediendo..."
             : isRegistering
               ? "Registrarse"

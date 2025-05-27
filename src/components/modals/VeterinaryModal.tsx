@@ -35,6 +35,7 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
     try {
       const codeResponse = await postFetch(
         '/api/vet/use-code',
+        undefined,
         {
           code: sanitizedCode,
           firstName,

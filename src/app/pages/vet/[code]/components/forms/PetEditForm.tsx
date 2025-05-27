@@ -19,7 +19,7 @@ export default function PetEditForm({ code, pet, disabled = false }: Props) {
     e.preventDefault();
     if (disabled) return;
 
-    const res = await putFetch(`/api/vet/edit/${pet.id}`, { code, name, image });
+    const res = await putFetch(`/api/vet/edit/${pet.id}`, undefined, { code, name, image });
 
     // ← usar res.ok para determinar éxito
     const success = res.ok;

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { PetRepository } from "@/repos/index";
 import { ApiParams } from "@/types/lib";
 import { getWithErrorHandling, withValidationAndErrorHandling } from "@/services/apiService";
+import { PetType } from "@/types/index";
 
 const updatePetSchema = z.object({
   name: z.string().optional(),
@@ -26,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: ApiParams) {
     req,
     updatePetSchema,
     async (updates) => {
-      const updated = await PetRepository.updateById(params.id, updates);
+      const updated = await PetRepository.updateById(params.id, updates as Partial<PetType>);
       if (!updated) {
         return NextResponse.json(
           { success: false, message: "Mascota no encontrada" },

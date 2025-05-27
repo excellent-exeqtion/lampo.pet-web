@@ -7,8 +7,8 @@ import { petTypes, genders, weightUnits, breedOptions, foodOptions, weightCondit
 import Steps from "../lib/steps";
 import { Empty } from '@/data/index';
 import { useDeviceDetect } from '@/hooks/useDeviceDetect';
-import { BasicDataRepository } from '@/repos/index';
 import { useAppContext } from '../layout/ClientAppProvider';
+import { postFetch } from '@/services/apiService';
 
 interface BasicDataFormProps {
   pet: PetType;
@@ -92,9 +92,9 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
         console.log(pet);
         let basicDataSaved: BasicDataType = Empty.BasicData();
         if (!storageContext.storedBasicData.pet_id) {
-          const resPet = await fetch(`/api/pets/basic-data/${pet.id}`);
-          if (!resPet.ok) throw new Error("Falló fetch basic-data");
-          basicDataSaved = await resPet.json() as BasicDataType;
+          const petResponse = await fetch(`/api/pets/basic-data/${pet.id}`);
+          if (!petResponse.ok) throw new Error("Falló fetch basic-data");
+          basicDataSaved = await petResponse.json() as BasicDataType;
           storageContext.setStoredBasicData(basicDataSaved);
         }
         else{
@@ -135,8 +135,8 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
           pet_type: finalPetType || '',
           race: finalRace || '',
         };
-        const { error: basicDataErr } = await BasicDataRepository.upsert(dataToSave);
-        if (basicDataErr) throw new Error(basicDataErr?.message || "Error creando mascota");
+        const basicDataResponse = await postFetch(`/api/pets/basic-data/${formData.pet_id}`, undefined, dataToSave);
+          if (!basicDataResponse.ok) throw new Error("Error actualizado datos básicos de la mascota");
         setSavedData(dataToSave);
         setBasicData(dataToSave);
         storageContext.setStoredBasicData(dataToSave);

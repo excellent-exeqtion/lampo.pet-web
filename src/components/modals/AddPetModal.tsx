@@ -84,7 +84,6 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
     const stepConfigs: Partial<Record<PetStep, StepConfig<any>>> = {
         [PetStep.Vaccines]: {
             entityName: "vacuna",
-            repository: VaccineRepository,
             storedList: storageContext.storedVaccineData,
             setStoredList: storageContext.setStoredVaccineData,
             emptyFactory: emptyVaccine,
@@ -98,7 +97,6 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
         },
         [PetStep.Medicines]: {
             entityName: "medicina",
-            repository: MedicineRepository,
             storedList: storageContext.storedMedicineData,
             setStoredList: storageContext.setStoredMedicineData,
             emptyFactory: emptyMedicine,
@@ -110,7 +108,6 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
         },
         [PetStep.LabTests]: {
             entityName: "prueba",
-            repository: LabTestRepository,
             storedList: storageContext.storedLabTestData,
             setStoredList: storageContext.setStoredLabTestData,
             emptyFactory: emptyLabTest,
@@ -123,7 +120,6 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
         },
         [PetStep.Conditions]: {
             entityName: "condición",
-            repository: ConditionRepository,
             storedList: storageContext.storedConditionData,
             setStoredList: storageContext.setStoredConditionData,
             emptyFactory: emptyCondition,
@@ -134,7 +130,6 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
         },
         [PetStep.Surgeries]: {
             entityName: "cirugía",
-            repository: SurgeryRepository,
             storedList: storageContext.storedSurgeryData,
             setStoredList: storageContext.setStoredSurgeryData,
             emptyFactory: emptySurgery,
@@ -188,13 +183,12 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
                 // TS: usamos Partial y ! para asegurar que cfg y data existen
                 const cfg = stepConfigs[step]!;
                 const [items, setItems] = dataMap[step]!;
-                const repository = new cfg.repository();
 
                 return (
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     <EntityForm<any>
                         key={step}
-                        petId={pet.id!}
+                        id={pet.id!}
                         storedList={cfg.storedList}
                         setStoredList={cfg.setStoredList}
                         data={items}
@@ -203,7 +197,6 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
                         stepStates={stepStates}
                         setStepStates={setStepStates}
                         entityName={cfg.entityName}
-                        repository={repository}
                         emptyFactory={cfg.emptyFactory}
                         fieldsConfig={cfg.fieldsConfig}
                         onNext={step === PetStep.Surgeries ? finalize : next}

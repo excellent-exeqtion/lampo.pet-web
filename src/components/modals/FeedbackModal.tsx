@@ -20,11 +20,7 @@ export default function FeedbackModal({ setShowFeedbackModal }: FeedbackModalPro
     setSending(true);
 
     try {
-      const res = await postFetch(`/api/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback, anonymous, userEmail: session?.db?.user.email }),
-      });
+      const res = await postFetch(`/api/feedback`, undefined, { feedback, anonymous, userEmail: session?.db?.user.email });
       if (!res.ok) throw new Error("Error en el servidor");
       alert("¡Gracias por tu opinión!");
       setShowFeedbackModal(false);

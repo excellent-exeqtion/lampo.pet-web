@@ -7,8 +7,5 @@ export function ChangeState(stepStates: StepsStateType[], setStepStates: Dispatc
         step.state = stepState;
         step.error = stepError;
     }
-    else {
-        stepStates.push({ step: stepNumber, state: stepState, error: stepError });
-    }
     setStepStates(stepStates);
 }

@@ -34,17 +34,17 @@ export function useAppStorage() {
     "petConditionData",
     []
   );
-  
+
   const [storedLabTestData, setStoredLabTestData] = useLocalStorage<LabTestDataType[]>(
     "petLabTestData",
     []
   );
-  
+
   const [storedMedicineData, setStoredMedicineData] = useLocalStorage<MedicineDataType[]>(
     "petMedicineData",
     []
   );
-  
+
   const [storedSurgeryData, setStoredSurgeryData] = useLocalStorage<SurgeryDataType[]>(
     "petSurgeryData",
     []
@@ -75,7 +75,7 @@ export function useAppStorage() {
     setStoredPet,
     storedBasicData,
     setStoredBasicData,
-    storedOwnerData, 
+    storedOwnerData,
     setStoredOwnerData,
     storedOwnerPets,
     setStoredOwnerPets,

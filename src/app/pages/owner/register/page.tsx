@@ -4,8 +4,8 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { PlanVersionType } from "@/types/index";
 import { SubscriptionRepository, PlanRepository } from "@/repos/index";
-import { useAppContext } from "@/app/layout";
 import { useRouter } from "next/navigation";
+import { useAppContext } from "@/components/layout/ClientAppProvider";
 
 export default function PlanSelection() {
     const router = useRouter();

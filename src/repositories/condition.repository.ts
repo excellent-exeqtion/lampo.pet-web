@@ -4,10 +4,6 @@ import type { ConditionDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 
 export default class ConditionRepository implements FormRepository<ConditionDataType> {
-    static async create(condition: ConditionDataType) {
-        return supabase.from('conditions').insert(condition);
-    }
-
     async createAll(conditions: ConditionDataType[]) {
         const { data, error } = await supabase
             .from('conditions')
@@ -20,17 +16,20 @@ export default class ConditionRepository implements FormRepository<ConditionData
     }
 
     async findByParentId(parent_id: string): Promise<ConditionDataType[] | null> {
-        const { data, error } = await supabase.from('conditions').select('*').eq('pet_id', parent_id);
+        const { data, error } = await supabase.from('conditions').select('*').eq('deleted', false).eq('pet_id', parent_id);
         if (error) throw new Error(error.message);
         if (!data) return null;
         return data;
     }
 
-    static async update(condition: ConditionDataType) {
-        return supabase.from('conditions').update(condition).eq('id', condition.id);
-    }
-
     async delete(id: string) {
-        await supabase.from('conditions').delete().eq('id', id);
+        try {
+            const currentTimestamp = new Date().toISOString();
+            await supabase.from('conditions').update({ deleted: true, deleted_at: currentTimestamp }).eq('id', id);
+            return true;
+        }
+        catch {
+            return false;
+        }
     }
 }

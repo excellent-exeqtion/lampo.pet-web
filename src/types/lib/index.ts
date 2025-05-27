@@ -1,6 +1,7 @@
 import { PostgrestError, Session } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { Dispatch, SetStateAction } from "react";
+import { ZodObject } from "zod";
 
 export interface AppSession {
   db: Session;
@@ -28,7 +29,12 @@ export interface MenuType {
 export interface StepsStateType {
   step: number;
   state: StepStateEnum;
+  url?: string;
   error?: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: ZodObject<any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  repository?: FormRepository<any>
 }
 
 export enum StepStateEnum {
@@ -41,12 +47,11 @@ export enum StepStateEnum {
 }
 
 export type StepConfig<T> = {
-    entityName: string;
-    repository: { new(): FormRepository<T> };
-    storedList: T[];
-    setStoredList: (list: T[]) => void;
-    emptyFactory: (petId: string) => T;
-    fieldsConfig: FieldConfig<T>[];
+  entityName: string;
+  storedList: T[];
+  setStoredList: (list: T[]) => void;
+  emptyFactory: (petId: string) => T;
+  fieldsConfig: FieldConfig<T>[];
 };
 
 export interface FieldConfig<T> {
@@ -58,13 +63,13 @@ export interface FieldConfig<T> {
 }
 
 export interface FormRepository<T> {
-  createAll: (conditions: T[]) => Promise<{
+  createAll: (list: T[]) => Promise<{
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any[] | null;
     error: PostgrestError | null;
   }>;
   findByParentId: (parent_id: string) => Promise<T[] | null>;
-  delete: (id: string) => Promise<void>
+  delete: (id: string) => Promise<boolean>
 }
 
 export interface ApiParams {
@@ -86,3 +91,13 @@ export type ValidationResult<T> =
  * Excepción que lanzamos cuando falta un parámetro obligatorio en la query.
  */
 export class QueryParamError extends Error { }
+
+/**
+ * Excepción que lanzamos cuando falta alguna configuración en los steps.
+ */
+export class StepStateError extends Error { }
+
+/**
+ * Excepción que lanzamos cuando hay un problema en el repositorio.
+ */
+export class RepositoryError extends Error { }

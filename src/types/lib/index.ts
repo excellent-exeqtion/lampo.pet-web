@@ -78,10 +78,6 @@ export interface ApiParams {
 
 export type ApiResponse = Promise<NextResponse<{ message: string; success: boolean }>>;
 
-export interface ApiError {
-  message: string;
-}
-
 export type ValidationResult<T> =
   | { data: T; error?: undefined }
   | { data?: undefined; error: NextResponse };
@@ -101,3 +97,8 @@ export class StepStateError extends Error { }
  * Excepción que lanzamos cuando hay un problema en el repositorio.
  */
 export class RepositoryError extends Error { }
+
+/**
+ * Excepción que lanzamos cuando hay un problema consumiendo un api.
+ */
+export class ApiError extends Error { }

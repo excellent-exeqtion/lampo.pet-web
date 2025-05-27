@@ -2,7 +2,7 @@
 "use client";
 
 import { deleteFetch } from '@/services/apiService';
-import { StepsStateType } from '@/types/lib';
+import { ApiError, StepsStateType } from '@/types/lib';
 import { Dispatch, SetStateAction } from 'react';
 
 export function useEntityList<T extends { id: string | undefined }>(
@@ -18,7 +18,12 @@ export function useEntityList<T extends { id: string | undefined }>(
         const getUrl = () =>
             stepStates.find(x => x.step == stepNumber)?.url;
         if (id) {
-            deleteFetch(`${getUrl()}${id}`);
+            try {
+                deleteFetch(`${getUrl()}${id}`);
+            }
+            catch {
+                throw new ApiError("Error al consumir la api de delete");
+            }
         }
         setList(prev => {
             const items = prev.filter(item => item.id !== id);

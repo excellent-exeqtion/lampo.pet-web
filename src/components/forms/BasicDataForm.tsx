@@ -1,7 +1,7 @@
 // src/components/forms/BasicDataForm.tsx
 import React, { useState, useEffect, Dispatch } from 'react';
 import { InitialBasicDataType, PetStep as PetStep, PetType, type BasicDataType } from '@/types/index';
-import { StepsStateType, StepStateEnum } from '@/types/lib';
+import { ApiError, StepsStateType, StepStateEnum } from '@/types/lib';
 import { Dates, Step } from '@/utils/index';
 import { petTypes, genders, weightUnits, breedOptions, foodOptions, weightConditionOptions, sizeOptions } from '@/data/petdata';
 import Steps from "../lib/steps";
@@ -89,7 +89,6 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
       setLoadLoading(true);
       if (stateEq(StepStateEnum.NotInitialize)) {
         setState(StepStateEnum.Initialize);
-        console.log(pet);
         let basicDataSaved: BasicDataType = Empty.BasicData();
         if (!storageContext.storedBasicData.pet_id) {
           const petResponse = await fetch(`/api/pets/basic-data/${pet.id}`);
@@ -97,7 +96,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
           basicDataSaved = await petResponse.json() as BasicDataType;
           storageContext.setStoredBasicData(basicDataSaved);
         }
-        else{
+        else {
           basicDataSaved = storageContext.storedBasicData;
         }
         if (basicDataSaved) {
@@ -135,8 +134,10 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
           pet_type: finalPetType || '',
           race: finalRace || '',
         };
+        console.log(dataToSave);
         const basicDataResponse = await postFetch(`/api/pets/basic-data/${formData.pet_id}`, undefined, dataToSave);
-          if (!basicDataResponse.ok) throw new Error("Error actualizado datos básicos de la mascota");
+        console.log(basicDataResponse);
+        if (!basicDataResponse.ok) throw new ApiError("Error actualizado datos básicos de la mascota");
         setSavedData(dataToSave);
         setBasicData(dataToSave);
         storageContext.setStoredBasicData(dataToSave);
@@ -147,6 +148,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
     } catch (err: any) {
       setState(StepStateEnum.Error, err.message);
       setError(err.message);
+      setSubmitLoading(true);
     } finally {
       setSubmitLoading(true);
     }

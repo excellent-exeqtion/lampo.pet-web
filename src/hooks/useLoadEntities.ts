@@ -4,7 +4,7 @@
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { Step } from '@/utils/index';
-import { StepStateEnum, StepsStateType } from '@/types/lib';
+import { ApiError, StepStateEnum, StepsStateType } from '@/types/lib';
 import { getFetch } from '@/services/apiService';
 
 export function useLoadEntities<T>(
@@ -37,8 +37,8 @@ export function useLoadEntities<T>(
                 setState(StepStateEnum.Initialize);
                 let saved: T[] = [];
                 if (storedList.length == 0) {
-                    const response = await getFetch(`${getUrl}${id}`);
-                    if(!response.ok) setError(`Fallo al obtener información de ${entityName}`);
+                    const response = await getFetch(`${getUrl()}}${id}`);
+                    if(!response.ok) throw new ApiError(`Fallo al obtener información de ${entityName}`);
                     setStoredList(saved);
                 }
                 else {

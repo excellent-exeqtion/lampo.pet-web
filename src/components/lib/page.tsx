@@ -45,6 +45,7 @@ const Page = <T,>({
                 }
                 else {
                     data = storedList;
+                    setItems(data);
                 }
             } catch (err) {
                 console.error(`Error cargando ${title.toLowerCase()}:`, err);

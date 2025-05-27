@@ -2,7 +2,7 @@
 "use client";
 
 import { Dispatch, SetStateAction, useState } from 'react';
-import { StepStateEnum, StepsStateType } from '@/types/lib';
+import { ApiError, StepStateEnum, StepsStateType } from '@/types/lib';
 import { Step, Validations } from '@/utils/index';
 import { FieldConfig } from '../types/lib/index';
 import { postFetch } from '@/services/apiService';
@@ -40,10 +40,12 @@ export function useEntitySubmit<T>(
         setError(null);
         try {
             if (stateEq(StepStateEnum.Modified)) {
-                const basicDataResponse = await postFetch(`${getUrl()}${id}`, undefined, entities);
-                if (!basicDataResponse.ok) throw new Error(`Error actualizado ${entityName}.`);
-                setDataCallback(entities as T[]);
-                setStoredList(entities as T[]);
+                if (entities.length > 0) {
+                    const basicDataResponse = await postFetch(`${getUrl()}${id}`, undefined, entities);
+                    if (!basicDataResponse.ok) throw new ApiError(`Error actualizado ${entityName}.`);
+                    setDataCallback(entities as T[]);
+                    setStoredList(entities as T[]);
+                }
                 setState(StepStateEnum.Saved);
             }
             onNext();

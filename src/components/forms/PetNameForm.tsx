@@ -4,7 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { FaCloudUploadAlt } from 'react-icons/fa';
 import { generateUniquePetId } from '@/utils/random';
 import { PetStep, PetType } from '@/types/index';
-import { StepsStateType, StepStateEnum } from '@/types/lib';
+import { ApiError, StepsStateType, StepStateEnum } from '@/types/lib';
 import Steps from '../lib/steps';
 import { Step } from '@/utils/index';
 import { Empty } from '@/data/index';
@@ -73,10 +73,10 @@ export default function PetNameForm({
         if (!storageContext.storedPet.id) {
           const response = await getFetch(`/api/pets/${pet.id}`);
           if (!response.ok) {
-            throw new Error('Error al obtener la mascota');
+            throw new ApiError('Error al obtener la mascota');
           }
           petSaved = (await response.json())[0] as PetType;
-          
+
           storageContext.setStoredPet(petSaved);
           const pets = storageContext.storedOwnerPets.filter((p: PetType) => p.id != petSaved.id);
           storageContext.setStoredOwnerPets([...pets, petSaved]);
@@ -114,18 +114,20 @@ export default function PetNameForm({
       if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
         const newId = pet.id || (await generateUniquePetId());
         const newPet: PetType = { id: newId, name: pet.name, image: pet.image, owner_id: ownerId };
-        const response = await postFetch('/api/pets', undefined, newPet);
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error('Error al guardar mascota');
+        if (JSON.stringify(newPet) != JSON.stringify(storageContext.storedPet)) {
+          const response = await postFetch('/api/pets', undefined, newPet);
+          const result = await response.json();
+          if (!response.ok) {
+            throw new ApiError('Error al guardar mascota');
+          }
+          const savedPet: PetType = result[0] as PetType;
+          setSavedData(savedPet);
+          storageContext.setStoredPet(savedPet);
+          const pets = storageContext.storedOwnerPets.filter((p: PetType) => p.id != savedPet.id);
+          storageContext.setStoredOwnerPets([...pets, savedPet]);
+          setPet(savedPet);
         }
-        const savedPet: PetType = result[0] as PetType;
-        setSavedData(savedPet);
-        storageContext.setStoredPet(savedPet);
-        const pets = storageContext.storedOwnerPets.filter((p: PetType) => p.id != savedPet.id);
-        storageContext.setStoredOwnerPets([...pets, savedPet]);
         setState(StepStateEnum.Saved);
-        setPet(savedPet);
       }
       onNext();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

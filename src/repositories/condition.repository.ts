@@ -28,7 +28,8 @@ export default class ConditionRepository implements FormRepository<ConditionData
             await supabase.from('conditions').update({ deleted: true, deleted_at: currentTimestamp }).eq('id', id);
             return true;
         }
-        catch {
+        catch(err) {
+            console.log(err);
             return false;
         }
     }

@@ -43,12 +43,12 @@ export const BasicDataTypeSchema = z.object({
   lives_with_others: z.boolean(),
   main_food: z.string(),
   has_vaccine: z.boolean(),
-  last_vaccine_name: z.string().optional(),
-  last_vaccine_date: z.string().optional(),
+  last_vaccine_name: z.string().optional().nullable(),
+  last_vaccine_date: z.string().optional().nullable(),
   is_castrated: z.boolean(),
-  castration_date: z.string().optional(),
+  castration_date: z.string().optional().nullable(),
   has_anti_flea: z.boolean(),
-  anti_flea_date: z.string().optional(),
+  anti_flea_date: z.string().optional().nullable(),
   uses_medicine: z.boolean(),
   special_condition: z.boolean(),
 });
@@ -68,8 +68,8 @@ export const VaccineDataTypeSchema = z.object({
   id: z.string(),
   pet_id: z.string(),
   name: z.string(),
-  description: z.string().optional(),
-  date: z.string().optional(),
+  description: z.string().optional().nullable(),
+  date: z.string().optional().nullable(),
   batch: z.string(),
   brand: z.string(),
 });
@@ -79,8 +79,8 @@ export const SurgeryDataTypeSchema = z.object({
   id: z.string(),
   pet_id: z.string(),
   name: z.string(),
-  date: z.string().optional(),
-  description: z.string().optional(),
+  date: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
 });
 
 // MedicineDataType
@@ -106,8 +106,8 @@ export const LabTestDataTypeSchema = z.object({
   pet_id: z.string(),
   name: z.string(),
   type: z.string(),
-  date: z.string().optional(),
-  result: z.string().optional(),
+  date: z.string().optional().nullable(),
+  result: z.string().optional().nullable(),
 });
 
 // VeterinaryAccessType

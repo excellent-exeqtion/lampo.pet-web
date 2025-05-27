@@ -4,6 +4,7 @@ import { BasicDataRepository } from '@/repos/index'
 import { getWithErrorHandling, withValidationAndErrorHandling } from '@/services/apiService';
 import { BasicDataTypeSchema } from '@/schemas/validationSchemas';
 import { BasicDataType } from '@/types/index';
+import { RepositoryError } from '@/types/lib';
 
 export async function GET(
     req: NextRequest,
@@ -13,7 +14,7 @@ export async function GET(
         req,
         async () => {
             const { petId } = params;
-            const data = await BasicDataRepository.findByPetId(petId)
+            const data = await BasicDataRepository.findByPetId(petId);
             return NextResponse.json(data);
         });
 }
@@ -24,14 +25,19 @@ export async function POST(req: NextRequest) {
         req,
         BasicDataTypeSchema,
         async (basicData) => {
-            const { data, error } = await BasicDataRepository.upsert(basicData as BasicDataType)
-            if (error) {
-                return NextResponse.json(
-                    { success: false, message: error.message },
-                    { status: 500 }
-                )
+            try {
+                const { data, error } = await BasicDataRepository.upsert(basicData as BasicDataType);
+                if (error) {
+                    return NextResponse.json(
+                        { success: false, message: `Error upserting record: ${error.message}` },
+                        { status: 500 }
+                    )
+                }
+                return NextResponse.json(data, { status: 201 });
             }
-            return NextResponse.json(data, { status: 201 })
+            catch {
+                throw new RepositoryError("Error upserting record");
+            }
         }
     )
 }

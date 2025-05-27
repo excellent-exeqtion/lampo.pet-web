@@ -1,7 +1,6 @@
 // app/api/basic-data/[petId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getWithErrorHandling, withValidationAndErrorHandling } from '@/services/apiService';
-import { BasicDataTypeSchema } from '@/schemas/validationSchemas';
+import { getWithErrorHandling, withErrorHandling, withValidationAndErrorHandling } from '@/services/apiService';
 import { Empty } from '@/data/index';
 import { RepositoryError, StepsStateType, StepStateError } from '@/types/lib';
 
@@ -43,8 +42,8 @@ export async function POST(req: NextRequest) {
                     }
                     return NextResponse.json(data, { status: 201 });
                 }
-                catch{
-                        throw new RepositoryError("Error upserting records");
+                catch {
+                    throw new RepositoryError("Error upserting records");
                 }
             }
             throw new StepStateError("Missing repository");
@@ -55,18 +54,18 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest,
     { params }: { params: { id: string; list: string } }) {
     const step = getStep(req);
-    return withValidationAndErrorHandling(
+    return withErrorHandling(
         'DELETE',
         req,
-        BasicDataTypeSchema,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        async (_: unknown) => {
+        async () => {
             const { id } = params;
+            console.log(step.repository)
             if (step.repository) {
                 const response = await step.repository.delete(id);
                 if (!response) {
                     throw new RepositoryError("Error deleting record");
                 }
+                return NextResponse.json({ success: true, message: "Se eliminó correctamente el registro" }, { status: 200 });
             }
             throw new StepStateError("Missing repository");
         }

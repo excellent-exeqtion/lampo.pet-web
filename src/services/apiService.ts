@@ -87,6 +87,55 @@ export function getRequiredQueryParam(req: NextRequest, name: string): string {
  * @param schema – el ZodSchema contra el que validar
  * @param handler– función que recibe el body ya parseado
  */
+export async function withErrorHandling(
+    method: string,
+    req: NextRequest,
+    handler: () => Promise<NextResponse>
+): Promise<NextResponse> {
+    try {
+        // 2) Lógica de negocio con body ya parseado
+        return await handler();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+        console.error(`[${method}] Error en ${req.url} —`, JSON.stringify(err));
+        // 3) Falta de parámetro de query → 400
+        if (err instanceof QueryParamError) {
+            return NextResponse.json(
+                { success: false, message: err.message },
+                { status: 400 }
+            )
+        }
+        // 4) Falta de configuración en el step -> 500
+        if (err instanceof StepStateError) {
+            return NextResponse.json(
+                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { status: 500 }
+            )
+        }
+        // 5) Error con el patron repository -> 500
+        if (err instanceof RepositoryError) {
+            return NextResponse.json(
+                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { status: 500 }
+            )
+        }
+
+        // 6) Cualquier otro error cae aquí
+        return NextResponse.json(
+            { success: false, message: "Error interno del servidor" },
+            { status: 500 }
+        );
+    }
+}
+
+/**
+ * Combina validación de body con manejo de errores.
+ * 
+ * @param method – nombre del método HTTP (para logging)
+ * @param req    – el NextRequest que llega
+ * @param schema – el ZodSchema contra el que validar
+ * @param handler– función que recibe el body ya parseado
+ */
 export async function withValidationAndErrorHandling<T>(
     method: string,
     req: NextRequest,
@@ -97,7 +146,9 @@ export async function withValidationAndErrorHandling<T>(
     try {
         // 1) Validación del body
         const { data, error } = await validateBody(req, schema);
-        if (error) return error;
+        if (error) {
+            return error;
+        }
 
         // 2) Lógica de negocio con body ya parseado
         return await handler(data);
@@ -143,24 +194,45 @@ export async function withValidationAndErrorHandling<T>(
 async function validateBody<T>(
     req: NextRequest,
     schema: ZodSchema<T>
-): Promise<ValidationResult<T>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<ValidationResult<any>> {
     try {
         const body = await req.json();
-        const parsed = schema.safeParse(body);
-        if (!parsed.success) {
-            // Opcionalmente, podemos enviar detalles de ZodError.flatten()
-            return {
-                error: NextResponse.json(
-                    {
-                        success: false,
-                        message: "Payload inválido",
-                        errors: (parsed.error as ZodError).format(),
-                    },
-                    { status: 400 }
-                ),
-            };
+        if (Array.isArray(body)) {
+            body.forEach((e: T) => {
+                const parsed = schema.safeParse(e);
+                if (!parsed.success) {
+                    // Opcionalmente, podemos enviar detalles de ZodError.flatten()
+                    return {
+                        error: NextResponse.json(
+                            {
+                                success: false,
+                                message: "Payload inválido",
+                                errors: (parsed.error as ZodError).format(),
+                            },
+                            { status: 400 }
+                        ),
+                    };
+                }
+            });
         }
-        return { data: parsed.data };
+        else {
+            const parsed = schema.safeParse(body);
+            if (!parsed.success) {
+                // Opcionalmente, podemos enviar detalles de ZodError.flatten()
+                return {
+                    error: NextResponse.json(
+                        {
+                            success: false,
+                            message: "Payload inválido",
+                            errors: (parsed.error as ZodError).format(),
+                        },
+                        { status: 400 }
+                    ),
+                };
+            }
+        }
+        return { data: body };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
         // JSON inválido u otro error de lectura

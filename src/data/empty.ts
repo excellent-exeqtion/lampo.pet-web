@@ -171,7 +171,7 @@ export function Steps(): StepsStateType[] {
         { step: PetStep.BasicData, state: StepStateEnum.NotInitialize, schema: BasicDataTypeSchema },
         { step: PetStep.Vaccines, state: StepStateEnum.NotInitialize, schema: VaccineDataTypeSchema, url: '/api/pets/list/vaccines/', repository: new VaccineRepository() },
         { step: PetStep.Medicines, state: StepStateEnum.NotInitialize, schema: MedicineDataTypeSchema, url: '/api/pets/list/medicines/', repository: new MedicineRepository() },
-        { step: PetStep.LabTests, state: StepStateEnum.NotInitialize, schema: LabTestDataTypeSchema, url: '/api/pets/list/lab-test/', repository: new LabTestRepository() },
+        { step: PetStep.LabTests, state: StepStateEnum.NotInitialize, schema: LabTestDataTypeSchema, url: '/api/pets/list/lab-tests/', repository: new LabTestRepository() },
         { step: PetStep.Conditions, state: StepStateEnum.NotInitialize, schema: ConditionDataTypeSchema, url: '/api/pets/list/conditions/', repository: new ConditionRepository() },
         { step: PetStep.Surgeries, state: StepStateEnum.NotInitialize, schema: SurgeryDataTypeSchema, url: '/api/pets/list/surgeries/', repository: new SurgeryRepository() }
     ];

@@ -29,13 +29,6 @@ import {
 import type { StepsStateType, StepConfig } from "@/types/lib";
 import { Empty } from "@/data/index";
 
-import {
-    ConditionRepository,
-    LabTestRepository,
-    MedicineRepository,
-    SurgeryRepository,
-    VaccineRepository
-} from "@/repos/index";
 import { useAppContext } from "../layout/ClientAppProvider";
 
 interface AddPetModalProps {

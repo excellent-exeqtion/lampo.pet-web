@@ -12,7 +12,6 @@ import {
     FaPowerOff,
     FaRocket,
     FaSyringe,
-    FaTimes,
     FaUser
 } from "react-icons/fa";
 import Link from 'next/link';

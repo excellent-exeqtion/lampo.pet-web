@@ -2,18 +2,18 @@
 "use client";
 import React from "react";
 import { FaCloudSun } from "react-icons/fa";
-import { Page } from "@/components/index";
-import { ConditionRepository } from "@/repos/index";
+import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
 import { useAppContext } from "@/components/layout/ClientAppProvider";
 
 export default function ConditionsPage() {
     const { storageContext } = useAppContext();
     return (
-        <Page
+        <PageComponent
+            parentId={storageContext.storedPet.id}
             title="Condiciones especiales"
             icon={<FaCloudSun />}
-            repository={new ConditionRepository()}
+            apiUrl={'/api/pet/list/conditions/'}
             storedList={storageContext.storedConditionData}
             setStoredList={storageContext.setStoredConditionData}
             emptyMessage="No hay registro de condiciones especiales."

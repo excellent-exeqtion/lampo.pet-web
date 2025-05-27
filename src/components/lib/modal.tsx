@@ -12,7 +12,7 @@ interface ModalProps {
     dropdownRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export default function Modal({ children, title, description, setShowModal, maxWidth = "450px", dropdownRef }: ModalProps) {
+export default function ModalComponent({ children, title, description, setShowModal, maxWidth = "450px", dropdownRef }: ModalProps) {
     return (
         <div
             style={{

@@ -3,9 +3,9 @@
 
 import { Dispatch, SetStateAction, useState } from 'react';
 import { ApiError, StepStateEnum, StepsStateType } from '@/types/lib';
-import { Step, Validations } from '@/utils/index';
+import { Steps, Validations } from '@/utils/index';
 import { FieldConfig } from '../types/lib/index';
-import { postFetch } from '@/services/apiService';
+import { postFetch } from '@/app/api';
 
 export function useEntitySubmit<T>(
     id: string,
@@ -23,7 +23,7 @@ export function useEntitySubmit<T>(
     const [submitting, setSubmitting] = useState(false);
 
     const setState = (state: StepStateEnum, err: string | null = null) => {
-        Step.ChangeState(stepStates, setStepStates, stepNumber, state, err);
+        Steps.ChangeState(stepStates, setStepStates, stepNumber, state, err);
     };
     const stateEq = (state: StepStateEnum) =>
         stepStates.find(x => x.step === stepNumber)?.state === state;

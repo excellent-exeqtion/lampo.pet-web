@@ -6,9 +6,9 @@ import FeedbackModal from "./FeedbackModal";
 import PetCodeModal from "./PetCodeModal";
 import VeterinaryModal from "./VeterinaryModal";
 import ChangePetModal from "./ChangePetModal";
-import { isOwner, isVet } from "@/services/roleService";
 import AddPetModal from "./AddPetModal";
 import { useAppContext } from "../layout/ClientAppProvider";
+import { isOwner, isVet } from "@/utils/roles";
 
 interface BubblesProps {
   setShowFeedbackModal: Dispatch<SetStateAction<boolean>>;

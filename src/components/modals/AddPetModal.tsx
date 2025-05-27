@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, Dispatch, SetStateAction, useEffect } from "react";
-import Modal from "../lib/modal";
+import ModalComponent from "../lib/modal";
 import { EntityForm } from "@/components/index";
 
 import { PetNameForm, BasicDataForm } from "@/components/forms";
@@ -214,8 +214,8 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
     };
 
     return (
-        <Modal title={stepTitle()} setShowModal={setShowAddPetModal} maxWidth="1000px">
+        <ModalComponent title={stepTitle()} setShowModal={setShowAddPetModal} maxWidth="1000px">
             {renderStep()}
-        </Modal>
+        </ModalComponent>
     );
 }

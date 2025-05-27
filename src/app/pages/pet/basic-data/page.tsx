@@ -3,17 +3,17 @@
 import React, { useEffect, useState } from "react";
 import { FaUser } from "react-icons/fa";
 import { format } from "@/utils/dates";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { BasicField, Loading, Title } from "@/components/index";
 import { FieldType } from "@/types/lib";
 import { BasicDataType, OwnerDataType } from "@/types/index";
 import { v4 } from 'uuid';
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
-import { getFetch } from "@/services/apiService";
+import { getFetch } from "@/app/api";
 import { useAppContext } from "@/components/layout/ClientAppProvider";
+import { useSession } from "@/hooks/useSession";
 
 export default function BasicDataPage() {
-  useRequireAuth();
+  useSession();
 
   const { isMobile } = useDeviceDetect();
   const { storageContext } = useAppContext();

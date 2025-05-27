@@ -2,18 +2,18 @@
 "use client";
 import React from "react";
 import { FaSyringe } from "react-icons/fa";
-import { Page } from "@/components/index";
-import { VaccineRepository } from "@/repos/index";
+import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
 import { useAppContext } from "@/components/layout/ClientAppProvider";
 
 export default function VaccinesPage() {
   const { storageContext } = useAppContext();
   return (
-    <Page
+    <PageComponent
+      parentId={storageContext.storedPet.id}
       title="Vacunas"
       icon={<FaSyringe />}
-      repository={new VaccineRepository()}
+      apiUrl={'/api/pet/list/vaccines/'}
       storedList={storageContext.storedVaccineData}
       setStoredList={storageContext.setStoredVaccineData}
       emptyMessage="No hay registro de vacunas."

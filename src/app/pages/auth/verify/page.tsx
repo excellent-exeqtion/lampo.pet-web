@@ -1,8 +1,7 @@
-// app/pages/auth/verify/page.tsx
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getSession, setSession } from "@/services/authService";
+import { getFetch, postFetch } from "@/app/api";
 
 export default function VerifyEmail() {
   const router = useRouter();
@@ -13,26 +12,44 @@ export default function VerifyEmail() {
     const refresh_token = url.searchParams.get("refresh_token");
     const type = url.searchParams.get("type");
 
-    if (access_token && refresh_token && type === "signup") {
-      setSession({ access_token, refresh_token })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .then(({ error }: any) => {
-          if (error) {
-            console.error("Error al establecer sesión:", error.message);
-            router.replace("/login");
-            return;
-          }
-          router.replace("/owners/register");
-        });
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      getSession().then(({ data: { session } }: any) => {
-        if (session) {
+    const trySetSession = async () => {
+      try {
+        const response = await postFetch("/api/auth/set-session", undefined, { access_token, refresh_token });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          console.error("Error al establecer sesión:", result.message);
+          router.replace("/login");
+          return;
+        }
+
+        router.replace("/owners/register");
+      } catch (err) {
+        console.error("Error de red al establecer sesión:", err);
+        router.replace("/login");
+      }
+    };
+
+    const checkSession = async () => {
+      try {
+        const response = await getFetch("/api/auth/session");
+        const result = await response.json();
+
+        if (response.ok && result.success && result.session) {
           router.replace("/owners/register");
         } else {
           router.replace("/login");
         }
-      });
+      } catch (err) {
+        console.error("Error al verificar sesión:", err);
+        router.replace("/login");
+      }
+    };
+
+    if (access_token && refresh_token && type === "signup") {
+      trySetSession();
+    } else {
+      checkSession();
     }
   }, [router]);
 

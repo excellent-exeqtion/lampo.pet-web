@@ -2,18 +2,18 @@
 "use client";
 import React from "react";
 import { FaPills } from "react-icons/fa";
-import { Page } from "@/components/index";
-import { MedicineRepository } from "@/repos/index";
+import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
 import { useAppContext } from "@/components/layout/ClientAppProvider";
 
 export default function MedicinesPage() {
     const { storageContext } = useAppContext();
     return (
-        <Page
+        <PageComponent
+            parentId={storageContext.storedPet.id}
             title="Medicinas"
             icon={<FaPills />}
-            repository={new MedicineRepository()}
+            apiUrl={'/api/pet/list/medicines/'}
             storedList={storageContext.storedMedicineData}
             setStoredList={storageContext.setStoredMedicineData}
             emptyMessage="No hay registro de medicamentos."

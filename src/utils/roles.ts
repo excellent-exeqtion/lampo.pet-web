@@ -1,4 +1,4 @@
-// src/services/roleService.ts
+// src/utils/role.ts
 import { AppSession } from "@/types/lib";
 import { VeterinaryAccessType } from "../types";
 

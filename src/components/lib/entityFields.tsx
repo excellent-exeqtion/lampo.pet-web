@@ -5,7 +5,7 @@ import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { FieldConfig } from "@/types/lib";
 import { Dates } from "@/utils/index";
 import React from "react";
-import RemoveItem from "./removeItem";
+import RemoveItemComponent from "./removeItem";
 
 
 interface EntityFieldsProps<T extends { id: string | undefined }> {
@@ -79,7 +79,7 @@ export default function EntityFields<T extends { id: string | undefined }>({
                     />
                 </label>
             ))}
-            <RemoveItem id={item.id} loadLoading={loadLoading} handleRemove={handleRemove} />
+            <RemoveItemComponent id={item.id} loadLoading={loadLoading} handleRemove={handleRemove} />
         </div>
     );
 }

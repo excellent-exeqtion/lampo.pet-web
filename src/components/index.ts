@@ -17,7 +17,7 @@ export { default as Field } from "./lib/field";
 export { default as Form } from "./lib/form";
 export { default as Loading } from "./lib/loading";
 export { default as Modal } from "./lib/modal";
-export { default as Page } from "./lib/page";
+export { default as PageComponent } from "./lib/page";
 export { default as RemoveItem } from "./lib/removeItem";
 export { default as Steps } from "./lib/steps";
 export { default as Title } from "./lib/title";

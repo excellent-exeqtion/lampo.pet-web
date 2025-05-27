@@ -9,7 +9,7 @@ interface AddItemProps {
     count: number;
 }
 
-export default function AddItem({ entityName, loadLoading, handleAdd, count }: AddItemProps) {
+export default function AddItemComponent({ entityName, loadLoading, handleAdd, count }: AddItemProps) {
     return (
         <>
             <style jsx global>{`

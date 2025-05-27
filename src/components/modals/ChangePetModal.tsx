@@ -10,7 +10,7 @@ import React, {
 import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
 import { useAppContext } from "../layout/ClientAppProvider";
 import { PetType } from "@/types/index";
-import Modal from "../lib/modal";
+import ModalComponent from "../lib/modal";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index"
 
@@ -53,7 +53,7 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
   };
 
   return (
-    <Modal title="Selecciona la mascota" description="Visualiza la información de la mascota seleccionada" setShowModal={setShowChangePetModal} dropdownRef={dropdownRef}>
+    <ModalComponent title="Selecciona la mascota" description="Visualiza la información de la mascota seleccionada" setShowModal={setShowChangePetModal} dropdownRef={dropdownRef}>
       {/* Custom dropdown */}
       <div style={{ position: "relative", marginTop: "1rem" }}>
         <button
@@ -135,6 +135,6 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
         )}
 
       </div>
-    </Modal>
+    </ModalComponent>
   );
 }

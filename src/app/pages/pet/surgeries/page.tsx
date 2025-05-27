@@ -2,18 +2,18 @@
 "use client";
 import React from "react";
 import { FaCut } from "react-icons/fa";
-import { Page } from "@/components/index";
-import { SurgeryRepository } from "@/repos/index";
+import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
 import { useAppContext } from "@/components/layout/ClientAppProvider";
 
 export default function SurgeriesPage() {
     const { storageContext } = useAppContext();
     return (
-        <Page
+        <PageComponent
+            parentId={storageContext.storedPet.id}
             title="Cirugías"
             icon={<FaCut />}
-            repository={new SurgeryRepository()}
+            apiUrl={'/api/pet/list/surgeries/'}
             storedList={storageContext.storedSurgeryData}
             setStoredList={storageContext.setStoredSurgeryData}
             emptyMessage="No hay registro de cirugías."

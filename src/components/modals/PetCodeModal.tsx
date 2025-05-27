@@ -3,7 +3,7 @@
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaShareAlt, FaCopy } from "react-icons/fa";
 import { useAppContext } from "../layout/ClientAppProvider";
-import Modal from "../lib/modal";
+import ModalComponent from "../lib/modal";
 
 interface PetCodeModalProps {
   setShowCodeModal: Dispatch<SetStateAction<boolean>>;
@@ -59,7 +59,7 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
   };
 
   return (
-    <Modal title="Generar código" setShowModal={setShowCodeModal}>
+    <ModalComponent title="Generar código" setShowModal={setShowCodeModal}>
 
       {!show &&
         <p style={{ fontSize: "0.8rem" }}>
@@ -144,6 +144,6 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
           <FaShareAlt size={20} /> Generar
         </button>
       }
-    </Modal>
+    </ModalComponent>
   );
 }

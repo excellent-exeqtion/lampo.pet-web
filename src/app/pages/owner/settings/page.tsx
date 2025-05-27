@@ -4,7 +4,7 @@
 import { Title } from "@/components/index";
 import { useAppContext } from "@/components/layout/ClientAppProvider";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
-import { getFetch, putFetch } from "@/services/apiService";
+import { getFetch, putFetch } from "@/app/api";
 import type { OwnerDataType } from "@/types/index";
 import React, { FormEvent, useEffect, useState } from "react";
 import { FaCog } from "react-icons/fa";

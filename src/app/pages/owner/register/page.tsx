@@ -59,7 +59,7 @@ export default function PlanSelection() {
                 cycle === "annual" ? plan.price_year : plan.price_month;
             const discountApplied = cycle === "annual" ? plan.discount_year : plan.discount_month;
 
-            // Crea la suscripción en Supabase
+            //TODO: Create subscription api
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const subscription = await SubscriptionRepository.create({
                 ownerId: ownerId,

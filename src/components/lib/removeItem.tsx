@@ -7,7 +7,7 @@ interface RemoveItemProps {
     handleRemove: (id: string | undefined) => void;
 }
 
-export default function RemoveItem({ id, loadLoading, handleRemove }: RemoveItemProps) {
+export default function RemoveItemComponent({ id, loadLoading, handleRemove }: RemoveItemProps) {
     return (
         <div className="flex flex-wrap gap-2" style={{ marginTop: '26px', alignContent: 'center' }}>
             <button

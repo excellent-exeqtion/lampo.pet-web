@@ -5,11 +5,10 @@ import "@picocss/pico";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { signIn, ownerSignUp, resetPassword } from "@/services/authService";
 import type { OwnerDataType } from "@/types/index";
-import { OwnerRepository } from "@/repos/index";
 import PlanSelection from "./components/PlanSelection";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { postFetch } from "@/app/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,39 +43,44 @@ export default function LoginPage() {
     setLoading(true);
 
     if (isRegistering) {
-      // 1) Crear cuenta en Supabase (envía correo de confirmación)
-      const { error: signUpError, data } = await ownerSignUp(email, password);
-      if (signUpError) {
-        console.log('error:', signUpError);
-        setError("Ocurrio un error al registrar el usuario.");
+      // 1) Registro vía API
+      const signUpResponse = await postFetch("/api/auth/sign-up", undefined, { email, password });
+      const signUpJson = await signUpResponse.json();
+
+      if (!signUpResponse.ok || !signUpJson.success) {
+        console.error("Signup error:", signUpJson);
+        setError("Ocurrió un error al registrar el usuario.");
         setLoading(false);
         return;
       }
 
-      // 2) Guardar datos del owner en tu tabla ‘owners’ y manejar errores
-      const userId = data?.user?.id;
+      const userId = signUpJson.user?.id;
       setOwnerId(userId);
+
+      // 2) Guardar datos del owner
       if (userId) {
-        const { error: ownerError } = await OwnerRepository.create({
+        const response = await postFetch('/api/owners', undefined, {
           ...(ownerInfo as OwnerDataType),
           owner_id: userId,
-          email: email
+          email
         });
-        if (ownerError) {
-          setError(ownerError.message);
+        if (!response.ok) {
+          setError("Error creando al dueño de la mascota");
           setLoading(false);
           return;
         }
       }
 
       setShowConfirmModal(true);
-
     } else {
-      // Login normal
-      const { error: signInError } = await signIn(email, password);
-      if (signInError) {
-        setError(signInError.message);
+      // Inicio de sesión
+      const loginResponse = await postFetch("/api/auth/sign-in", undefined, { email, password });
+      const loginJson = await loginResponse.json();
+
+      if (!loginResponse.ok || !loginJson.success) {
+        setError(loginJson?.message || "Error iniciando sesión");
       } else {
+        await postFetch("/api/auth/set-session", undefined, { access_token: loginJson.session.access_token, refresh_token: loginJson.session.refresh_token });
         router.push("/");
       }
     }
@@ -90,9 +94,12 @@ export default function LoginPage() {
       setError("Ingresa tu correo para restablecer la contraseña.");
       return;
     }
-    const { error: resetError } = await resetPassword(email);
-    if (resetError) {
-      setError(resetError.message);
+
+    const resetResponse = await postFetch("/api/auth/reset-password", undefined, { email });
+    const resetJson = await resetResponse.json();
+
+    if (!resetResponse.ok || !resetJson.success) {
+      setError(resetJson?.message || "Error al enviar correo de recuperación.");
     } else {
       setError("Revisa tu correo para restablecer la contraseña.");
     }
@@ -172,7 +179,7 @@ export default function LoginPage() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <Image loading={"lazy"} src="/logo.png" alt="Lampo" width="150" height="48" style={{ width:"auto", height:"auto", marginBottom: '10px' }} />
+          <Image loading={"lazy"} src="/logo.png" alt="Lampo" width="150" height="48" style={{ width: "auto", height: "auto", marginBottom: '10px' }} />
           <h1>{isRegistering ? "Regístrate" : "Inicia sesión"}</h1>
         </div>
 

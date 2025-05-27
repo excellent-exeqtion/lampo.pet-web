@@ -3,9 +3,9 @@
 "use client";
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
-import { Step } from '@/utils/index';
+import { Steps } from '@/utils/index';
 import { ApiError, StepStateEnum, StepsStateType } from '@/types/lib';
-import { getFetch } from '@/services/apiService';
+import { getFetch } from '@/app/api';
 
 export function useLoadEntities<T>(
     id: string,
@@ -24,7 +24,7 @@ export function useLoadEntities<T>(
     const [loading, setLoading] = useState(true);
 
     const setState = (state: StepStateEnum, err: string | null = null) => {
-        Step.ChangeState(stepStates, setStepStates, stepNumber, state, err);
+        Steps.ChangeState(stepStates, setStepStates, stepNumber, state, err);
     };
     const stateEq = (state: StepStateEnum) =>
         stepStates.find(x => x.step === stepNumber)?.state === state;

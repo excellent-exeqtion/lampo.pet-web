@@ -2,13 +2,13 @@
 import React, { useState, useEffect, Dispatch } from 'react';
 import { InitialBasicDataType, PetStep as PetStep, PetType, type BasicDataType } from '@/types/index';
 import { ApiError, StepsStateType, StepStateEnum } from '@/types/lib';
-import { Dates, Step } from '@/utils/index';
+import { Dates, Steps } from '@/utils/index';
 import { petTypes, genders, weightUnits, breedOptions, foodOptions, weightConditionOptions, sizeOptions } from '@/data/petdata';
-import Steps from "../lib/steps";
 import { Empty } from '@/data/index';
 import { useDeviceDetect } from '@/hooks/useDeviceDetect';
 import { useAppContext } from '../layout/ClientAppProvider';
-import { postFetch } from '@/services/apiService';
+import { postFetch } from '@/app/api';
+import StepsComponent from '../lib/steps';
 
 interface BasicDataFormProps {
   pet: PetType;
@@ -23,7 +23,7 @@ interface BasicDataFormProps {
 export default function BasicDataForm({ pet, basicData, setBasicData, onNext, onBack, stepStates, setStepStates }: BasicDataFormProps) {
   const step = PetStep.BasicData;
   const setState = (stepState: StepStateEnum, stepError: string | null = null) => {
-    Step.ChangeState(stepStates, setStepStates, step, stepState, stepError);
+    Steps.ChangeState(stepStates, setStepStates, step, stepState, stepError);
   }
   const stateEq = (stepState: StepStateEnum) => {
     return stepStates.find(x => x.step == step)?.state == stepState;
@@ -155,7 +155,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   };
 
   return (
-    <Steps onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={stepStates.length} error={error}>
+    <StepsComponent onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={stepStates.length} error={error}>
       {/* Sección: Información básica */}
       <fieldset>
         <legend><b>Información básica</b></legend>
@@ -523,6 +523,6 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
           </label>
         </div>
       </fieldset>
-    </Steps>
+    </StepsComponent>
   );
 }

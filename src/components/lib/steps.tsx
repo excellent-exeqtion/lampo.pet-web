@@ -12,7 +12,7 @@ interface StepsProps {
   onBack: () => void;
 }
 
-export default function Steps({ children, submitLoading, loadLoading, step, totalSteps, error, onNext, onBack }: StepsProps) {
+export default function StepsComponent({ children, submitLoading, loadLoading, step, totalSteps, error, onNext, onBack }: StepsProps) {
 
   return (
     <>

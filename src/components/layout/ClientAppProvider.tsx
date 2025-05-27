@@ -4,16 +4,16 @@ import React, { useState, useEffect, useMemo, createContext, useContext } from "
 import { useSession as useRawSession } from "@/hooks/useSession";
 import { useAppStorage } from "@/hooks/useAppStorage";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "@/services/authService";
-import { PetRepository } from "@/repos/index";
-import { AppSession } from "@/types/lib";
-import { isOwner, isVetWithoutUserSession } from "@/services/roleService";
+import { ApiError, AppSession } from "@/types/lib";
+import { isOwner, isVetWithoutUserSession } from "@/utils/roles";
 import { Empty } from "@/data/index";
 import { Bubbles, Loading, SideBar } from "@/components/index";
 import { LoginPage } from "@/pages/index";
 import { AppContextType } from "@/context/AppContextType";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { emptyStorage } from "@/context/StorageContextType";
+import { getFetch } from "@/app/api";
+import { PetType } from "@/types/index";
 
 const AppContext = createContext<AppContextType>({
     session: { db: null! },
@@ -58,8 +58,10 @@ export default function ClientAppProvider({ children }: ClientAppProviderProps) 
         (async () => {
             if (isOwner(appSession)) {
                 if (storageContext.storedOwnerPets.length === 0) {
-                    const pets = await PetRepository.findByOwnerId(ownerId);
-                    storageContext.setStoredOwnerPets(pets);
+                    const response = await getFetch(`/api/owners/pets/${ownerId}`);
+                    if (!response.ok) throw new ApiError(`Fallo al obtener las mascotas del dueño: ${ownerId}`);
+                    const data = await response.json();
+                    storageContext.setStoredOwnerPets(data as PetType[]);
                 }
             }
 
@@ -74,12 +76,26 @@ export default function ClientAppProvider({ children }: ClientAppProviderProps) 
     }, [appSession, ownerId]);
 
     const handleLogout = async () => {
-        await signOut();
+        try {
+            const response = await fetch("/api/auth/sign-out", { method: "POST" });
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                console.error("Error cerrando sesión:", result.message || "Unknown error");
+            }
+        } catch (err) {
+            console.error("Error en logout:", err);
+        }
+
+        // Limpieza local después del logout
         storageContext.setStoredPet(Empty.Pet());
         storageContext.setStoredOwnerPets([]);
         storageContext.setStoredVetAccess(Empty.VetAccess());
+
+        // Redirección
         window.location.href = "/";
     };
+
 
     const contextValue: AppContextType = useMemo(() => ({
         session: appSession,

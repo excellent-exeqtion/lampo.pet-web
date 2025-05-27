@@ -3,9 +3,9 @@
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { useRouter } from "next/navigation";
 import { veterinaryStyles } from "../../styles/veterinary";
-import Modal from "../lib/modal";
+import ModalComponent from "../lib/modal";
 import { useAppContext } from "../layout/ClientAppProvider";
-import { postFetch, getFetch } from "@/services/apiService";
+import { postFetch, getFetch } from "@/app/api";
 
 interface VeterinaryModalProps {
   setShowVetModal: Dispatch<SetStateAction<boolean>>;
@@ -70,7 +70,7 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
   };
 
   return (
-    <Modal title="Soy médico veterinario" description="Aquí puedes revisar el historial completo, modificarlo y agregar entradas
+    <ModalComponent title="Soy médico veterinario" description="Aquí puedes revisar el historial completo, modificarlo y agregar entradas
         a la historia de la mascota" setShowModal={setShowVetModal} maxWidth="1000px">
 
       <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -152,6 +152,6 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
       </button>
 
       <style jsx>{veterinaryStyles}</style>
-    </Modal>
+    </ModalComponent>
   );
 }

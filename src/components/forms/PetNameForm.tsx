@@ -5,11 +5,11 @@ import { FaCloudUploadAlt } from 'react-icons/fa';
 import { generateUniquePetId } from '@/utils/random';
 import { PetStep, PetType } from '@/types/index';
 import { ApiError, StepsStateType, StepStateEnum } from '@/types/lib';
-import Steps from '../lib/steps';
-import { Step } from '@/utils/index';
+import StepsComponent from '../lib/steps';
+import { Steps } from '@/utils/index';
 import { Empty } from '@/data/index';
 import { CircularImage } from "@/components/index";
-import { getFetch, postFetch } from '@/services/apiService';
+import { getFetch, postFetch } from '@/app/api';
 import { useAppContext } from '../layout/ClientAppProvider';
 
 interface PetFormProps {
@@ -33,7 +33,7 @@ export default function PetNameForm({
 }: PetFormProps) {
   const step = PetStep.Name;
   const setState = (stepState: StepStateEnum, stepError: string | null = null) => {
-    Step.ChangeState(stepStates, setStepStates, step, stepState, stepError);
+    Steps.ChangeState(stepStates, setStepStates, step, stepState, stepError);
   };
   const stateEq = (stepState: StepStateEnum) =>
     stepStates.find((x) => x.step === step)?.state === stepState;
@@ -140,7 +140,7 @@ export default function PetNameForm({
   };
 
   return (
-    <Steps
+    <StepsComponent
       onBack={onBack}
       onNext={handleSubmit}
       submitLoading={submitLoading}
@@ -194,6 +194,6 @@ export default function PetNameForm({
           </div>
         )}
       </div>
-    </Steps>
+    </StepsComponent>
   );
 }

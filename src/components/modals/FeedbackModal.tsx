@@ -2,8 +2,8 @@
 "use client";
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { useAppContext } from "../layout/ClientAppProvider";
-import Modal from "../lib/modal";
-import { postFetch } from "@/services/apiService";
+import ModalComponent from "../lib/modal";
+import { postFetch } from "@/app/api";
 
 interface FeedbackModalProps {
   setShowFeedbackModal: Dispatch<SetStateAction<boolean>>;
@@ -32,7 +32,7 @@ export default function FeedbackModal({ setShowFeedbackModal }: FeedbackModalPro
   };
 
   return (
-    <Modal title="Queremos leerte" description="Cuéntanos tu experiencia con Lampo o sobre tu mascota" setShowModal={setShowFeedbackModal}>
+    <ModalComponent title="Queremos leerte" description="Cuéntanos tu experiencia con Lampo o sobre tu mascota" setShowModal={setShowFeedbackModal}>
       <textarea
         value={feedback}
         onChange={(e) => setFeedback(e.target.value)}
@@ -68,6 +68,6 @@ export default function FeedbackModal({ setShowFeedbackModal }: FeedbackModalPro
           {sending ? "Enviando..." : "Enviar"}
         </button>
       </div>
-    </Modal>
+    </ModalComponent>
   );
 }

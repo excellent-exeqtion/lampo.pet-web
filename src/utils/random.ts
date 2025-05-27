@@ -1,4 +1,4 @@
-// app/lib/codeGenerator.tsx
+// src/utils/random.tsx
 import { PetRepository } from '@/repos/index';
 import { customAlphabet } from "nanoid";
 

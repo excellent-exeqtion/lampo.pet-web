@@ -20,7 +20,7 @@ import { AppSession, MenuType } from "@/types/lib";
 import { v4 } from 'uuid';
 import { useRouter } from "next/navigation";
 import { VeterinaryAccessType } from "@/types/index";
-import { isOwner, isVet } from "@/services/roleService";
+import { isOwner, isVet } from "@/utils/roles";
 import { FaPencil } from "react-icons/fa6";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index";

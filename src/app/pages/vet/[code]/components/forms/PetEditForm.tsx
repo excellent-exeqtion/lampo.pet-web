@@ -1,5 +1,5 @@
 "use client";
-import { putFetch } from "@/services/apiService";
+import { putFetch } from "@/app/api";
 import { PetType } from "@/types/index";
 import React, { useState, FormEvent } from "react";
 

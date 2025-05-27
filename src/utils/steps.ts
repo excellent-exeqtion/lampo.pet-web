@@ -1,3 +1,4 @@
+// src/utils/steps.ts
 import { StepsStateType, StepStateEnum } from '@/types/lib';
 import { Dispatch } from 'react';
 

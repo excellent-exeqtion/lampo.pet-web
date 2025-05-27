@@ -72,6 +72,15 @@ export interface FormRepository<T> {
   delete: (id: string) => Promise<boolean>
 }
 
+export interface LogInType {
+  email: string;
+  password?: string;
+}
+export interface SetSesionType {
+  access_token: string;
+  refresh_token: string;
+}
+
 export interface ApiParams {
   params: Record<string, string>;
 };

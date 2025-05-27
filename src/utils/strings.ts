@@ -1,3 +1,4 @@
+// src/utils/string.ts
 import { ApiParams } from "@/types/lib";
 
 export function titleCase(word: string) {

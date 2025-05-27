@@ -1,8 +1,8 @@
 // src/components/forms/VaccineForm.tsx
 "use client";
 import React from "react";
-import Steps from "./steps";
-import Entities from "@/components/lib/entities";
+import StepsComponent from "./steps";
+import EntitiesComponent from "@/components/lib/entities";
 
 interface FormProps<T extends { id: string | undefined }> {
     entityList: Partial<T>[];
@@ -18,10 +18,10 @@ interface FormProps<T extends { id: string | undefined }> {
     handleSubmit: () => Promise<void>;
 }
 
-export default function Form<T extends { id: string | undefined }>({ entityList, step, totalSteps, entityName, submitLoading, loadLoading, error, form, onBack, handleAdd, handleSubmit }: FormProps<T> ) {
+export default function FormComponent<T extends { id: string | undefined }>({ entityList, step, totalSteps, entityName, submitLoading, loadLoading, error, form, onBack, handleAdd, handleSubmit }: FormProps<T> ) {
     return (
-        <Steps onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={totalSteps} error={error} >
-            <Entities form={form} entityList={entityList} entityName={entityName} loadLoading={loadLoading} handleAdd={handleAdd} />
-        </Steps >
+        <StepsComponent onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={totalSteps} error={error} >
+            <EntitiesComponent form={form} entityList={entityList} entityName={entityName} loadLoading={loadLoading} handleAdd={handleAdd} />
+        </StepsComponent >
     );
 }

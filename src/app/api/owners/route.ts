@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { OwnerRepository } from '@/repos/index';
 import type { OwnerDataType } from '@/types/index';
+import { withValidationAndErrorHandling } from '@/services/apiService';
+import { OwnerDataTypeSchema } from '@/schemas/validationSchemas';
+import { RepositoryError } from '@/types/lib';
 
 // PUT /api/owner : crea o actualiza datos del dueño
 export async function PUT(request: NextRequest) {
@@ -28,4 +31,26 @@ export async function PUT(request: NextRequest) {
         console.error('Error upserting owner:', error);
         return NextResponse.json({ error: error.message || 'Error interno del servidor' }, { status: 500 });
     }
+}
+
+
+
+export async function POST(req: NextRequest) {
+    return withValidationAndErrorHandling(
+        'POST',
+        req,
+        OwnerDataTypeSchema,
+        async (ownerData: OwnerDataType) => {
+            try {
+                const { data, error } = await OwnerRepository.create(ownerData);
+                if (error) {
+                    throw new RepositoryError(`Error creating record: ${JSON.stringify(ownerData)}`);
+                }
+                return NextResponse.json(data, { status: 201 });
+            }
+            catch {
+                throw new RepositoryError("Error creating record");
+            }
+        }
+    )
 }

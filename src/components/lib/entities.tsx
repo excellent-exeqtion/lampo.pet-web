@@ -13,7 +13,7 @@ interface EntitiesProps {
     loadLoading: boolean;
     handleAdd: () => void;
 }
-export default function Entities({ form, entityList, entityName, loadLoading, handleAdd }: EntitiesProps) {
+export default function EntitiesComponent({ form, entityList, entityName, loadLoading, handleAdd }: EntitiesProps) {
 
     return (
         <div className="grid grid-cols-1 gap-6" style={{ display: 'flow' }}>

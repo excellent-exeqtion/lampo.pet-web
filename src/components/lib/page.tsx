@@ -2,16 +2,17 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { v4 } from "uuid";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loading, DataNotFound, Display, Title } from "@/components/index";
-import { FormRepository, FormType } from "@/types/lib";
+import { ApiError, FormType } from "@/types/lib";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
-import { useAppContext } from "../layout/ClientAppProvider";
+import { useSession } from "@/hooks/useSession";
+import { getFetch } from "@/app/api";
 
 export interface PageProps<T> {
+    parentId: string,
     title: string;
     icon: React.JSX.Element;
-    repository: FormRepository<T>;
+    apiUrl: string;
     storedList: T[];
     setStoredList: (value: T[]) => void;
     /** Mapea cada ítem a un array de campos para Display */
@@ -19,27 +20,29 @@ export interface PageProps<T> {
     emptyMessage: string;
 }
 
-const Page = <T,>({
+const PageComponent = <T,>({
+    parentId,
     title,
     icon,
-    repository,
+    apiUrl,
     storedList,
     setStoredList,
     mapItemToFields,
     emptyMessage,
 }: PageProps<T>) => {
-    useRequireAuth();
+    useSession();
     const { isMobile } = useDeviceDetect();
-    const { storageContext, showEditPetModal } = useAppContext();
     const [items, setItems] = useState<T[] | null>(null);
 
     useEffect(() => {
-        if (!storageContext.storedPet.id) return;
+        if (!parentId) return;
         const fetchData = async () => {
             try {
                 let data: T[] = [];
                 if (storedList.length == 0) {
-                    data = await repository.findByParentId(storageContext.storedPet.id) ?? [];
+                    const response = await getFetch(`${apiUrl}${parentId}`);
+                    if(!response.ok) throw new ApiError(`Error llamando al api: ${apiUrl}${parentId}`);
+                    const data = await response.json();
                     setItems(data);
                     setStoredList(data);
                 }
@@ -53,7 +56,7 @@ const Page = <T,>({
         };
         fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storageContext.storedPet.id, showEditPetModal]);
+    }, [storedList]);
 
     const formItems: FormType[] = (items || []).map((item) => ({
         id: v4(),
@@ -74,4 +77,4 @@ const Page = <T,>({
     );
 };
 
-export default Page;
+export default PageComponent;

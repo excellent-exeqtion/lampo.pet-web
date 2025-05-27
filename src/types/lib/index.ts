@@ -40,10 +40,14 @@ export enum StepStateEnum {
   Error = 5,
 }
 
-export interface DisplayPageType {
-  page: number;
-  ref:  React.RefObject<boolean>;
-}
+export type StepConfig<T> = {
+    entityName: string;
+    repository: { new(): FormRepository<T> };
+    storedList: T[];
+    setStoredList: (list: T[]) => void;
+    emptyFactory: (petId: string) => T;
+    fieldsConfig: FieldConfig<T>[];
+};
 
 export interface FieldConfig<T> {
   label: string;

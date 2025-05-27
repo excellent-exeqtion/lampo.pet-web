@@ -54,13 +54,13 @@ export default function Bubbles({
   showEditPetModal,
 }: BubblesProps) {
 
-  const { storedOwnerPets, session, storedVetAccess, storedPet } = useAppContext();
+  const { storageContext, session } = useAppContext();
   const [showChangePetBubble, setShowChangePetBubble] = useState(false);
 
   useEffect(() => {
-    const show = (storedOwnerPets.length ?? 0) > 0;
+    const show = (storageContext.storedOwnerPets.length ?? 0) > 0;
     setShowChangePetBubble(show);
-  }, [storedOwnerPets]);
+  }, [storageContext.storedOwnerPets]);
 
   return (
     <div
@@ -87,7 +87,7 @@ export default function Bubbles({
       </div>
 
       {/* Vet Bubble */}
-      {isOwner(session) && !isVet(session, storedVetAccess) &&
+      {isOwner(session) && !isVet(session, storageContext.storedVetAccess) &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowVetModal(true)}
@@ -101,7 +101,7 @@ export default function Bubbles({
       }
 
       {/* Code Bubble */}
-      {isOwner(session) && !isVet(session, storedVetAccess) &&
+      {isOwner(session) && !isVet(session, storageContext.storedVetAccess) &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowCodeModal(true)}
@@ -134,7 +134,7 @@ export default function Bubbles({
       {showCodeModal && <PetCodeModal setShowCodeModal={setShowCodeModal} />}
       {showFeedbackModal && <FeedbackModal setShowFeedbackModal={setShowFeedbackModal} />}
       {showAddPetModal && <AddPetModal showAddPetModal={showAddPetModal} setShowAddPetModal={setShowAddPetModal} />}
-      {showEditPetModal && <AddPetModal editPet={storedPet} showAddPetModal={showAddPetModal} setShowAddPetModal={setShowEditPetModal} />}
+      {showEditPetModal && <AddPetModal editPet={storageContext.storedPet} showAddPetModal={showAddPetModal} setShowAddPetModal={setShowEditPetModal} />}
     </div>
   );
 }

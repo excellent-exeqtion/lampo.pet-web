@@ -18,6 +18,7 @@ export default class PetRepository {
     const { data, error } = await supabase
       .from("pets")
       .select("*")
+      .eq("deleted", false)
       .eq("id", id)
       .single();
     if (error) throw new Error(error.message);
@@ -28,6 +29,7 @@ export default class PetRepository {
     const { data, error } = await supabase
       .from("pets")
       .select("*", { count: 'exact', head: true })
+      .eq("deleted", false)
       .eq("id", id);
     if (error) throw new Error(error.message);
     return data != null;
@@ -52,6 +54,7 @@ export default class PetRepository {
     const { data, error } = await supabase
       .from("pets")
       .select("id")
+      .eq("deleted", false)
       .eq("owner_id", ownerId)
       .eq("id", pet_id);
 
@@ -67,6 +70,7 @@ export default class PetRepository {
     const { data, error } = await supabase
       .from("pets")
       .select("*")
+      .eq("deleted", false)
       .eq("owner_id", ownerId);
 
     if (error) throw new Error(error.message);

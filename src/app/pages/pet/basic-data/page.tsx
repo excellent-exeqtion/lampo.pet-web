@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/basic-data/page.tsx (server component)
 "use client";
 import React, { useEffect, useState } from "react";
@@ -7,55 +6,71 @@ import { format } from "@/utils/dates";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { BasicField, Loading, Title } from "@/components/index";
 import { FieldType } from "@/types/lib";
-import { BasicDataType, DisplayPage as DisplayPage, OwnerDataType } from "@/types/index";
+import { BasicDataType, OwnerDataType } from "@/types/index";
 import { v4 } from 'uuid';
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch } from "@/services/apiService";
-import { Empty } from "@/data/index";
 import { useAppContext } from "@/components/layout/ClientAppProvider";
 
 export default function BasicDataPage() {
- // console.log('BasicDataPage')
-  const page = DisplayPage.BasicData;
   useRequireAuth();
 
   const { isMobile } = useDeviceDetect();
-  const { storedPet, showEditPetModal, didMountRef } = useAppContext();
+  const { storageContext } = useAppContext();
   const [petData, setPetData] = useState<BasicDataType | null>(null);
   const [ownerData, setOwnerData] = useState<OwnerDataType | null>(null);
   const [basicDataItems, setBasicDataItems] = useState<FieldType[]>([]);
   const [contactItems, setContactItems] = useState<FieldType[]>([]);
 
   useEffect(() => {
-    if (!didMountRef[page].ref.current || petData == null || ownerData == null) {
-      setPetData(Empty.BasicData());
-      setOwnerData(Empty.OwnerData());
-      didMountRef[page].ref.current = true;
-      if (!storedPet.id) return;
+    if (!storageContext.storedPet.id) return;
 
-      const fetchData = async () => {
-        try {
+    const fetchData = async () => {
+      try {
+        if (!storageContext.storedBasicData.pet_id) {
           // 1) Datos básicos de la mascota
-          const resPet = await getFetch(`/api/pets/basic-data/${storedPet.id}`);
+          const resPet = await getFetch(`/api/pets/basic-data/${storageContext.storedPet.id}`);
           if (!resPet.ok) throw new Error("Falló fetch basic-data");
           const basicData: BasicDataType = await resPet.json();
+          storageContext.setStoredBasicData(basicData);
           setPetData(basicData);
+        }
+        else {
+          setPetData(storageContext.storedBasicData);
+        }
+      } catch (err) {
+        console.error("Error cargando datos:", err);
+      }
+    };
 
-          // 2) Datos del dueño
-          const resOwner = await getFetch(`/api/owner/${storedPet.owner_id}`);
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageContext.storedBasicData]);
+
+
+  useEffect(() => {
+    if (!storageContext.storedPet.id) return;
+
+    const fetchData = async () => {
+      try {
+        if (!storageContext.storedOwnerData.owner_id) {
+          const resOwner = await getFetch(`/api/owner/${storageContext.storedPet.owner_id}`);
           if (!resOwner.ok) throw new Error("Falló fetch owners");
           const owner: OwnerDataType = await resOwner.json();
+          storageContext.setStoredOwnerData(owner);
           setOwnerData(owner);
-        } catch (err) {
-          console.error("Error cargando datos:", err);
         }
-      };
+        else {
+          setOwnerData(storageContext.storedOwnerData);
+        }
+      } catch (err) {
+        console.error("Error cargando datos:", err);
+      }
+    };
 
-      fetchData();
-    }
-
+    fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storedPet.id, storedPet.owner_id, showEditPetModal]);
+  }, [storageContext.storedOwnerData]);
 
   useEffect(() => {
     if (petData) {

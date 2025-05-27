@@ -8,6 +8,7 @@ import Steps from "../lib/steps";
 import { Empty } from '@/data/index';
 import { useDeviceDetect } from '@/hooks/useDeviceDetect';
 import { BasicDataRepository } from '@/repos/index';
+import { useAppContext } from '../layout/ClientAppProvider';
 
 interface BasicDataFormProps {
   pet: PetType;
@@ -57,6 +58,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   const [loadedWithApi, setLoadedWithApi] = useState<boolean>(false);
   const [savedData, setSavedData] = useState<BasicDataType>(Empty.BasicData());
   const { isMobile, isDesktop, isTablet } = useDeviceDetect();
+  const { storageContext } = useAppContext();
 
   // Estilo común de grid: en móvil siempre 2 columnas, en desktop auto-ajusta
   const sectionGridStyle: React.CSSProperties = {
@@ -88,10 +90,16 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
       if (stateEq(StepStateEnum.NotInitialize)) {
         setState(StepStateEnum.Initialize);
         console.log(pet);
-        // 1) Datos básicos de la mascota
-        const resPet = await fetch(`/api/pets/basic-data/${pet.id}`);
-        if (!resPet.ok) throw new Error("Falló fetch basic-data");
-        const basicDataSaved: BasicDataType = await resPet.json();
+        let basicDataSaved: BasicDataType = Empty.BasicData();
+        if (!storageContext.storedBasicData.pet_id) {
+          const resPet = await fetch(`/api/pets/basic-data/${pet.id}`);
+          if (!resPet.ok) throw new Error("Falló fetch basic-data");
+          basicDataSaved = await resPet.json() as BasicDataType;
+          storageContext.setStoredBasicData(basicDataSaved);
+        }
+        else{
+          basicDataSaved = storageContext.storedBasicData;
+        }
         if (basicDataSaved) {
           setSavedData(basicDataSaved);
           setBasicData(basicDataSaved);
@@ -131,6 +139,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
         if (basicDataErr) throw new Error(basicDataErr?.message || "Error creando mascota");
         setSavedData(dataToSave);
         setBasicData(dataToSave);
+        storageContext.setStoredBasicData(dataToSave);
         setState(StepStateEnum.Saved);
       }
       onNext();

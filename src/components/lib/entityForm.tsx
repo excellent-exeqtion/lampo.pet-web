@@ -10,8 +10,9 @@ import { useEntitySubmit } from "@/hooks/useEntitySubmit";
 import type { FormRepository, FieldConfig, StepsStateType } from "@/types/lib";
 
 export interface EntityFormProps<T extends { id?: string }> {
-  page: number;
   petId: string;
+  storedList: T[];
+  setStoredList: (list: T[]) => void;
   data: T[];
   setData: Dispatch<SetStateAction<T[]>>;
   step: number;
@@ -26,8 +27,9 @@ export interface EntityFormProps<T extends { id?: string }> {
 }
 
 export default function EntityForm<T extends { id: string | undefined }>({
-  page,
   petId,
+  storedList,
+  setStoredList,
   data,
   setData,
   step,
@@ -48,9 +50,10 @@ export default function EntityForm<T extends { id: string | undefined }>({
     setError: setLoadError,
     loading: loadLoading,
   } = useLoadEntities<T>(
-    page,
     repository,
     petId,
+    storedList,
+    setStoredList,
     data,
     setData,
     step,
@@ -74,10 +77,10 @@ export default function EntityForm<T extends { id: string | undefined }>({
     loading: submitLoading,
     error: submitError,
   } = useEntitySubmit<T>(
-    page,
     repository,
     list,
     entityName,
+    setStoredList,
     setData,
     fieldsConfig,
     step,

@@ -14,7 +14,7 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const { session, storedPet } = useAppContext();
+  const { session, storageContext } = useAppContext();
 
   async function generar() {
     setError("");
@@ -24,7 +24,7 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
         {
           method: 'POST',
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ owner_id: session?.db?.user.id, pet_id: storedPet.id }),
+          body: JSON.stringify({ owner_id: session?.db?.user.id, pet_id: storageContext.storedPet.id }),
         }
       );
 

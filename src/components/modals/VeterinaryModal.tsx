@@ -21,7 +21,7 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { setStoredPet, setStoredOwnerPets } = useAppContext();
+  const { storageContext } = useAppContext();
 
   const handleSubmit = async () => {
     setError("");
@@ -56,8 +56,8 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
         }
         const petData = await petResponse.json();
 
-        setStoredPet(petData)
-        setStoredOwnerPets([]);
+        storageContext.setStoredPet(petData)
+        storageContext.setStoredOwnerPets([]);
         setShowVetModal(false);
         router.push(`/pages/vet/${sanitizedCode}`);
       }

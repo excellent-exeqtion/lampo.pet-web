@@ -4,14 +4,14 @@
 import { Title } from "@/components/index";
 import { useAppContext } from "@/components/layout/ClientAppProvider";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
-import { putFetch } from "@/services/apiService";
+import { getFetch, putFetch } from "@/services/apiService";
 import type { OwnerDataType } from "@/types/index";
 import React, { FormEvent, useEffect, useState } from "react";
 import { FaCog } from "react-icons/fa";
 
 export default function SettingsPage() {
   const { isMobile } = useDeviceDetect();
-  const { session } = useAppContext();
+  const { session, storageContext } = useAppContext();
   const userId = session?.db?.user.id;
   const userEmail = session?.db?.user.email;
 
@@ -34,14 +34,20 @@ export default function SettingsPage() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(`/api/owner?userId=${encodeURIComponent(userId)}`);
-        const json = await res.json();
-        if (res.ok) {
-          setOwnerInfo(json.owner);
-        } else {
-          console.error("Error al obtener owner:", json.error);
-          setError("No se pudo cargar la información del dueño.");
-          setFormFailed(true);
+        if (!storageContext.storedOwnerData.owner_id) {
+          const res = await getFetch(`/api/owner?userId=${encodeURIComponent(userId)}`);
+          const json = await res.json();
+          if (res.ok) {
+            storageContext.setStoredOwnerData(json.owner);
+            setOwnerInfo(json.owner);
+          } else {
+            console.error("Error al obtener owner:", json.error);
+            setError("No se pudo cargar la información del dueño.");
+            setFormFailed(true);
+          }
+        }
+        else{
+          setOwnerInfo(storageContext.storedOwnerData);
         }
       } catch (err) {
         console.error("Fetch owner error:", err);
@@ -84,6 +90,7 @@ export default function SettingsPage() {
 
         if (res.ok) {
           setError("Datos actualizados correctamente.");
+          storageContext.setStoredOwnerData(payload);
           setFormFailed(false);
         } else {
           console.error("API error:", json.error);

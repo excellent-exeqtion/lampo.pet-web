@@ -37,7 +37,7 @@ export default function SideBar({
     setShowEditPetModal: Dispatch<SetStateAction<boolean>>;
 }) {
     const { isMobile } = useDeviceDetect()
-    const { logout, storedPet, session, storedVetAccess, setStoredVetAccess } = useAppContext();
+    const { logout, storageContext, session } = useAppContext();
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
 
@@ -54,16 +54,16 @@ export default function SideBar({
         { label: "Agregar Consulta", icon: <FaCog />, url: "/pages/vet/diagnostic", show: isVet(session, vetAccess) }
     ];
     useEffect(() => {
-        const menu = menuData(storedPet.id != "", session, storedVetAccess);
+        const menu = menuData(storageContext.storedPet.id != "", session, storageContext.storedVetAccess);
 
-        if (storedPet) {
+        if (storageContext.storedPet) {
             menu.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner(session) });
         }
         setMenuItems(menu);
-    }, [storedPet, session, storedVetAccess, setShowEditPetModal]);
+    }, [storageContext.storedPet, session, storageContext.storedVetAccess, setShowEditPetModal]);
 
     const goToLogin = () => {
-        setStoredVetAccess(Empty.VetAccess());
+        storageContext.setStoredVetAccess(Empty.VetAccess());
         router.push("/pages/login");
     }
 
@@ -106,9 +106,9 @@ export default function SideBar({
                 >
                     <div style={{ padding: "0 1rem 1rem", display: 'flex', alignItems: 'center' }}>
                         <CircularImage
-                            src={storedPet.image || "/pets/pet.jpg"}
+                            src={storageContext.storedPet.image || "/pets/pet.jpg"}
                             width={80} />
-                        <p style={{ marginLeft: '20px' }}><b>{storedPet.name ?? 'Nombre de tu mascota'}</b></p>
+                        <p style={{ marginLeft: '20px' }}><b>{storageContext.storedPet.name ?? 'Nombre de tu mascota'}</b></p>
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
@@ -151,9 +151,9 @@ export default function SideBar({
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <CircularImage
-                            src={storedPet.image || "/pets/pet.jpg"}
+                            src={storageContext.storedPet.image || "/pets/pet.jpg"}
                             width={60} borderSize="3px" />
-                        <span style={{ fontSize: "1rem", fontWeight: "600" }}>{storedPet.name}</span>
+                        <span style={{ fontSize: "1rem", fontWeight: "600" }}>{storageContext.storedPet.name}</span>
                     </div>
 
                     <button

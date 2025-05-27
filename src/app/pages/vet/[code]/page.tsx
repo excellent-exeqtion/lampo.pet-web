@@ -20,7 +20,7 @@ export default function VetPage({ params }: VetPageProps) {
   const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState("");
 
-  const { setStoredPet: setStoredPetId, setStoredVetAccess, setStoredPetCode } = useAppContext();
+  const { storageContext } = useAppContext();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,18 +36,18 @@ export default function VetPage({ params }: VetPageProps) {
           // 2. Código expirado
           setMessage("El código ha expirado. Pídele al dueño de la mascota que genere uno nuevo.");
         } else {
-          setStoredPetCode(codeRecord);
+          storageContext.setStoredPetCode(codeRecord);
           // 3. Encontrar la mascota
           const petFound = await PetRepository.findById(codeRecord.pet_id);
           setPet(petFound);
           if (!petFound) {
             setMessage("No se encontró la mascota asociada.");
           } else {
-            setStoredPetId(petFound);
+            storageContext.setStoredPet(petFound);
             setIsValid(true);
           // 4. Encontrar el veterinario que accedió con el código de la mascota
             const vetAccess = await VeterinaryAccessRepository.findByCodeAndByPetId(code, petFound.id);
-            if (vetAccess) setStoredVetAccess(vetAccess);
+            if (vetAccess) storageContext.setStoredVetAccess(vetAccess);
           }
 
         }

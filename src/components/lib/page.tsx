@@ -9,44 +9,50 @@ import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { useAppContext } from "../layout/ClientAppProvider";
 
 export interface PageProps<T> {
-    page: number;
     title: string;
     icon: React.JSX.Element;
     repository: FormRepository<T>;
+    storedList: T[];
+    setStoredList: (value: T[]) => void;
     /** Mapea cada ítem a un array de campos para Display */
     mapItemToFields: (item: T) => { label: string; show: boolean; value: string }[];
     emptyMessage: string;
 }
 
 const Page = <T,>({
-    page,
     title,
     icon,
     repository,
+    storedList,
+    setStoredList,
     mapItemToFields,
     emptyMessage,
 }: PageProps<T>) => {
     useRequireAuth();
     const { isMobile } = useDeviceDetect();
-    const { storedPet, showEditPetModal, didMountRef } = useAppContext();
+    const { storageContext, showEditPetModal } = useAppContext();
     const [items, setItems] = useState<T[] | null>(null);
 
     useEffect(() => {
-        if (!didMountRef[page].ref.current) {
-            didMountRef[page].ref.current = true;
-            if (!storedPet.id) return;
-            const fetchData = async () => {
-                try {
-                    const data = await repository.findByParentId(storedPet.id);
+        if (!storageContext.storedPet.id) return;
+        const fetchData = async () => {
+            try {
+                let data: T[] = [];
+                if (storedList.length == 0) {
+                    data = await repository.findByParentId(storageContext.storedPet.id) ?? [];
                     setItems(data);
-                } catch (err) {
-                    console.error(`Error cargando ${title.toLowerCase()}:`, err);
+                    setStoredList(data);
                 }
-            };
-            fetchData();
-        }
+                else {
+                    data = storedList;
+                }
+            } catch (err) {
+                console.error(`Error cargando ${title.toLowerCase()}:`, err);
+            }
+        };
+        fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storedPet.id, showEditPetModal]);
+    }, [storageContext.storedPet.id, showEditPetModal]);
 
     const formItems: FormType[] = (items || []).map((item) => ({
         id: v4(),

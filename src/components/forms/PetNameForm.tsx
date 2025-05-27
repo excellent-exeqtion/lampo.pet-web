@@ -43,7 +43,7 @@ export default function PetNameForm({
   const [submitLoading, setSubmitLoading] = useState(false);
   const [savedData, setSavedData] = useState<PetType>(Empty.Pet());
   const [preview, setPreview] = useState<string>(pet.image || '/pets/pet.jpg');
-  const { setStoredPet, storedOwnerPets, setStoredOwnerPets } = useAppContext();
+  const { storageContext } = useAppContext();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -69,16 +69,23 @@ export default function PetNameForm({
       if (stateEq(StepStateEnum.NotInitialize) && !pet.id) {
         setState(StepStateEnum.Initialize);
       } else if (stateEq(StepStateEnum.NotInitialize)) {
-        const response = await getFetch(`/api/pets/${pet.id}`);
-        if (!response.ok) {
-          throw new Error('Error al obtener la mascota');
+        let petSaved: PetType = Empty.Pet();
+        if (!storageContext.storedPet.id) {
+          const response = await getFetch(`/api/pets/${pet.id}`);
+          if (!response.ok) {
+            throw new Error('Error al obtener la mascota');
+          }
+          petSaved = (await response.json())[0] as PetType;
+          
+          storageContext.setStoredPet(petSaved);
+          const pets = storageContext.storedOwnerPets.filter((p: PetType) => p.id != petSaved.id);
+          storageContext.setStoredOwnerPets([...pets, petSaved]);
         }
-        const petSaved: PetType = (await response.json())[0] as PetType;
+        else {
+          petSaved = storageContext.storedPet;
+        }
         if (petSaved) {
           setPet(petSaved);
-          setStoredPet(petSaved);
-          const pets = storedOwnerPets.filter((p: PetType) => p.id != petSaved.id);
-          setStoredOwnerPets([...pets, petSaved]);
           setSavedData(petSaved);
           setPreview(petSaved.image || preview);
         }
@@ -114,9 +121,9 @@ export default function PetNameForm({
         }
         const savedPet: PetType = result[0] as PetType;
         setSavedData(savedPet);
-        setStoredPet(savedPet);
-        const pets = storedOwnerPets.filter((p: PetType) => p.id != savedPet.id);
-        setStoredOwnerPets([...pets, savedPet]);
+        storageContext.setStoredPet(savedPet);
+        const pets = storageContext.storedOwnerPets.filter((p: PetType) => p.id != savedPet.id);
+        storageContext.setStoredOwnerPets([...pets, savedPet]);
         setState(StepStateEnum.Saved);
         setPet(savedPet);
       }

@@ -23,11 +23,10 @@ import {
     MedicineDataType,
     LabTestDataType,
     ConditionDataType,
-    SurgeryDataType,
-    DisplayPage,
+    SurgeryDataType
 } from "@/types/index";
 
-import type { StepsStateType, FieldConfig, FormRepository } from "@/types/lib";
+import type { StepsStateType, StepConfig } from "@/types/lib";
 import { Empty } from "@/data/index";
 
 import {
@@ -45,16 +44,9 @@ interface AddPetModalProps {
     setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
 }
 
-type StepConfig<T> = {
-    entityPage: number;
-    entityName: string;
-    repository: { new(): FormRepository<T> };
-    emptyFactory: (petId: string) => T;
-    fieldsConfig: FieldConfig<T>[];
-};
 
 export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetModal }: AddPetModalProps) {
-    const { session, storedOwnerPets, setStoredOwnerPets } = useAppContext();
+    const { session, storageContext } = useAppContext();
     const [step, setStep] = useState<PetStep>(PetStep.Name);
 
     // Estados por entidad
@@ -82,7 +74,7 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
     const finalize = () => {
         if (!pet.id) return;
         pet.owner_id = ownerId;
-        setStoredOwnerPets([...(storedOwnerPets ?? []), pet]);
+        storageContext.setStoredOwnerPets([...(storageContext.storedOwnerPets ?? []), pet]);
         setShowAddPetModal(false);
         setStepStates(Empty.Steps());
     };
@@ -91,9 +83,10 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stepConfigs: Partial<Record<PetStep, StepConfig<any>>> = {
         [PetStep.Vaccines]: {
-            entityPage: DisplayPage.Vaccines,
             entityName: "vacuna",
             repository: VaccineRepository,
+            storedList: storageContext.storedVaccineData,
+            setStoredList: storageContext.setStoredVaccineData,
             emptyFactory: emptyVaccine,
             fieldsConfig: [
                 { label: "Nombre *", name: "name", type: "text", mandatory: true, className: "w-full" },
@@ -104,9 +97,10 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
             ],
         },
         [PetStep.Medicines]: {
-            entityPage: DisplayPage.Medicines,
             entityName: "medicina",
             repository: MedicineRepository,
+            storedList: storageContext.storedMedicineData,
+            setStoredList: storageContext.setStoredMedicineData,
             emptyFactory: emptyMedicine,
             fieldsConfig: [
                 { label: "Nombre *", name: "name", type: "text", mandatory: true, className: "w-full" },
@@ -115,9 +109,10 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
             ],
         },
         [PetStep.LabTests]: {
-            entityPage: DisplayPage.LabTests,
             entityName: "prueba",
             repository: LabTestRepository,
+            storedList: storageContext.storedLabTestData,
+            setStoredList: storageContext.setStoredLabTestData,
             emptyFactory: emptyLabTest,
             fieldsConfig: [
                 { label: "Nombre *", name: "name", type: "text", mandatory: true, className: "w-full" },
@@ -127,9 +122,10 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
             ],
         },
         [PetStep.Conditions]: {
-            entityPage: DisplayPage.Conditions,
             entityName: "condición",
             repository: ConditionRepository,
+            storedList: storageContext.storedConditionData,
+            setStoredList: storageContext.setStoredConditionData,
             emptyFactory: emptyCondition,
             fieldsConfig: [
                 { label: "Condición *", name: "condition", type: "text", mandatory: true, className: "w-full" },
@@ -137,9 +133,10 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
             ],
         },
         [PetStep.Surgeries]: {
-            entityPage: DisplayPage.Surgeries,
             entityName: "cirugía",
             repository: SurgeryRepository,
+            storedList: storageContext.storedSurgeryData,
+            setStoredList: storageContext.setStoredSurgeryData,
             emptyFactory: emptySurgery,
             fieldsConfig: [
                 { label: "Nombre *", name: "name", type: "text", mandatory: true, className: "w-full" },
@@ -196,9 +193,10 @@ export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetMod
                 return (
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     <EntityForm<any>
-                        page={cfg.entityPage}
                         key={step}
                         petId={pet.id!}
+                        storedList={cfg.storedList}
+                        setStoredList={cfg.setStoredList}
                         data={items}
                         setData={setItems}
                         step={step}

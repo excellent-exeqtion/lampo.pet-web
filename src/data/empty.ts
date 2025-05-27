@@ -1,6 +1,5 @@
-import { DisplayPageType, StepsStateType, StepStateEnum } from "@/types/lib";
-import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType, PetStep, DisplayPage } from "@/types/index";
-import { useRef } from "react";
+import { StepsStateType, StepStateEnum } from "@/types/lib";
+import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType, PetStep } from "@/types/index";
 
 export function Pet(): PetType { return { id: '', name: '', image: '', owner_id: '' } };
 
@@ -174,16 +173,4 @@ export function Steps(): StepsStateType[] {
         { step: PetStep.Conditions, state: StepStateEnum.NotInitialize },
         { step: PetStep.Surgeries, state: StepStateEnum.NotInitialize }
     ];
-}
-
-export function Pages(): DisplayPageType[] {
-    return [
-        { page: DisplayPage.Layout, ref: useRef(false) },
-        { page: DisplayPage.BasicData, ref: useRef(false) },
-        { page: DisplayPage.Vaccines, ref: useRef(false) },
-        { page: DisplayPage.Medicines, ref: useRef(false) },
-        { page: DisplayPage.LabTests, ref: useRef(false) },
-        { page: DisplayPage.Conditions, ref: useRef(false) },
-        { page: DisplayPage.Surgeries, ref: useRef(false) }
-    ].sort(x => x.page);
 }

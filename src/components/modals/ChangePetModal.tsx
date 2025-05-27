@@ -20,7 +20,7 @@ interface ChangePetModalProps {
 };
 
 export default function ChangePetModal({ setShowChangePetModal, setShowAddPetModal }: ChangePetModalProps) {
-  const { storedOwnerPets, storedPet, setStoredPet, setStoredVetAccess, didMountRef } = useAppContext();
+  const { storageContext } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -40,13 +40,11 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
   }, []);
 
   const handleSelect = (pet: PetType) => {
-    setStoredPet(pet);
-    didMountRef.forEach(p => {
-      p.ref.current = true;
-    })
+    storageContext.setStoredPet(pet);
+    storageContext.resetPet();
     setIsOpen(false);
     setShowChangePetModal(false);
-    setStoredVetAccess(Empty.VetAccess());
+    storageContext.setStoredVetAccess(Empty.VetAccess());
   };
 
   const addPet = () => {
@@ -74,11 +72,11 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
         >
           <div style={{ display: "flex", alignItems: "center" }}>
             <CircularImage
-              src={storedPet.image || "/pets/pet.jpg"}
+              src={storageContext.storedPet.image || "/pets/pet.jpg"}
               width={60}
               borderSize="3px" />
             <span style={{ color: '#000', marginLeft: '10px' }}>
-              {storedPet.name ?? "Selecciona una mascota"}
+              {storageContext.storedPet.name ?? "Selecciona una mascota"}
             </span>
           </div>
           {isOpen ? <FaChevronUp /> : <FaChevronDown />}
@@ -102,7 +100,7 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
               listStyle: "none",
             }}
           >
-            {storedOwnerPets.map((pet) => (
+            {storageContext.storedOwnerPets.map((pet) => (
               <li
                 className="pet-selection"
                 key={pet.id}

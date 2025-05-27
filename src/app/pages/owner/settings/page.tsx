@@ -35,7 +35,7 @@ export default function SettingsPage() {
     const fetchData = async () => {
       try {
         if (!storageContext.storedOwnerData.owner_id) {
-          const res = await getFetch(`/api/owner?userId=${encodeURIComponent(userId)}`);
+          const res = await getFetch(`/api/owner/${encodeURIComponent(userId)}`);
           const json = await res.json();
           if (res.ok) {
             storageContext.setStoredOwnerData(json.owner);

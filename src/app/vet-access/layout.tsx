@@ -1,4 +1,4 @@
-// app/vet/access/layout.tsx
+// app/vet-access/layout.tsx
 export default function VetLayout({ children }: { children: React.ReactNode }) {
   return (
     <html>

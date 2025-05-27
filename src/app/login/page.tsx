@@ -1,4 +1,4 @@
-// app/pages/login/page.tsx
+// app/login/page.tsx
 "use client";
 import React, { FormEvent, useState } from "react";
 import "@picocss/pico";
@@ -74,7 +74,7 @@ export default function LoginPage() {
       if (!loginResponse.ok || !loginJson.success) {
         setError(loginJson?.message || "Error iniciando sesión");
       } else {
-        await postFetch("/api/auth/set-session", undefined, { access_token: loginJson.session.access_token, refresh_token: loginJson.session.refresh_token });
+        router.refresh();
         router.push("/");
       }
     }
@@ -103,7 +103,7 @@ export default function LoginPage() {
     router.replace("/pages/vet/access");
   }
 
-  const goToRegister = ()=>{
+  const goToRegister = () => {
     router.replace("/pages/owner/register");
   }
 

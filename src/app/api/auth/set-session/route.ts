@@ -1,9 +1,9 @@
 // src/app/api/auth/set-session/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { setSession } from "@/services/authService";
 import { withValidationAndErrorHandling } from "@/services/apiService";
 import { z } from "zod";
 import { SetSesionType } from "@/types/lib";
+import { setSession } from "@/services/authService";
 
 const SessionSchema = z.object({
     access_token: z.string(),

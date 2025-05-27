@@ -5,12 +5,12 @@ import { useState, useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 export function useSession(): Session | null | undefined {
-  const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const [appSession, setAppSession] = useState<Session | null | undefined>(undefined);
   useEffect(() => {
     const getCurrentSession = async () => {
       const res = await fetch("/api/auth/session");
       const json = await res.json();
-      setSession(json.session || null);
+      setAppSession(json.session || null);
     };
 
     // 1. Obtiene sesión inicial
@@ -31,5 +31,5 @@ export function useSession(): Session | null | undefined {
   }, []);
 
 
-  return session;
+  return appSession;
 }

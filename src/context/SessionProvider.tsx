@@ -9,16 +9,16 @@ const SessionContext = createContext<AppSession | null>(null);
 export const useSessionContext = () => useContext(SessionContext);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-    const rawSession = useRawSession();
-    const [appSession, setAppSession] = useState<AppSession | null>(null);
+  const rawSession = useRawSession();
+  const [appSession, setAppSession] = useState<AppSession | null>(null);
 
-    useEffect(() => {
-        if (rawSession) setAppSession({ db: rawSession });
-    }, [rawSession]);
+  useEffect(() => {
+    if (rawSession) setAppSession({ db: rawSession });
+  }, [rawSession]);
 
-    return (
-        <SessionContext.Provider value={appSession}>
-            {children}
-        </SessionContext.Provider>
-    );
+  return (
+    <SessionContext.Provider value={appSession}>
+      {children}
+    </SessionContext.Provider>
+  );
 }

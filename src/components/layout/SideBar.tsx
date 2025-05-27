@@ -61,7 +61,7 @@ export default function SideBar() {
 
     const goToLogin = () => {
         storage.setStoredVetAccess(Empty.VetAccess());
-        router.push("/pages/login");
+        router.push("/login");
     }
 
     function item({ label, icon, url, show, showModal }: MenuType) {

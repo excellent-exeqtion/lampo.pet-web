@@ -15,11 +15,11 @@ export function isVetWithSession(appSession: AppSession | null | undefined): boo
 }
 
 export function isVetWithoutSession(appSession: AppSession | null | undefined, vetAccess: VeterinaryAccessType): boolean {
-    return (appSession == null || appSession == undefined) && vetAccess.id != "";
+    return (appSession == null || appSession == undefined) && vetAccess?.id != "";
 }
 
 export function isVetWithUserSession(appSession: AppSession | null | undefined, vetAccess: VeterinaryAccessType): boolean {
-    return vetAccess.id != "" && isOwner(appSession);
+    return vetAccess?.id != "" && isOwner(appSession);
 }
 
 export function isOwner(appSession: AppSession | null | undefined) {

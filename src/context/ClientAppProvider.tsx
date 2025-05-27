@@ -6,38 +6,47 @@ import { Bubbles, SideBar } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { isVetWithoutUserSession } from "@/utils/roles";
 import LoadingComponent from "@/components/lib/loading";
-import { LoginPage } from "@/app/pages";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useSessionContext } from "./SessionProvider";
 import { usePetStorage } from "./PetStorageProvider";
+import useAuthRedirect from "@/hooks/useAuthRedirect";
 
 interface Props {
     children: React.ReactNode;
 }
 
 export default function ClientAppProvider({ children }: Props) {
-    const router = useRouter();
-    const pathname = usePathname();
+    useAuthRedirect();
+
     const { isMobile, isDesktop } = useDeviceDetect();
-    const session = useSessionContext();
-    const storage = usePetStorage();
+    const session = useSessionContext();                      // undefined | null | AppSession
+    const { storedVetAccess } = usePetStorage();
+    const pathname = usePathname();
 
-    const isVetRoute = pathname.startsWith("/pages/vet");
+    const isLoginRoute = pathname === "/login" || pathname.endsWith("/login");
+    const isVetRoute = pathname.startsWith("/vet-access");
 
-    // 🔒 Control de acceso
+    // No envolver con sidebar en login o vet-access
+    if (isLoginRoute || isVetRoute) {
+        return <>{children}</>;
+    }
+
+    // Mostrar loader mientras carga la sesión
     if (session === undefined) {
         return <LoadingComponent />;
     }
 
-    if (session === null && !isVetRoute) {
-        return <LoginPage />;
-    }
-
-    const isVetUser = isVetWithoutUserSession(session, storage.storedVetAccess);
-    if (isVetUser && !isVetRoute) {
-        router.replace("/pages/vet/access");
+    // Si no hay sesión, bloquear render hasta redirect
+    if (session === null) {
         return null;
     }
+
+    // Si es vet-user con sesión y no está en vet-access, bloquear hasta redirect
+    const isVetUserNow = isVetWithoutUserSession(session, storedVetAccess);
+    if (isVetUserNow) {
+        return null;
+    }
+
 
     const gridCols = isMobile ? "1fr" : "300px 1fr";
 

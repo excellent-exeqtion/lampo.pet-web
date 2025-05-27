@@ -1,6 +1,6 @@
 // src/app/api/auth/sign-in/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { signIn } from '@/services/authService';
+import { setSession, signIn } from '@/services/authService';
 import { withValidationAndErrorHandling } from '@/services/apiService';
 import { z } from 'zod';
 import { LogInType } from '@/types/lib';
@@ -16,6 +16,8 @@ export async function POST(req: NextRequest) {
         if (error) {
             return NextResponse.json({ success: false, message: error.message }, { status: 401 });
         }
-        return NextResponse.json({ success: true, session: data.session, user: data.user });
+        // Persist tokens in HTTP-only cookies:
+        await setSession(data.session!);
+        return NextResponse.json({ success: true, user: data.user });
     });
 }

@@ -25,7 +25,7 @@ export interface EntityFormProps<T extends { id?: string }> {
   onBack: () => void;
 }
 
-export default function EntityForm<T extends { id: string | undefined }>({
+export default function EntityFormComponent<T extends { id: string | undefined }>({
   id,
   storedList,
   setStoredList,

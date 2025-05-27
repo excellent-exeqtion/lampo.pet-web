@@ -7,7 +7,7 @@ interface DisplayProps {
     isMobile: boolean;
 }
 
-export default function Display(props: DisplayProps) {
+export default function DisplayComponent(props: DisplayProps) {
     return (
         <div style={{ display: "grid", gridTemplateColumns: props.isMobile ? "1fr" : "repeat(2, 1fr)", gap: "1rem" }}>
             {props.formItems.map((item) => (

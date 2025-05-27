@@ -16,7 +16,7 @@ interface CircularImageProps {
     hoverEnabled?: boolean;
 }
 
-export default function CircularImage({ src, width, borderSize = '5px', getRootProps, getInputProps, onClick, overlayText, hoverEnabled = false }: CircularImageProps) {
+export default function CircularImageComponent({ src, width, borderSize = '5px', getRootProps, getInputProps, onClick, overlayText, hoverEnabled = false }: CircularImageProps) {
     const [hover, setHover] = useState(false);
     if (!hoverEnabled) {
         return (

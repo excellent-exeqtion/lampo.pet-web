@@ -3,30 +3,41 @@
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { PlanVersionType } from "@/types/index";
-import { SubscriptionRepository, PlanRepository } from "@/repos/index";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "@/components/layout/ClientAppProvider";
+import { useSession } from "@/hooks/useSession";
+import { getFetch, postFetch } from "@/app/api";
 
-export default function PlanSelection() {
+export default function RegisterPage() {
+    useSession();
     const router = useRouter();
     const [plans, setPlans] = useState<PlanVersionType[]>([]);
     const [cycles, setCycles] = useState<Record<string, "monthly" | "annual">>(
         {}
     );
     const [loading, setLoading] = useState<boolean>(false);
-    const {session } = useAppContext();
+    const { session } = useAppContext();
 
-    // Carga las versiones de plan vigentes
     useEffect(() => {
         async function load() {
-            const data = await PlanRepository.getAllCurrent();
-            setPlans(data);
-            // Inicializa ciclo por defecto en mensual
-            const initialCycles: Record<string, "monthly" | "annual"> = {};
-            data.forEach((p) => {
-                initialCycles[p.id.toString()] = "monthly";
-            });
-            setCycles(initialCycles);
+            try {
+                const response = await getFetch("/api/plans/current");
+                const json = await response.json();
+                if (json.success) {
+                    const data = json.plans;
+                    setPlans(data);
+
+                    const initialCycles: Record<string, "monthly" | "annual"> = {};
+                    data.forEach((p: PlanVersionType) => {
+                        initialCycles[p.id.toString()] = "monthly";
+                    });
+                    setCycles(initialCycles);
+                } else {
+                    console.error("Error obteniendo planes:", json.message);
+                }
+            } catch (err) {
+                console.error("Error en petición de planes:", err);
+            }
         }
         load();
     }, []);
@@ -36,7 +47,7 @@ export default function PlanSelection() {
         console.error("No hay sesión activa o falta el user.id");
         return null;
     }
-    
+
     const ownerId = session?.db?.user?.id;
 
     const handleCycle = (planId: string, cycle: "monthly" | "annual") => {
@@ -53,26 +64,26 @@ export default function PlanSelection() {
     const handleSelect = async (plan: PlanVersionType) => {
         setLoading(true);
         try {
-
             const cycle = cycles[plan.id.toString()];
-            const priceAtPurchase =
-                cycle === "annual" ? plan.price_year : plan.price_month;
+            const priceAtPurchase = cycle === "annual" ? plan.price_year : plan.price_month;
             const discountApplied = cycle === "annual" ? plan.discount_year : plan.discount_month;
 
-            //TODO: Create subscription api
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const subscription = await SubscriptionRepository.create({
-                ownerId: ownerId,
+            const response = await postFetch("/api/plans/subscriptions", undefined, {
+                ownerId,
                 planVersionId: plan.id,
                 cycle,
                 priceAtPurchase,
-                discountApplied,
+                discountApplied
             });
+            const json = await response.json();
+
+            if (!response.ok || !json.success) {
+                throw new Error(json.message || "Error al crear suscripción");
+            }
 
             router.replace("/pages/pet/register");
         } catch (e) {
             console.error("Error creando suscripción:", e);
-            // aquí podrías mostrar un toast o mensaje de error
         } finally {
             setLoading(false);
         }

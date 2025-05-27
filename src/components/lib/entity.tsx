@@ -11,7 +11,7 @@ interface EntityProps {
     index: number;
 }
 
-export default function Entity({ children, index, entityName }: EntityProps) {
+export default function EntityComponent({ children, index, entityName }: EntityProps) {
     
 
     return (

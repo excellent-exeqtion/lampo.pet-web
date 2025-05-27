@@ -18,7 +18,7 @@ interface EntityFieldsProps<T extends { id: string | undefined }> {
     handleRemove: (id: string | undefined) => void;
 }
 
-export default function EntityFields<T extends { id: string | undefined }>({
+export default function EntityFieldsComponent<T extends { id: string | undefined }>({
     fieldsConfig,
     item,
     index,

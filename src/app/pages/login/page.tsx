@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import type { OwnerDataType } from "@/types/index";
-import PlanSelection from "./components/PlanSelection";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { postFetch } from "@/app/api";
 
@@ -15,7 +14,6 @@ export default function LoginPage() {
 
   // Estados comunes
   const [email, setEmail] = useState("");
-  const [ownerId, setOwnerId] = useState<string | undefined>("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -34,9 +32,6 @@ export default function LoginPage() {
     email: ""
   });
 
-  // Control para mostrar minibosquejo de selección de plan
-  const [showPlanSelection, setShowPlanSelection] = useState(false);
-
   const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
@@ -54,14 +49,13 @@ export default function LoginPage() {
         return;
       }
 
-      const userId = signUpJson.user?.id;
-      setOwnerId(userId);
+      const ownerId = signUpJson.user?.id;
 
       // 2) Guardar datos del owner
-      if (userId) {
+      if (ownerId) {
         const response = await postFetch('/api/owners', undefined, {
           ...(ownerInfo as OwnerDataType),
-          owner_id: userId,
+          owner_id: ownerId,
           email
         });
         if (!response.ok) {
@@ -109,6 +103,10 @@ export default function LoginPage() {
     router.replace("/pages/vet/access");
   }
 
+  const goToRegister = ()=>{
+    router.replace("/pages/owner/register");
+  }
+
   // 4) Mostrar modal de “verifica tu correo”
   if (showConfirmModal) {
     return (
@@ -141,7 +139,7 @@ export default function LoginPage() {
           <button
             onClick={() => {
               setShowConfirmModal(false);
-              setShowPlanSelection(true);
+              goToRegister();
             }}
             style={{ marginTop: "1rem", width: "100%" }}
           >
@@ -150,11 +148,6 @@ export default function LoginPage() {
         </div>
       </div>
     );
-  }
-
-  // 4) Si ya registró, mostrar bosquejo de planes
-  if (showPlanSelection) {
-    return <PlanSelection onSelect={(planId) => console.log("Plan elegido:", planId)} ownerId={ownerId} />;
   }
 
   return (

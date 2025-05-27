@@ -135,6 +135,15 @@ export interface SubscriptionType {
     expires_at: string | null;
     updated_at: string;
 }
+
+export interface CreateSubscriptionType {
+    ownerId: string;
+    planVersionId: number;
+    cycle: 'monthly' | 'annual';
+    priceAtPurchase: number;
+    discountApplied: number;
+}
+
 export enum PetStep {
     Name = 0,
     BasicData = 1,

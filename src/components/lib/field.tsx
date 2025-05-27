@@ -5,7 +5,7 @@ interface FieldsProps {
     field: FieldType;
 } 
 
-export default function Field(props: FieldsProps) {
+export default function FieldComponent(props: FieldsProps) {
     if (!props.field.show) {
         return <div></div>;
     }

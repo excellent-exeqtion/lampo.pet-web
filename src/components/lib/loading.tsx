@@ -2,7 +2,7 @@
 import React from "react";
 import { FaSpinner } from "react-icons/fa";
 
-export default function Loading() {
+export default function LoadingComponent() {
   return (
     <div className="loading-container">
       <FaSpinner className="spinner" size={48} />

@@ -4,7 +4,7 @@ interface BasicFieldProps {
     item: FieldType
 }
 
-export default function BasicField(props: BasicFieldProps) {
+export default function BasicFieldComponent(props: BasicFieldProps) {
     if (!props.item.show) {
         return <div></div>;
     }

@@ -1,5 +1,4 @@
 // src/utils/random.tsx
-import { PetRepository } from '@/repos/index';
 import { customAlphabet } from "nanoid";
 
 // Define un alfabeto con dígitos y letras (mayúsculas + minúsculas)
@@ -28,10 +27,12 @@ export async function generateUniquePetId(): Promise<string> {
   let candidate: string;
   let exists: boolean;
 
-  //TODO: Cambiar a api
   do {
     candidate = randomPetId();
-    exists = await PetRepository.existsById(candidate);
+
+    const res = await fetch(`/api/pets/exists?id=${candidate}`);
+    const data = await res.json();
+    exists = data.exists;
   } while (exists);
 
   return candidate;

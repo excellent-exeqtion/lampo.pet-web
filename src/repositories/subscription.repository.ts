@@ -1,19 +1,13 @@
 // src/repositories/subscription.repository.ts
 import { supabase } from '@/lib/client/supabase';
-import { SubscriptionType } from '@/types/index';
+import { CreateSubscriptionType, SubscriptionType } from '@/types/index';
 
 
 export default class SubscriptionRepository {
     /**
      * Crea una suscripción en estado pending
      */
-    static async create(params: {
-        ownerId: string
-        planVersionId: number
-        cycle: 'monthly' | 'annual'
-        priceAtPurchase: number
-        discountApplied: number
-    }): Promise<SubscriptionType | null> {
+    static async create(params: CreateSubscriptionType): Promise<SubscriptionType | null> {
         const { data, error } = await supabase
             .from('subscriptions')
             .insert([{

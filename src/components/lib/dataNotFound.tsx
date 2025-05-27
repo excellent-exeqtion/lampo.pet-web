@@ -6,7 +6,7 @@ interface DataNotFoundProps {
   message: string;
 }
 
-export default function DataNotFound({ message }: DataNotFoundProps) {
+export default function DataNotFoundComponent({ message }: DataNotFoundProps) {
   return (
     <div
       style={{

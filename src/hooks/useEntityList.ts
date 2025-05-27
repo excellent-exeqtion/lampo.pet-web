@@ -1,7 +1,7 @@
 // src/hooks/useEntityList.ts
 "use client";
 
-import { deleteFetch } from '@/api/index';
+import { deleteFetch } from '@/app/api';
 import { ApiError, StepsStateType } from '@/types/lib';
 import { Dispatch, SetStateAction } from 'react';
 

@@ -32,9 +32,8 @@ export default function ClientAppProvider({ children }: ClientAppProviderProps) 
     const pathname = usePathname();
     const router = useRouter();
     const isVetRoute = pathname?.startsWith("/pages/vet/");
-    const { isMobile } = useDeviceDetect();
+    const { isMobile, isDesktop } = useDeviceDetect();
 
-    const [menuOpen, setMenuOpen] = useState(false);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [showVetModal, setShowVetModal] = useState(false);
     const [showCodeModal, setShowCodeModal] = useState(false);
@@ -118,7 +117,7 @@ export default function ClientAppProvider({ children }: ClientAppProviderProps) 
                     marginLeft: '2%'
                 }}
             >
-                <SideBar menuOpen={menuOpen} setMenuOpen={setMenuOpen} setShowEditPetModal={setShowEditPetModal} />
+                <SideBar setShowEditPetModal={setShowEditPetModal} />
                 <Bubbles
                     setShowCodeModal={setShowCodeModal}
                     showCodeModal={showCodeModal}
@@ -133,7 +132,7 @@ export default function ClientAppProvider({ children }: ClientAppProviderProps) 
                     showEditPetModal={showEditPetModal}
                     setShowEditPetModal={setShowEditPetModal}
                 />
-                <main style={{ padding: "1rem" }}>{children}</main>
+                <main style={{ padding: "3rem", marginLeft: isMobile ? '1rem' : (isDesktop ? '5rem' : '2rem'), width: isMobile ? '100%' : (isDesktop ? '107%' : '247%') }}>{children}</main>
             </div>
         </AppContext.Provider>
     );

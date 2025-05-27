@@ -28,6 +28,7 @@
 }
 
 .main {
+  background-color: rgb(249, 250, 251);
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -133,6 +134,7 @@ a.secondary {
   }
 
   .main {
+    background-color: rgb(249, 250, 251);
     align-items: center;
   }
 

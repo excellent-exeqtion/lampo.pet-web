@@ -83,7 +83,7 @@ export default function Bubbles({
         >
           <FaCommentDots />
         </button>
-        <span className="tooltip-text">Enviar feedback</span>
+        <span className="tooltip-text tooltip-left">Enviar feedback</span>
       </div>
 
       {/* Vet Bubble */}
@@ -96,7 +96,7 @@ export default function Bubbles({
           >
             <FaUserMd />
           </button>
-          <span className="tooltip-text">Soy médico veterinario</span>
+          <span className="tooltip-text tooltip-left">Soy médico veterinario</span>
         </div>
       }
 
@@ -110,7 +110,7 @@ export default function Bubbles({
           >
             <FaShareAlt />
           </button>
-          <span className="tooltip-text">Genera un código único para tu veterinario</span>
+          <span className="tooltip-text tooltip-left">Genera un código único para tu veterinario</span>
         </div>
       }
 
@@ -124,7 +124,7 @@ export default function Bubbles({
           >
             <FaExchangeAlt />
           </button>
-          <span className="tooltip-text">Cambia de mascota</span>
+          <span className="tooltip-text tooltip-left">Cambia de mascota</span>
         </div>
       }
 

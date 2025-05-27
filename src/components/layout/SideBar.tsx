@@ -9,6 +9,7 @@ import {
     FaFlask,
     FaHome,
     FaPills,
+    FaPowerOff,
     FaRocket,
     FaSyringe,
     FaTimes,
@@ -28,15 +29,11 @@ import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { useAppContext } from "./ClientAppProvider";
 
 export default function SideBar({
-    menuOpen,
-    setMenuOpen,
     setShowEditPetModal
 }: {
-    menuOpen: boolean;
-    setMenuOpen: Dispatch<SetStateAction<boolean>>;
     setShowEditPetModal: Dispatch<SetStateAction<boolean>>;
 }) {
-    const { isMobile } = useDeviceDetect()
+    const { isMobile, isTablet, isDesktop } = useDeviceDetect()
     const { logout, storageContext, session } = useAppContext();
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
@@ -93,7 +90,8 @@ export default function SideBar({
 
     return (
         <>
-            {!isMobile && (
+            {/* Desktop Sidebar */}
+            {isDesktop && (
                 <aside
                     style={{
                         width: "300px",
@@ -107,85 +105,97 @@ export default function SideBar({
                     <div style={{ padding: "0 1rem 1rem", display: 'flex', alignItems: 'center' }}>
                         <CircularImage
                             src={storageContext.storedPet.image || "/pets/pet.jpg"}
-                            width={80} />
-                        <p style={{ marginLeft: '20px' }}><b>{storageContext.storedPet.name ?? 'Nombre de tu mascota'}</b></p>
+                            width={80}
+                        />
+                        <p style={{ marginLeft: '20px' }}>
+                            <b>{storageContext.storedPet.name ?? 'Nombre de tu mascota'}</b>
+                        </p>
                     </div>
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
-                            {menuItems.map(({ label, icon, url, show, showModal }) => item({ label, icon, url, show, showModal }))}
-                            {session && <li><button onClick={logout}>Cerrar sesión</button></li>}
+                            {menuItems.map(item)}
+                            {session && <li><a style={{ background: "none", border: "none", color: '#d32f2f' }} onClick={logout}> <FaPowerOff style={{ marginRight: '1rem' }} />Cerrar sesión</a></li>}
                             {!session && <li><button onClick={goToLogin}>Iniciar sesión</button></li>}
                         </ul>
                     </nav>
                     <div style={{ display: "flow", justifyContent: "space-around", marginTop: "1rem" }}>
-                        <Image
-                            loading={"lazy"}
-                            src="/others/play-store.png" alt="Google Play"
-                            width="120" height="100" style={{ width: "220px", height: "auto" }} />
-                        <br />
-                        <br />
-                        <Image
-                            loading={"lazy"}
-                            src="/others/app-store.png" alt="App Store"
-                            width="120" height="100" style={{ width: "220px", height: "auto" }} />
+                        <Image src="/others/play-store.png" alt="Google Play" width="120" height="100" style={{ width: "220px", height: "auto" }} />
+                        <br /><br />
+                        <Image src="/others/app-store.png" alt="App Store" width="120" height="100" style={{ width: "220px", height: "auto" }} />
                     </div>
                 </aside>
             )}
 
-            {/* Header Mobile */}
-            {isMobile && (
-                <header
+            {/* Mobile Sidebar */}
+            {(isMobile || isTablet) && (
+                <aside
                     style={{
                         position: "fixed",
                         top: 0,
+                        bottom: 0,
                         left: 0,
-                        right: 0,
+                        width: "64px",
                         backgroundColor: "#ffffff",
+                        boxShadow: "2px 0 8px rgba(0,0,0,0.05)",
+                        zIndex: 1000,
                         display: "flex",
+                        flexDirection: "column",
                         alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "0.5rem 1rem",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                        zIndex: 1000
+                        paddingTop: "1rem",
+                        gap: "1rem"
                     }}
                 >
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <CircularImage
-                            src={storageContext.storedPet.image || "/pets/pet.jpg"}
-                            width={60} borderSize="3px" />
-                        <span style={{ fontSize: "1rem", fontWeight: "600" }}>{storageContext.storedPet.name}</span>
+                    {/* Foto y nombre */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                        <CircularImage src={storageContext.storedPet.image || "/pets/pet.jpg"} width={50} borderSize="2px" />
+                        <span style={{ fontSize: "1rem", textAlign: "center", padding: "0 4px" }}><b>{storageContext.storedPet.name}</b></span>
                     </div>
 
-                    <button
-                        onClick={() => setMenuOpen(!menuOpen)}
-                        style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer" }}
-                    >
-                        {menuOpen ? <FaTimes fill="black" /> : <FaBars fill="black" />}
-                    </button>
-                </header>
-            )}
+                    {/* Íconos con tooltip */}
+                    {menuItems.filter(m => m.show).map(({ label, icon, url, showModal }) => {
+                        const content = (
+                            <div className="tooltip-container" style={{ fontSize: "1.75rem", cursor: "pointer" }}>
+                                {icon}
+                                <span className="tooltip-text">{label}</span>
+                            </div>
+                        );
 
-            {/* Mobile Nav */}
-            {isMobile && menuOpen && (
-                <nav
-                    style={{
-                        position: "fixed",
-                        top: "3.5rem",
-                        left: 0,
-                        right: 0,
-                        backgroundColor: "#ffffff",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                        maxHeight: "calc(100vh - 3.5rem)",
-                        overflowY: "auto",
-                        zIndex: 999,
-                    }}
-                >
-                    <ul style={{ listStyle: "none", margin: 0, padding: "0.5rem 1rem" }}>
-                        {menuItems.map(({ label, icon, url, show, showModal }) => item({ label, icon, url, show, showModal }))}
-                        {session && <li><button onClick={logout}>Cerrar sesión</button></li>}
-                        {!session && <li><button onClick={goToLogin}>Iniciar sesión</button></li>}
-                    </ul>
-                </nav>
+                        if (showModal) {
+                            return (
+                                <button
+                                    key={label}
+                                    onClick={() => showModal(true)}
+                                    style={{ background: "none", border: "none", color: '#02659a', padding: '0' }}
+                                >
+                                    {content}
+                                </button>
+                            );
+                        } else {
+                            return (
+                                <Link
+                                    key={label}
+                                    href={url}
+                                    style={{ display: "flex", justifyContent: "center", alignItems: "center", color: '#02659a' }}
+                                >
+                                    {content}
+                                </Link>
+                            );
+                        }
+                    })}
+
+                    {/* Logout/Login */}
+                    <div style={{ position: 'fixed', bottom: "0", marginBottom: "1rem" }}>
+                        <div className="tooltip-container" style={{ cursor: "pointer" }}>
+                            <button
+                                onClick={session ? logout : goToLogin}
+                                style={{ background: "none", border: "none", fontSize: "1.75rem", color: '#d32f2f' }}
+                            >
+                                {session ? <FaPowerOff /> : <FaBars />}
+                            </button>
+                            <span className="tooltip-text tooltip-right">{session ? "Cerrar sesión" : "Iniciar sesión"}</span>
+                        </div>
+                    </div>
+                </aside>
             )}
         </>
     );

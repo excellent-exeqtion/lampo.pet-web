@@ -78,3 +78,7 @@ body {
 .text-error {
   color: #d32f2f;
 }
+
+main {
+  background-color: rgb(249, 250, 251);
+}

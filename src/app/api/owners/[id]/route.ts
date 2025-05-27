@@ -6,20 +6,20 @@ import { QueryParamError, RepositoryError } from '@/types/lib';
 
 export async function GET(
     req: NextRequest,
-    context: { params: { ownerId: string } }
+    context: { params: { id: string } }
 ) {
     return getWithErrorHandling(
         req,
         async () => {
-            const { ownerId } = context.params;
-            if (!ownerId) {
+            const { id } = context.params;
+            if (!id) {
                 throw new QueryParamError(`Falta parámetro OwnerId`);
             }
 
             try {
-                const ownerData = await OwnerRepository.findById(ownerId);
+                const ownerData = await OwnerRepository.findById(id);
                 if (!ownerData) {
-                    throw new RepositoryError(`Owner no encontrado: ${ownerId}`);
+                    throw new RepositoryError(`Owner no encontrado: ${id}`);
                 }
                 return NextResponse.json({ owner: ownerData });
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any

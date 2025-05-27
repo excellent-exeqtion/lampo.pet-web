@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { PetRepository } from "@/repos/index";
-import { ApiParams } from "@/types/lib";
 import { getWithErrorHandling, withValidationAndErrorHandling } from "@/services/apiService";
 import { PetType } from "@/types/index";
 
@@ -21,13 +20,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     });
 }
 
-export async function PATCH(req: NextRequest, { params }: ApiParams) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withValidationAndErrorHandling(
     "PATCH",
     req,
     updatePetSchema,
     async (updates) => {
-      const updated = await PetRepository.updateById(params.id, updates as Partial<PetType>);
+      const { id } = await params;
+      const updated = await PetRepository.updateById(id, updates as Partial<PetType>);
       if (!updated) {
         return NextResponse.json(
           { success: false, message: "Mascota no encontrada" },

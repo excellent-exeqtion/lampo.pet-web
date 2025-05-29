@@ -18,6 +18,6 @@ export async function POST(req: NextRequest) {
         }
         // Persist tokens in HTTP-only cookies:
         await setSession(data.session!);
-        return NextResponse.json({ success: true, user: data.user });
+        return NextResponse.json({ success: true, user: data.session });
     });
 }

@@ -1,4 +1,4 @@
-// components/PlanSelection.tsx
+// app/pages/owner/register/page.tsx
 "use client";
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";

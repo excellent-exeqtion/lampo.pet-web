@@ -45,7 +45,7 @@ export default class PetRepository {
       .update(updates)
       .eq("id", id);
     if (error) throw new Error(error.message);
-    if(!data) return false;
+    if (!data) return false;
     return true;
   }
 
@@ -78,5 +78,29 @@ export default class PetRepository {
 
     // Devolvemos la primera mascota (puedes adaptar si quieres soportar varias)
     return data ?? [];
+  }
+
+  /**
+   * Marca una mascota como eliminada (soft delete).
+   * @param id ID de la mascota a borrar
+   * @returns true si la operación no falló
+   */
+  static async deleteById(id: string): Promise<boolean> {
+    const now = new Date().toISOString();
+    try {
+      const { error } = await supabase
+        .from("pets")
+        .update({ deleted: true, deleted_at: now })
+        .eq("id", id);
+
+      if (error) {
+        console.error("Error al eliminar mascota:", error);
+        throw new Error(error.message);
+      }
+      return true;
+    }
+    catch {
+      return false;
+    }
   }
 }

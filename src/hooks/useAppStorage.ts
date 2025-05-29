@@ -3,6 +3,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType } from "@/types/index";
 import { Empty } from "@/data/index";
 export interface StorageContextType {
+    resetSession: () => void;
     resetPet: () => void;
     storedPet: PetType;
     setStoredPet: (value: PetType) => void;
@@ -93,7 +94,17 @@ export function useAppStorage() {
     setStoredVaccineData([]);
   }
 
+  const resetSession = () =>{
+    resetPet();
+    setStoredPetCode(Empty.PetCode());
+    setStoredVetAccess(Empty.VetAccess());
+    setStoredOwnerData(Empty.OwnerData());
+    setStoredOwnerPets([]);
+    setStoredPet(Empty.Pet());
+  }
+
   return {
+    resetSession,
     resetPet,
     storedPet,
     setStoredPet,

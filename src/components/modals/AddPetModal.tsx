@@ -28,8 +28,8 @@ import {
 
 import type { StepsStateType, StepConfig } from "@/types/lib";
 import { Empty } from "@/data/index";
-import { useSessionContext } from "@/context/SessionProvider";
 import { usePetStorage } from "@/context/PetStorageProvider";
+import { useSessionContext } from "@/context/SessionProvider";
 
 interface AddPetModalProps {
     editPet?: PetType,

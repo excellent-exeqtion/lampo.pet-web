@@ -1,4 +1,4 @@
-// components/DataNotFound.tsx
+// src/components/DataNotFound.tsx
 import React from "react";
 import { FaInbox } from "react-icons/fa";
 

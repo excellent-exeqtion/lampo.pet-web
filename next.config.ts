@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false,
   env:{
     MAILTRAP_URL: process.env.MAILTRAP_URL,
     MAILTRAP_TO: process.env.MAILTRAP_TO,

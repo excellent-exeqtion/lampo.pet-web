@@ -393,7 +393,7 @@ export async function POST(req: NextRequest) {
 ----- Archivo: route.ts ----- 
 // src/app/api/auth/sign-in/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { signIn } from '@/services/authService';
+import { setSession, signIn } from '@/services/authService';
 import { withValidationAndErrorHandling } from '@/services/apiService';
 import { z } from 'zod';
 import { LogInType } from '@/types/lib';
@@ -409,7 +409,9 @@ export async function POST(req: NextRequest) {
         if (error) {
             return NextResponse.json({ success: false, message: error.message }, { status: 401 });
         }
-        return NextResponse.json({ success: true, session: data.session, user: data.user });
+        // Persist tokens in HTTP-only cookies:
+        await setSession(data.session!);
+        return NextResponse.json({ success: true, user: data.session });
     });
 } 
 ----- Archivo: route.ts ----- 
@@ -1129,21 +1131,10 @@ export default function LoginPage() {
       if (!loginResponse.ok || !loginJson.success) {
         setError(loginJson?.message || "Error iniciando sesión");
       } else {
-        setSession({
-          access_token: loginJson.session.access_token,
-          refresh_token: loginJson.session.refresh_token,
-        })
-        /*
-        await postFetch('/api/auth/set-session', undefined, {
-          access_token: loginJson.session.access_token,
-          refresh_token: loginJson.session.refresh_token,
-        });
-        // Fuerza revalidación de datos compartidos (useSession, SWR, etc.)
+        console.log(loginJson);
+        setSession({access_token: loginJson.user.access_token, refresh_token: loginJson.user.refresh_token });
         router.refresh();
-        router.push('/');
-        /*
-        await postFetch("/api/auth/set-session", undefined, { access_token: loginJson.session.access_token, refresh_token: loginJson.session.refresh_token });
-        router.push("/");*/
+        router.push("/");
       }
     }
 
@@ -1443,7 +1434,7 @@ export { default as BasicDataPage } from "./pet/basic-data/page";
 export { default as CalendarPage } from "./pet/calendar/page";
 export { default as ConditionsPage } from "./pet/conditions/page";
 export { default as LabTestsPage } from "./pet/lab-tests/page";
-export { default as LoginPage } from "./login/page";
+export { default as LoginPage } from "../login/page";
 export { default as MedicinesPage } from "./pet/medicines/page";
 export { default as SettingsPage } from "./owner/settings/page";
 export { default as UpgradePage } from "./owner/upgrade/page";
@@ -1832,8 +1823,8 @@ import { getFetch, putFetch } from "@/app/api";
 import type { OwnerDataType } from "@/types/index";
 import React, { FormEvent, useEffect, useState } from "react";
 import { FaCog } from "react-icons/fa";
-import { useSessionContext } from "@/context/SessionProvider";
 import { usePetStorage } from "@/context/PetStorageProvider";
+import { useSessionContext } from "@/context/SessionProvider";
 
 export default function SettingsPage() {
   const { isMobile } = useDeviceDetect();
@@ -2073,89 +2064,89 @@ export default function BasicDataPage() {
   const [basicDataItems, setBasicDataItems] = useState<FieldType[]>([]);
   const [contactItems, setContactItems] = useState<FieldType[]>([]);
 
+  
   useEffect(() => {
-    if (!storage.storedPet.id) return;
-
-    const fetchData = async () => {
-      try {
-        if (!storage.storedBasicData.pet_id) {
-          // 1) Datos básicos de la mascota
-          const resPet = await getFetch(`/api/pets/basic-data/${storage.storedPet.id}`);
-          if (!resPet.ok) throw new Error("Falló fetch basic-data");
-          const basicData: BasicDataType = await resPet.json();
-          storage.setStoredBasicData(basicData);
-          setPetData(basicData);
-        }
-        else {
-          setPetData(storage.storedBasicData);
-        }
-      } catch (err) {
-        console.error("Error cargando datos:", err);
-      }
-    };
-
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storage.storedBasicData]);
-
-
+    console.log('BasicDataPage');
+  }, []);
+  
   useEffect(() => {
-    if (!storage.storedPet.id) return;
-
-    const fetchData = async () => {
-      try {
-        if (!storage.storedOwnerData.owner_id) {
-          const resOwner = await getFetch(`/api/owners/${storage.storedPet.owner_id}`);
-          if (!resOwner.ok) throw new Error("Falló fetch owners");
-          const owner: OwnerDataType = await resOwner.json();
-          storage.setStoredOwnerData(owner);
-          setOwnerData(owner);
-        }
-        else {
-          setOwnerData(storage.storedOwnerData);
-        }
-      } catch (err) {
-        console.error("Error cargando datos:", err);
-      }
-    };
-
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storage.storedOwnerData]);
-
-  useEffect(() => {
-    if (petData) {
-      setBasicDataItems([
-        { label: "Tipo de mascota", show: true, value: petData.pet_type },
-        { label: "Género", show: true, value: petData.gender },
-        { label: "Peso", show: true, value: petData.weight },
-        { label: "Raza", show: true, value: petData.race },
-        { label: "Alergias", show: true, value: petData.has_allergies ? 'Si' : 'No' },
-        { label: "Condición de peso", show: true, value: petData.weight_condition },
-        { label: "Tamaño", show: true, value: petData.size },
-        { label: "Vive con otros", show: true, value: petData.lives_with_others ? 'Si' : 'No' },
-        { label: "Comida principal", show: true, value: petData.main_food },
-        { label: "Última vacuna", show: true, value: petData.has_vaccine ? (`${petData.last_vaccine_name} (${format(petData.last_vaccine_date)})`) : 'No tiene vacunas' },
-        { label: "Castrado", show: true, value: petData.is_castrated ? (`Sí (${format(petData.castration_date)})`) : 'No' },
-        { label: "Antipulgas", show: true, value: petData.has_anti_flea ? (`Sí (${format(petData.anti_flea_date)})`) : 'No' },
-        { label: "¿Usa medicina?", show: true, value: petData.uses_medicine ? 'Si' : 'No' },
-        { label: "Condición especial", show: true, value: petData.special_condition ? 'Si' : 'No' },
-      ])
+    const petId = storage.storedPet.id;
+    if (!petId || storage.storedBasicData.pet_id) {
+      setPetData(storage.storedBasicData);
+      return;
     }
+
+    const fetchData = async () => {
+      try {
+        // 1) Datos básicos de la mascota
+        const resPet = await getFetch(`/api/pets/basic-data/${storage.storedPet.id}`);
+        if (!resPet.ok) throw new Error("Falló fetch basic-data");
+        const basicData: BasicDataType = await resPet.json();
+        storage.setStoredBasicData(basicData);
+        setPetData(basicData);
+      } catch (err) {
+        console.error("Error cargando datos:", err);
+      }
+    };
+
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storage.storedPet.id, storage.storedBasicData.pet_id]);
+
+
+  useEffect(() => {
+    const ownerId = storage.storedPet.owner_id;
+    if (!ownerId || storage.storedOwnerData.owner_id) {
+      setOwnerData(storage.storedOwnerData);
+      return;
+    }
+    const fetchData = async () => {
+      try {
+        const resOwner = await getFetch(`/api/owners/${storage.storedPet.owner_id}`);
+        if (!resOwner.ok) throw new Error("Falló fetch owners");
+        const owner: OwnerDataType = await resOwner.json();
+        storage.setStoredOwnerData(owner);
+        setOwnerData(owner);
+      } catch (err) {
+        console.error("Error cargando datos:", err);
+      }
+    };
+
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storage.storedPet.owner_id, storage.storedOwnerData.owner_id]);
+
+  useEffect(() => {
+    if (!petData) return;
+    setBasicDataItems([
+      { label: "Tipo de mascota", show: true, value: petData.pet_type },
+      { label: "Género", show: true, value: petData.gender },
+      { label: "Peso", show: true, value: petData.weight },
+      { label: "Raza", show: true, value: petData.race },
+      { label: "Alergias", show: true, value: petData.has_allergies ? 'Si' : 'No' },
+      { label: "Condición de peso", show: true, value: petData.weight_condition },
+      { label: "Tamaño", show: true, value: petData.size },
+      { label: "Vive con otros", show: true, value: petData.lives_with_others ? 'Si' : 'No' },
+      { label: "Comida principal", show: true, value: petData.main_food },
+      { label: "Última vacuna", show: true, value: petData.has_vaccine ? (`${petData.last_vaccine_name} (${format(petData.last_vaccine_date)})`) : 'No tiene vacunas' },
+      { label: "Castrado", show: true, value: petData.is_castrated ? (`Sí (${format(petData.castration_date)})`) : 'No' },
+      { label: "Antipulgas", show: true, value: petData.has_anti_flea ? (`Sí (${format(petData.anti_flea_date)})`) : 'No' },
+      { label: "¿Usa medicina?", show: true, value: petData.uses_medicine ? 'Si' : 'No' },
+      { label: "Condición especial", show: true, value: petData.special_condition ? 'Si' : 'No' },
+    ]);
   }, [petData]);
 
 
   useEffect(() => {
-    if (ownerData) {
-      setContactItems([
-        { label: "Nombre del contacto", show: true, value: ownerData.name },
-        { label: "Teléfono", show: ownerData.phone != null, value: ownerData.phone },
-        { label: "Dirección", show: ownerData.address != null, value: ownerData.address },
-        { label: "Ciudad", show: true, value: ownerData.city },
-        { label: "País", show: true, value: ownerData.country },
-        { label: "Email", show: true, value: ownerData.email },
-      ])
-    }
+    if (!ownerData) return;
+    setContactItems([
+      { label: "Nombre del contacto", show: true, value: ownerData.name },
+      { label: "Teléfono", show: ownerData.phone != null, value: ownerData.phone },
+      { label: "Dirección", show: ownerData.address != null, value: ownerData.address },
+      { label: "Ciudad", show: true, value: ownerData.city },
+      { label: "País", show: true, value: ownerData.country },
+      { label: "Email", show: true, value: ownerData.email },
+    ]);
   }, [ownerData]);
 
   return (
@@ -2254,7 +2245,7 @@ export default function ConditionsPage() {
             parentId={storage.storedPet.id}
             title="Condiciones especiales"
             icon={<FaCloudSun />}
-            apiUrl={'/api/pet/list/conditions/'}
+            apiUrl={'/api/pets/list/conditions/'}
             storedList={storage.storedConditionData}
             setStoredList={storage.setStoredConditionData}
             emptyMessage="No hay registro de condiciones especiales."
@@ -2279,7 +2270,7 @@ export default function LabTestsPage() {
             parentId={storage.storedPet.id}
             title="Exámenes de laboratorio"
             icon={<FaFlask />}
-            apiUrl={'/api/pet/list/lab-tests/'}
+            apiUrl={'/api/pets/list/lab-tests/'}
             storedList={storage.storedLabTestData}
             setStoredList={storage.setStoredLabTestData}
             emptyMessage="No hay registro de resultados de laboratorio."
@@ -2304,7 +2295,7 @@ export default function MedicinesPage() {
             parentId={storage.storedPet.id}
             title="Medicinas"
             icon={<FaPills />}
-            apiUrl={'/api/pet/list/medicines/'}
+            apiUrl={'/api/pets/list/medicines/'}
             storedList={storage.storedMedicineData}
             setStoredList={storage.setStoredMedicineData}
             emptyMessage="No hay registro de medicamentos."
@@ -2333,7 +2324,7 @@ export default function SurgeriesPage() {
             parentId={storage.storedPet.id}
             title="Cirugías"
             icon={<FaCut />}
-            apiUrl={'/api/pet/list/surgeries/'}
+            apiUrl={'/api/pets/list/surgeries/'}
             storedList={storage.storedSurgeryData}
             setStoredList={storage.setStoredSurgeryData}
             emptyMessage="No hay registro de cirugías."
@@ -3140,7 +3131,7 @@ import { Steps } from '@/utils/index';
 import { Empty } from '@/data/index';
 import { CircularImage } from "@/components/index";
 import { getFetch, postFetch } from '@/app/api';
-import { useAppContext } from '../../context/ClientAppProvider';
+import { usePetStorage } from '@/context/PetStorageProvider';
 
 interface PetFormProps {
   ownerId: string;
@@ -3357,9 +3348,9 @@ import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { useUI } from "@/context/UIProvider";
-import { useSessionContext } from "@/context/SessionProvider";
 import { usePetStorage } from "@/context/PetStorageProvider";
 import { handleLogout } from "@/services/authService";
+import { useSessionContext } from "@/context/SessionProvider";
 
 export default function SideBar() {
     const { isMobile, isTablet, isDesktop } = useDeviceDetect();
@@ -3388,7 +3379,7 @@ export default function SideBar() {
             menu.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner(session) });
         }
         setMenuItems(menu);
-    }, [storage.storedPet, session, storage.storedVetAccess, setShowEditPetModal]);
+    }, [storage.storedPet, storage.storedOwnerPets, session, storage.storedVetAccess, setShowEditPetModal]);
 
     const goToLogin = () => {
         storage.setStoredVetAccess(Empty.VetAccess());
@@ -3445,7 +3436,7 @@ export default function SideBar() {
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
                             {menuItems.map(item)}
-                            {session && <li><a style={{ background: "none", border: "none", color: '#d32f2f' }} onClick={() => handleLogout(storage)}> <FaPowerOff style={{ marginRight: '1rem' }} />Cerrar sesión</a></li>}
+                            {session && <li><a style={{ background: "none", border: "none", color: '#d32f2f' }} onClick={() => handleLogout(storage, router)}> <FaPowerOff style={{ marginRight: '1rem' }} />Cerrar sesión</a></li>}
                             {!session && <li><button onClick={goToLogin}>Iniciar sesión</button></li>}
                         </ul>
                     </nav>
@@ -3518,7 +3509,7 @@ export default function SideBar() {
                     <div style={{ position: 'fixed', bottom: "0", marginBottom: "1rem" }}>
                         <div className="tooltip-container" style={{ cursor: "pointer" }}>
                             <button
-                                onClick={session ? () => handleLogout(storage) : goToLogin}
+                                onClick={session ? () => handleLogout(storage, router) : goToLogin}
                                 style={{ background: "none", border: "none", fontSize: "1.75rem", color: '#d32f2f' }}
                             >
                                 {session ? <FaPowerOff /> : <FaBars />}
@@ -4382,8 +4373,8 @@ import {
 
 import type { StepsStateType, StepConfig } from "@/types/lib";
 import { Empty } from "@/data/index";
-import { useSessionContext } from "@/context/SessionProvider";
 import { usePetStorage } from "@/context/PetStorageProvider";
+import { useSessionContext } from "@/context/SessionProvider";
 
 interface AddPetModalProps {
     editPet?: PetType,
@@ -4929,8 +4920,8 @@ export default function FeedbackModal({ setShowFeedbackModal }: FeedbackModalPro
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaShareAlt, FaCopy } from "react-icons/fa";
 import ModalComponent from "../lib/modal";
-import { useSessionContext } from "@/context/SessionProvider";
 import { usePetStorage } from "@/context/PetStorageProvider";
+import { useSessionContext } from "@/context/SessionProvider";
 
 interface PetCodeModalProps {
   setShowCodeModal: Dispatch<SetStateAction<boolean>>;
@@ -5237,48 +5228,24 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
  
 ----- Archivo: StorageContextType.ts ----- 
 // src/context/storageType.ts
-import { Empty } from "../data";
-
-export function emptyStorage() {
-    return {
-        resetPet: () => {},
-        storedPet: Empty.Pet(),
-        setStoredPet: () => { },
-        storedBasicData: Empty.BasicData(),
-        setStoredBasicData: () => { },
-        storedOwnerData: Empty.OwnerData(),
-        setStoredOwnerData: () => { },
-        storedVetAccess: Empty.VetAccess(),
-        setStoredVetAccess: () => { },
-        storedPetCode: Empty.PetCode(),
-        setStoredPetCode: () => { },
-        storedOwnerPets: [],
-        setStoredOwnerPets: () => { },
-        storedVaccineData: [],
-        setStoredVaccineData: () => { },
-        storedConditionData: [],
-        setStoredConditionData: () => { },
-        storedLabTestData: [],
-        setStoredLabTestData: () => { },
-        storedMedicineData: [],
-        setStoredMedicineData: () => { },
-        storedSurgeryData: [],
-        setStoredSurgeryData: () => { }
-    }
-} 
+ 
 ----- Archivo: AppContextProvider.tsx ----- 
 // src/context/AppContext.tsx
-import { SessionProvider } from "./SessionProvider";
+
 import { PetStorageProvider } from "./PetStorageProvider";
 import { UIProvider } from "./UIProvider";
+import { OwnerSessionProvider } from "./OwnerSessionProvider";
+import { SessionProvider } from "./SessionProvider";
 
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <PetStorageProvider>
-        <UIProvider>
-          {children}
-        </UIProvider>
+        <OwnerSessionProvider>
+          <UIProvider>
+            {children}
+          </UIProvider>
+        </OwnerSessionProvider>
       </PetStorageProvider>
     </SessionProvider>
   );
@@ -5294,9 +5261,9 @@ import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { isVetWithoutUserSession } from "@/utils/roles";
 import LoadingComponent from "@/components/lib/loading";
 import { usePathname } from "next/navigation";
-import { useSessionContext } from "./SessionProvider";
 import { usePetStorage } from "./PetStorageProvider";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
+import { useSessionContext } from "./SessionProvider";
 
 interface Props {
     children: React.ReactNode;
@@ -5334,8 +5301,8 @@ export default function ClientAppProvider({ children }: Props) {
         return null;
     }
 
-
     const gridCols = isMobile ? "1fr" : "300px 1fr";
+
 
     return (
         <AppContextProvider>
@@ -5384,7 +5351,7 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
     const ownerId = session?.db?.user?.id;
 
     useEffect(() => {
-        if (!session || !ownerId) return;
+        if (!session.db || !ownerId) return;
 
         (async () => {
             if (isOwner(session)) {
@@ -5407,14 +5374,12 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
     }, [session, ownerId]);
 
     return <>{children}</>;
-};
- 
+} 
 ----- Archivo: PetStorageProvider.tsx ----- 
 // src/context/PetStorageProvider.tsx
 "use client";
 import { useAppStorage } from "@/hooks/useAppStorage";
 import { createContext, useContext } from "react";
-
 
 export const Petstorage = createContext({} as ReturnType<typeof useAppStorage>);
 export const usePetStorage = () => useContext(Petstorage);
@@ -5426,29 +5391,22 @@ export function PetStorageProvider({ children }: { children: React.ReactNode }) 
 ----- Archivo: SessionProvider.tsx ----- 
 // src/context/SessionProvider.tsx
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
-import { useSession as useRawSession } from "@/hooks/useSession";
+import { createContext, useContext } from "react";
+import { useSession } from "@/hooks/useSession";
 import { AppSession } from "@/types/lib";
 
-const SessionContext = createContext<AppSession | null>(null);
+const SessionContext = createContext({} as AppSession);
 
 export const useSessionContext = () => useContext(SessionContext);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-    const rawSession = useRawSession();
-    const [appSession, setAppSession] = useState<AppSession | null>(null);
-
-    useEffect(() => {
-        if (rawSession) setAppSession({ db: rawSession });
-    }, [rawSession]);
-
+    const session = useSession();
     return (
-        <SessionContext.Provider value={appSession}>
+        <SessionContext.Provider value={{ db: session }}>
             {children}
         </SessionContext.Provider>
     );
-}
- 
+} 
 ----- Archivo: UIProvider.tsx ----- 
 // src/context/UIProvider.tsx
 "use client";
@@ -6056,9 +6014,9 @@ export function useAppStorage() {
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useSessionContext } from "@/context/SessionProvider";
 import { usePetStorage } from "@/context/PetStorageProvider";
 import { isVetWithoutUserSession } from "@/utils/roles";
+import { useSessionContext } from "@/context/SessionProvider";
 
 export default function useAuthRedirect() {
     const router = useRouter();
@@ -6414,35 +6372,33 @@ export function useLocalStorage<T>(
 
 import { useState, useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { onAuthStateChange } from "@/services/authService";
 
-export function useSession(): Session | null | undefined {
-  const [appSession, setAppSession] = useState<Session | null | undefined>(undefined);
+export function useSession(): Session | undefined {
+  const [session, setSession] = useState<Session | undefined>(undefined);
   useEffect(() => {
     const getCurrentSession = async () => {
       const res = await fetch("/api/auth/session");
       const json = await res.json();
-      setAppSession(json.session || null);
+      console.log(json.session);
+      setSession(json.session || undefined);
     };
 
     // 1. Obtiene sesión inicial
     getCurrentSession();
 
-    // 2. Escucha cambio de visibilidad de pestaña (útil si el usuario inicia/cierra sesión en otra tab)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        getCurrentSession();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    // 2) Nos suscribimos a cambios
+    const subscription = onAuthStateChange((_event, newSession) => {
+      if (newSession) setSession(newSession);
+    });
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      subscription.unsubscribe();
     };
   }, []);
 
 
-  return appSession;
+  return session;
 }
  
 ----- Archivo: supabase.tsx ----- 
@@ -7463,6 +7419,8 @@ async function validateBody<T>(
 import { supabase } from "@/lib/client/supabase";
 import type { Session, User, AuthError, AuthChangeEvent } from "@supabase/supabase-js";
 import { Empty } from "@/data/index";
+import { StorageContextType } from "@/hooks/useAppStorage";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 export const signIn = async (
   email: string,
@@ -7475,10 +7433,12 @@ export const ownerSignUp = async (
   email: string,
   password: string
 ): Promise<{ data: { user: User | null }; error: AuthError | null }> => {
-  return supabase.auth.signUp({ email, password,
+  return supabase.auth.signUp({
+    email, password,
     options: {
-    data: { role: "owner" }
-  } });
+      data: { role: "owner" }
+    }
+  });
 };
 
 export const resetPassword = async (
@@ -7499,7 +7459,7 @@ export const setSession = (session: {
   refresh_token: string;
 }) => supabase.auth.setSession(session);
 
-export const handleLogout = async (storage: StorageContextType) => {
+export const handleLogout = async (storage: StorageContextType, router: AppRouterInstance) => {
   try {
     const response = await fetch("/api/auth/sign-out", { method: "POST" });
     const result = await response.json();
@@ -7510,12 +7470,11 @@ export const handleLogout = async (storage: StorageContextType) => {
   } catch (err) {
     console.error("Error en logout:", err);
   }
-
+  await signOut();
   storage.setStoredPet(Empty.Pet());
   storage.setStoredOwnerPets([]);
   storage.setStoredVetAccess(Empty.VetAccess());
-
-  window.location.href = "/";
+  router.replace("/login");
 }; 
 ----- Archivo: emailService.ts ----- 
 // src/services/emailService.ts
@@ -7852,7 +7811,7 @@ export interface AppContextType {
 }
 
 export interface AppSession {
-  db: Session;
+  db: Session | undefined;
 }
 
 export interface FormType {

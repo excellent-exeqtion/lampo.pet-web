@@ -40,8 +40,8 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
   }, []);
 
   const handleSelect = (pet: PetType) => {
-    storage.setStoredPet(pet);
     storage.resetPet();
+    storage.setStoredPet(pet);
     setIsOpen(false);
     setShowChangePetModal(false);
     storage.setStoredVetAccess(Empty.VetAccess());

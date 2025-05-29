@@ -1,4 +1,4 @@
-// src/components/forms/entityForm.tsx
+// src/components/entityForm.tsx
 "use client";
 
 import React from "react";

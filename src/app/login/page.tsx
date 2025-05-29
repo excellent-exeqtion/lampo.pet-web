@@ -8,6 +8,7 @@ import Image from "next/image";
 import type { OwnerDataType } from "@/types/index";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { postFetch } from "@/app/api";
+import { setSession } from "@/services/authService";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -74,8 +75,9 @@ export default function LoginPage() {
       if (!loginResponse.ok || !loginJson.success) {
         setError(loginJson?.message || "Error iniciando sesión");
       } else {
-        router.push("/");
+        setSession({access_token: loginJson.user.access_token, refresh_token: loginJson.user.refresh_token });
         router.refresh();
+        router.push("/");
       }
     }
 

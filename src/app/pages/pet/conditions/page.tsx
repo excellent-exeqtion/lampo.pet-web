@@ -1,4 +1,4 @@
-// app/conditions/page.tsx
+// app/pages/pet/conditions/page.tsx
 "use client";
 import React from "react";
 import { FaCloudSun } from "react-icons/fa";
@@ -13,7 +13,7 @@ export default function ConditionsPage() {
             parentId={storage.storedPet.id}
             title="Condiciones especiales"
             icon={<FaCloudSun />}
-            apiUrl={'/api/pet/list/conditions/'}
+            apiUrl={'/api/pets/list/conditions/'}
             storedList={storage.storedConditionData}
             setStoredList={storage.setStoredConditionData}
             emptyMessage="No hay registro de condiciones especiales."

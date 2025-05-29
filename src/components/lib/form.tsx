@@ -1,4 +1,4 @@
-// src/components/forms/VaccineForm.tsx
+// src/components/form.tsx
 "use client";
 import React from "react";
 import StepsComponent from "./steps";

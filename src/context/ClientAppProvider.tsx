@@ -7,9 +7,9 @@ import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { isVetWithoutUserSession } from "@/utils/roles";
 import LoadingComponent from "@/components/lib/loading";
 import { usePathname } from "next/navigation";
-import { useSessionContext } from "./SessionProvider";
 import { usePetStorage } from "./PetStorageProvider";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
+import { useSessionContext } from "./SessionProvider";
 
 interface Props {
     children: React.ReactNode;
@@ -48,6 +48,7 @@ export default function ClientAppProvider({ children }: Props) {
     }
 
     const gridCols = isMobile ? "1fr" : "300px 1fr";
+
 
     return (
         <AppContextProvider>

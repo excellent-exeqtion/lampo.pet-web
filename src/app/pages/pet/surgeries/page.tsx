@@ -1,4 +1,4 @@
-// app/surgeries/page.tsx
+// app/pages/pet/surgeries/page.tsx
 "use client";
 import React from "react";
 import { FaCut } from "react-icons/fa";
@@ -13,7 +13,7 @@ export default function SurgeriesPage() {
             parentId={storage.storedPet.id}
             title="Cirugías"
             icon={<FaCut />}
-            apiUrl={'/api/pet/list/surgeries/'}
+            apiUrl={'/api/pets/list/surgeries/'}
             storedList={storage.storedSurgeryData}
             setStoredList={storage.setStoredSurgeryData}
             emptyMessage="No hay registro de cirugías."

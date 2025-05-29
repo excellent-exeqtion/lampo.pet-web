@@ -3,8 +3,9 @@
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { FaShareAlt, FaCopy } from "react-icons/fa";
 import ModalComponent from "../lib/modal";
-import { useSessionContext } from "@/context/SessionProvider";
 import { usePetStorage } from "@/context/PetStorageProvider";
+import { useSessionContext } from "@/context/SessionProvider";
+import { postFetch } from "@/app/api";
 
 interface PetCodeModalProps {
   setShowCodeModal: Dispatch<SetStateAction<boolean>>;
@@ -21,14 +22,7 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
   async function generar() {
     setError("");
     try {
-      const res = await fetch(
-        `${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/pets/me/code`,
-        {
-          method: 'POST',
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ owner_id: session?.db?.user.id, pet_id: storage.storedPet.id }),
-        }
-      );
+      const res = await postFetch('/api/pets/me/code', undefined, { owner_id: session?.db?.user.id, pet_id: storage.storedPet.id });
 
       if (res.status === 404) {
         setError("No se encontró la mascota.");

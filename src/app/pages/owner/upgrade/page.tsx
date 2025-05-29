@@ -1,4 +1,4 @@
-// app/upgrade/page.tsx (server component)
+// app/pages/owner/upgrade/page.tsx
 "use client";
 import React from "react";
 

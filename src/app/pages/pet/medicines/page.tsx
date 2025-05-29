@@ -1,4 +1,4 @@
-// app/surgeries/page.tsx
+// app/pages/pet/surgeries/page.tsx
 "use client";
 import React from "react";
 import { FaPills } from "react-icons/fa";
@@ -13,7 +13,7 @@ export default function MedicinesPage() {
             parentId={storage.storedPet.id}
             title="Medicinas"
             icon={<FaPills />}
-            apiUrl={'/api/pet/list/medicines/'}
+            apiUrl={'/api/pets/list/medicines/'}
             storedList={storage.storedMedicineData}
             setStoredList={storage.setStoredMedicineData}
             emptyMessage="No hay registro de medicamentos."

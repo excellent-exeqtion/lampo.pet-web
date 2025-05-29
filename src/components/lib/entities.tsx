@@ -1,4 +1,4 @@
-// src/components/forms/VaccineForm.tsx
+// src/components/entities.tsx
 "use client";
 
 import React from "react";

@@ -8,14 +8,17 @@ import { getFetch } from "@/app/api";
 import { isOwner } from "@/utils/roles";
 import { usePetStorage } from "./PetStorageProvider";
 import { useSessionContext } from "./SessionProvider";
+import { useUI } from "./UIProvider";
 
+//TODO: Why is not loading after log in
 export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }) => {
     const session = useSessionContext();
     const storage = usePetStorage();
+    const { setShowAddPetModal } = useUI();
     const ownerId = session?.db?.user?.id;
 
     useEffect(() => {
-        if (!session || !ownerId) return;
+        if (!session.db || !ownerId) return;
 
         (async () => {
             if (isOwner(session)) {
@@ -27,15 +30,22 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
                 }
             }
 
-            let initialPet = Empty.Pet();
-            if (storage.storedOwnerPets.length > 0) initialPet = storage.storedOwnerPets[0];
-            if (storage.storedPet.id) initialPet = storage.storedPet;
-            if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
-                storage.setStoredPet(initialPet);
-            }
         })();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session, ownerId]);
 
+    useEffect(() => {
+        let initialPet = Empty.Pet();
+        if (storage.storedOwnerPets.length > 0) initialPet = storage.storedOwnerPets[0];
+        if (storage.storedPet.id) initialPet = storage.storedPet;
+        if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
+            storage.setStoredPet(initialPet);
+        }
+        if(!initialPet.id){
+            setShowAddPetModal(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [storage.storedOwnerPets])
+
     return <>{children}</>;
-};
+}

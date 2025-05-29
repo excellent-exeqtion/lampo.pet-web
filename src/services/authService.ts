@@ -1,7 +1,8 @@
 // src/services/authService.ts
 import { supabase } from "@/lib/client/supabase";
 import type { Session, User, AuthError, AuthChangeEvent } from "@supabase/supabase-js";
-import { Empty } from "@/data/index";
+import { StorageContextType } from "@/hooks/useAppStorage";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 export const signIn = async (
   email: string,
@@ -14,10 +15,12 @@ export const ownerSignUp = async (
   email: string,
   password: string
 ): Promise<{ data: { user: User | null }; error: AuthError | null }> => {
-  return supabase.auth.signUp({ email, password,
+  return supabase.auth.signUp({
+    email, password,
     options: {
-    data: { role: "owner" }
-  } });
+      data: { role: "owner" }
+    }
+  });
 };
 
 export const resetPassword = async (
@@ -38,7 +41,7 @@ export const setSession = (session: {
   refresh_token: string;
 }) => supabase.auth.setSession(session);
 
-export const handleLogout = async (storage: StorageContextType) => {
+export const handleLogout = async (storage: StorageContextType, router: AppRouterInstance) => {
   try {
     const response = await fetch("/api/auth/sign-out", { method: "POST" });
     const result = await response.json();
@@ -49,10 +52,7 @@ export const handleLogout = async (storage: StorageContextType) => {
   } catch (err) {
     console.error("Error en logout:", err);
   }
-
-  storage.setStoredPet(Empty.Pet());
-  storage.setStoredOwnerPets([]);
-  storage.setStoredVetAccess(Empty.VetAccess());
-
-  window.location.href = "/";
+  await signOut();
+  storage.resetSession();
+  router.replace("/login");
 };

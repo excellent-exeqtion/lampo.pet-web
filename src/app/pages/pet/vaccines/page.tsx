@@ -1,4 +1,4 @@
-// app/vaccines/page.tsx
+// app/pages/pet/vaccines/page.tsx
 "use client";
 import React from "react";
 import { FaSyringe } from "react-icons/fa";

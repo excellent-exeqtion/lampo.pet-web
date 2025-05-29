@@ -1,4 +1,4 @@
-// app/auth/verify/layout.tsx
+// app/pages/auth/verify/layout.tsx
 export default function AuthVerifyLayout({ children }: { children: React.ReactNode }) {
   return (
     <html>

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { PetRepository } from "@/repos/index";
 import { getWithErrorHandling, withValidationAndErrorHandling } from "@/services/apiService";
 import { PetType } from "@/types/index";
+import { RepositoryError } from "@/types/lib";
 
 const updatePetSchema = z.object({
   name: z.string().optional(),
@@ -40,4 +41,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       );
     }
   );
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return getWithErrorHandling(req, async () => {
+    const { id } = await params;
+    const deleted = await PetRepository.deleteById(id);
+    if (!deleted) {
+      throw new RepositoryError("Mascota no encontrada");
+    }
+    return NextResponse.json(
+      { success: true, message: "Eliminado correctamente" },
+      { status: 200 }
+    );
+  });
 }

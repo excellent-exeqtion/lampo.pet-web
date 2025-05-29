@@ -3,7 +3,6 @@
 import { useAppStorage } from "@/hooks/useAppStorage";
 import { createContext, useContext } from "react";
 
-
 export const Petstorage = createContext({} as ReturnType<typeof useAppStorage>);
 export const usePetStorage = () => useContext(Petstorage);
 

@@ -3,9 +3,9 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useSessionContext } from "@/context/SessionProvider";
 import { usePetStorage } from "@/context/PetStorageProvider";
 import { isVetWithoutUserSession } from "@/utils/roles";
+import { useSessionContext } from "@/context/SessionProvider";
 
 export default function useAuthRedirect() {
     const router = useRouter();

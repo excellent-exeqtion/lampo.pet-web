@@ -26,9 +26,9 @@ import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { useUI } from "@/context/UIProvider";
-import { useSessionContext } from "@/context/SessionProvider";
 import { usePetStorage } from "@/context/PetStorageProvider";
 import { handleLogout } from "@/services/authService";
+import { useSessionContext } from "@/context/SessionProvider";
 
 export default function SideBar() {
     const { isMobile, isTablet, isDesktop } = useDeviceDetect();
@@ -57,7 +57,7 @@ export default function SideBar() {
             menu.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner(session) });
         }
         setMenuItems(menu);
-    }, [storage.storedPet, session, storage.storedVetAccess, setShowEditPetModal]);
+    }, [storage.storedPet, storage.storedOwnerPets, session, storage.storedVetAccess, setShowEditPetModal]);
 
     const goToLogin = () => {
         storage.setStoredVetAccess(Empty.VetAccess());
@@ -114,7 +114,7 @@ export default function SideBar() {
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
                             {menuItems.map(item)}
-                            {session && <li><a style={{ background: "none", border: "none", color: '#d32f2f' }} onClick={() => handleLogout(storage)}> <FaPowerOff style={{ marginRight: '1rem' }} />Cerrar sesión</a></li>}
+                            {session && <li><a style={{ background: "none", border: "none", color: '#d32f2f' }} onClick={() => handleLogout(storage, router)}> <FaPowerOff style={{ marginRight: '1rem' }} />Cerrar sesión</a></li>}
                             {!session && <li><button onClick={goToLogin}>Iniciar sesión</button></li>}
                         </ul>
                     </nav>
@@ -187,7 +187,7 @@ export default function SideBar() {
                     <div style={{ position: 'fixed', bottom: "0", marginBottom: "1rem" }}>
                         <div className="tooltip-container" style={{ cursor: "pointer" }}>
                             <button
-                                onClick={session ? () => handleLogout(storage) : goToLogin}
+                                onClick={session ? () => handleLogout(storage, router) : goToLogin}
                                 style={{ background: "none", border: "none", fontSize: "1.75rem", color: '#d32f2f' }}
                             >
                                 {session ? <FaPowerOff /> : <FaBars />}

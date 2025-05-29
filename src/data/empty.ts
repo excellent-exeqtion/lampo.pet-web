@@ -181,6 +181,7 @@ import { Empty } from "../data";
 
 export function emptyStorage() {
     return {
+        resetSession: () => { },
         resetPet: () => { },
         storedPet: Empty.Pet(),
         setStoredPet: () => { },

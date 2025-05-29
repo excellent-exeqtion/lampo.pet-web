@@ -18,10 +18,12 @@ export function isVetWithoutSession(appSession: AppSession | null | undefined, v
     return (appSession == null || appSession == undefined) && vetAccess?.id != "";
 }
 
+//TODO: This should be a hook depending on the appSession and the vetaccess
 export function isVetWithUserSession(appSession: AppSession | null | undefined, vetAccess: VeterinaryAccessType): boolean {
     return vetAccess?.id != "" && isOwner(appSession);
 }
 
+//TODO: This should be a hook depending on the appSession
 export function isOwner(appSession: AppSession | null | undefined) {
     return appSession?.db?.user?.user_metadata?.role === "owner";
 }

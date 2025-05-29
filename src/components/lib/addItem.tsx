@@ -1,7 +1,7 @@
+// src/components/lib/addItem.tsx
+
 import { tooltipStyles } from "@/styles/tooltip";
 import { FaInfoCircle } from "react-icons/fa";
-
-// src/components/lib/addItem.tsx
 interface AddItemProps {
     entityName: string;
     loadLoading: boolean;

@@ -12,7 +12,7 @@ export interface AppContextType {
 }
 
 export interface AppSession {
-  db: Session;
+  db: Session | undefined;
 }
 
 export interface FormType {

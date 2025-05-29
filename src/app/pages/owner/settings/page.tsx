@@ -1,17 +1,20 @@
-// app/settings/page.tsx (client component)
+// app/pages/owner/settings/page.tsx
 
 "use client";
 import { Title } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch, putFetch } from "@/app/api";
-import type { OwnerDataType } from "@/types/index";
+import type { OwnerDataType, PetType } from "@/types/index";
 import React, { FormEvent, useEffect, useState } from "react";
-import { FaCog } from "react-icons/fa";
-import { useSessionContext } from "@/context/SessionProvider";
+import { FaCog, FaExclamationTriangle } from "react-icons/fa";
 import { usePetStorage } from "@/context/PetStorageProvider";
+import { useSessionContext } from "@/context/SessionProvider";
+import { Empty } from "@/data/index";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
   const { isMobile } = useDeviceDetect();
+  const router = useRouter();
   const session = useSessionContext();
   const storage = usePetStorage();
   const userId = session?.db?.user.id;
@@ -27,6 +30,11 @@ export default function SettingsPage() {
     email: ""
   });
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  // asumo que en tu contexto tienes la mascota seleccionada:
+  const pet: PetType | null = storage.storedPet;
+
   const [loadLoading, setLoadLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formFailed, setFormFailed] = useState(false);
@@ -40,15 +48,16 @@ export default function SettingsPage() {
           const res = await getFetch(`/api/owners/${encodeURIComponent(userId)}`);
           const json = await res.json();
           if (res.ok) {
-            storage.setStoredOwnerData(json.owner);
-            setOwnerInfo(json.owner);
+            console.log(json);
+            storage.setStoredOwnerData(json);
+            setOwnerInfo(json);
           } else {
             console.error("Error al obtener owner:", json.error);
             setError("No se pudo cargar la información del dueño.");
             setFormFailed(true);
           }
         }
-        else{
+        else {
           setOwnerInfo(storage.storedOwnerData);
         }
       } catch (err) {
@@ -62,7 +71,7 @@ export default function SettingsPage() {
     };
 
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, session]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -93,6 +102,7 @@ export default function SettingsPage() {
 
         if (res.ok) {
           setError("Datos actualizados correctamente.");
+          console.log(payload);
           storage.setStoredOwnerData(payload);
           setFormFailed(false);
         } else {
@@ -105,6 +115,23 @@ export default function SettingsPage() {
       console.error("Submit error:", err);
       setError("Error de red al guardar cambios.");
       setFormFailed(true);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!pet) return;
+    const res = await fetch(`/api/pets/${encodeURIComponent(pet.id)}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      // actualizar lista en el contexto
+      storage.setStoredOwnerPets(
+        storage.storedOwnerPets.filter((p) => p.id !== pet.id)
+      );
+      storage.setStoredPet(Empty.Pet());
+      router.replace("/");
+    } else {
+      console.error("Error al eliminar mascota");
     }
   };
 
@@ -205,6 +232,125 @@ export default function SettingsPage() {
           )}
         </form>
       </section>
+
+
+      {/* ——— Sección Danger Zone para eliminar mascota ——— */}
+      {pet && (
+        <section
+          style={{
+            marginTop: "3rem",
+            padding: "1rem",
+            border: "1px solid #d73a49",
+            borderRadius: "6px",
+          }}
+        >
+          <h3
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              color: "#d73a49",
+            }}
+          >
+            <FaExclamationTriangle /> Danger Zone
+          </h3>
+          <p>Eliminar permanentemente la mascota seleccionada.</p>
+          <button
+            type="button"
+            style={{
+              backgroundColor: "#d73a49",
+              color: "white",
+              padding: "0.5rem 1rem",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+            onClick={() => setShowDeleteModal(true)}
+          >
+            Eliminar mascota
+          </button>
+        </section>
+      )}
+
+      {/* ——— Modal de confirmación ——— */}
+      {showDeleteModal && pet && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "2rem",
+              borderRadius: "6px",
+              width: "90%",
+              maxWidth: "400px",
+            }}
+          >
+            <h2>Confirmar eliminación</h2>
+            <p>
+              Escribe el nombre de la mascota{" "}
+              <strong>{pet.name}</strong> para confirmar:
+            </p>
+            <input
+              type="text"
+              placeholder="Nombre de la mascota"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "0.5rem",
+                marginTop: "0.5rem",
+                marginBottom: "1rem",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "1rem",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setConfirmText("");
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={confirmText !== pet.name}
+                style={{
+                  backgroundColor: "#d73a49",
+                  color: "white",
+                  padding: "0.5rem 1rem",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor:
+                    confirmText === pet.name ? "pointer" : "not-allowed",
+                  opacity: confirmText === pet.name ? 1 : 0.6,
+                }}
+                onClick={handleDelete}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }

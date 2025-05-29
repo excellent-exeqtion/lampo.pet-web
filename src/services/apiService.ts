@@ -24,6 +24,20 @@ export async function getWithErrorHandling(
                 { status: 400 }
             )
         }
+        // 4) Falta de configuración en el step -> 500
+        if (err instanceof StepStateError) {
+            return NextResponse.json(
+                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { status: 500 }
+            )
+        }
+        // 5) Error con el patron repository -> 500
+        if (err instanceof RepositoryError) {
+            return NextResponse.json(
+                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { status: 500 }
+            )
+        }
         return NextResponse.json(
             { success: false, message: 'Error interno del servidor' },
             { status: 500 }

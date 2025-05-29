@@ -587,7 +587,7 @@ export async function GET(
                 if (!ownerData) {
                     throw new RepositoryError(`Owner no encontrado: ${id}`);
                 }
-                return NextResponse.json({ owner: ownerData });
+                return NextResponse.json(ownerData);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
                 throw new RepositoryError(`Error fetching owner: ${error.message}`);
@@ -829,6 +829,7 @@ import { z } from "zod";
 import { PetRepository } from "@/repos/index";
 import { getWithErrorHandling, withValidationAndErrorHandling } from "@/services/apiService";
 import { PetType } from "@/types/index";
+import { RepositoryError } from "@/types/lib";
 
 const updatePetSchema = z.object({
   name: z.string().optional(),
@@ -866,7 +867,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   );
 }
- 
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return getWithErrorHandling(req, async () => {
+    const { id } = await params;
+    const deleted = await PetRepository.deleteById(id);
+    if (!deleted) {
+      throw new RepositoryError("Mascota no encontrada");
+    }
+    return NextResponse.json(
+      { success: true, message: "Eliminado correctamente" },
+      { status: 200 }
+    );
+  });
+} 
 ----- Archivo: route.ts ----- 
 import { NextRequest, NextResponse } from "next/server";
 import { PlanRepository } from "@/repos/index";
@@ -1131,7 +1148,6 @@ export default function LoginPage() {
       if (!loginResponse.ok || !loginJson.success) {
         setError(loginJson?.message || "Error iniciando sesión");
       } else {
-        console.log(loginJson);
         setSession({access_token: loginJson.user.access_token, refresh_token: loginJson.user.refresh_token });
         router.refresh();
         router.push("/");
@@ -1159,7 +1175,7 @@ export default function LoginPage() {
   };
 
   const goToVetPage = () => {
-    router.replace("/pages/vet/access");
+    router.replace("/vet-access");
   }
 
   const goToRegister = () => {
@@ -1430,6 +1446,7 @@ export default function LoginPage() {
   );
 } 
 ----- Archivo: index.ts ----- 
+// app/pages/index.tsx
 export { default as BasicDataPage } from "./pet/basic-data/page";
 export { default as CalendarPage } from "./pet/calendar/page";
 export { default as ConditionsPage } from "./pet/conditions/page";
@@ -1442,7 +1459,7 @@ export { default as VaccinesPage } from "./pet/vaccines/page";
 export { default as VetPage } from "./vet/[code]/page";
 export { default as OwnerSettings } from "./owner/settings/page"; 
 ----- Archivo: layout.tsx ----- 
-// app/auth/verify/layout.tsx
+// app/pages/auth/verify/layout.tsx
 export default function AuthVerifyLayout({ children }: { children: React.ReactNode }) {
   return (
     <html>
@@ -1453,6 +1470,7 @@ export default function AuthVerifyLayout({ children }: { children: React.ReactNo
   );
 } 
 ----- Archivo: page.tsx ----- 
+// app/pages/auth/verify/page.tsx
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -1517,7 +1535,7 @@ export default function VerifyEmail() {
 }
  
 ----- Archivo: page.tsx ----- 
-// components/PlanSelection.tsx
+// app/pages/owner/register/page.tsx
 "use client";
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
@@ -1814,20 +1832,23 @@ export default function RegisterPage() {
 }
  
 ----- Archivo: page.tsx ----- 
-// app/settings/page.tsx (client component)
+// app/pages/owner/settings/page.tsx
 
 "use client";
 import { Title } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch, putFetch } from "@/app/api";
-import type { OwnerDataType } from "@/types/index";
+import type { OwnerDataType, PetType } from "@/types/index";
 import React, { FormEvent, useEffect, useState } from "react";
-import { FaCog } from "react-icons/fa";
+import { FaCog, FaExclamationTriangle } from "react-icons/fa";
 import { usePetStorage } from "@/context/PetStorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
+import { Empty } from "@/data/index";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
   const { isMobile } = useDeviceDetect();
+  const router = useRouter();
   const session = useSessionContext();
   const storage = usePetStorage();
   const userId = session?.db?.user.id;
@@ -1843,6 +1864,11 @@ export default function SettingsPage() {
     email: ""
   });
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  // asumo que en tu contexto tienes la mascota seleccionada:
+  const pet: PetType | null = storage.storedPet;
+
   const [loadLoading, setLoadLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formFailed, setFormFailed] = useState(false);
@@ -1856,15 +1882,16 @@ export default function SettingsPage() {
           const res = await getFetch(`/api/owners/${encodeURIComponent(userId)}`);
           const json = await res.json();
           if (res.ok) {
-            storage.setStoredOwnerData(json.owner);
-            setOwnerInfo(json.owner);
+            console.log(json);
+            storage.setStoredOwnerData(json);
+            setOwnerInfo(json);
           } else {
             console.error("Error al obtener owner:", json.error);
             setError("No se pudo cargar la información del dueño.");
             setFormFailed(true);
           }
         }
-        else{
+        else {
           setOwnerInfo(storage.storedOwnerData);
         }
       } catch (err) {
@@ -1878,7 +1905,7 @@ export default function SettingsPage() {
     };
 
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, session]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -1909,6 +1936,7 @@ export default function SettingsPage() {
 
         if (res.ok) {
           setError("Datos actualizados correctamente.");
+          console.log(payload);
           storage.setStoredOwnerData(payload);
           setFormFailed(false);
         } else {
@@ -1921,6 +1949,23 @@ export default function SettingsPage() {
       console.error("Submit error:", err);
       setError("Error de red al guardar cambios.");
       setFormFailed(true);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!pet) return;
+    const res = await fetch(`/api/pets/${encodeURIComponent(pet.id)}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      // actualizar lista en el contexto
+      storage.setStoredOwnerPets(
+        storage.storedOwnerPets.filter((p) => p.id !== pet.id)
+      );
+      storage.setStoredPet(Empty.Pet());
+      router.replace("/");
+    } else {
+      console.error("Error al eliminar mascota");
     }
   };
 
@@ -2021,12 +2066,131 @@ export default function SettingsPage() {
           )}
         </form>
       </section>
+
+
+      {/* ——— Sección Danger Zone para eliminar mascota ——— */}
+      {pet && (
+        <section
+          style={{
+            marginTop: "3rem",
+            padding: "1rem",
+            border: "1px solid #d73a49",
+            borderRadius: "6px",
+          }}
+        >
+          <h3
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              color: "#d73a49",
+            }}
+          >
+            <FaExclamationTriangle /> Danger Zone
+          </h3>
+          <p>Eliminar permanentemente la mascota seleccionada.</p>
+          <button
+            type="button"
+            style={{
+              backgroundColor: "#d73a49",
+              color: "white",
+              padding: "0.5rem 1rem",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+            onClick={() => setShowDeleteModal(true)}
+          >
+            Eliminar mascota
+          </button>
+        </section>
+      )}
+
+      {/* ——— Modal de confirmación ——— */}
+      {showDeleteModal && pet && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "2rem",
+              borderRadius: "6px",
+              width: "90%",
+              maxWidth: "400px",
+            }}
+          >
+            <h2>Confirmar eliminación</h2>
+            <p>
+              Escribe el nombre de la mascota{" "}
+              <strong>{pet.name}</strong> para confirmar:
+            </p>
+            <input
+              type="text"
+              placeholder="Nombre de la mascota"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "0.5rem",
+                marginTop: "0.5rem",
+                marginBottom: "1rem",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "1rem",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setConfirmText("");
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={confirmText !== pet.name}
+                style={{
+                  backgroundColor: "#d73a49",
+                  color: "white",
+                  padding: "0.5rem 1rem",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor:
+                    confirmText === pet.name ? "pointer" : "not-allowed",
+                  opacity: confirmText === pet.name ? 1 : 0.6,
+                }}
+                onClick={handleDelete}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
  
 ----- Archivo: page.tsx ----- 
-// app/upgrade/page.tsx (server component)
+// app/pages/owner/upgrade/page.tsx
 "use client";
 import React from "react";
 
@@ -2040,7 +2204,7 @@ export default function UpgradePage() {
     );
 } 
 ----- Archivo: page.tsx ----- 
-// app/basic-data/page.tsx (server component)
+// app/pages/pet/basic-data/page.tsx (server component)
 "use client";
 import React, { useEffect, useState } from "react";
 import { FaUser } from "react-icons/fa";
@@ -2048,7 +2212,6 @@ import { format } from "@/utils/dates";
 import { BasicField, Loading, Title } from "@/components/index";
 import { FieldType } from "@/types/lib";
 import { BasicDataType, OwnerDataType } from "@/types/index";
-import { v4 } from 'uuid';
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch } from "@/app/api";
 import { useSession } from "@/hooks/useSession";
@@ -2068,7 +2231,7 @@ export default function BasicDataPage() {
   useEffect(() => {
     console.log('BasicDataPage');
   }, []);
-  
+
   useEffect(() => {
     const petId = storage.storedPet.id;
     if (!petId || storage.storedBasicData.pet_id) {
@@ -2091,7 +2254,7 @@ export default function BasicDataPage() {
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storage.storedPet.id, storage.storedBasicData.pet_id]);
+  }, [storage.storedBasicData]);
 
 
   useEffect(() => {
@@ -2105,6 +2268,7 @@ export default function BasicDataPage() {
         const resOwner = await getFetch(`/api/owners/${storage.storedPet.owner_id}`);
         if (!resOwner.ok) throw new Error("Falló fetch owners");
         const owner: OwnerDataType = await resOwner.json();
+            console.log(owner);
         storage.setStoredOwnerData(owner);
         setOwnerData(owner);
       } catch (err) {
@@ -2114,7 +2278,7 @@ export default function BasicDataPage() {
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storage.storedPet.owner_id, storage.storedOwnerData.owner_id]);
+  }, [storage.storedOwnerData]);
 
   useEffect(() => {
     if (!petData) return;
@@ -2160,7 +2324,7 @@ export default function BasicDataPage() {
         {petData &&
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
             {basicDataItems.map((item) =>
-              <BasicField key={v4()} item={item} />
+              <BasicField key={item.label} item={item} />
             )}
           </div>
         }
@@ -2173,7 +2337,7 @@ export default function BasicDataPage() {
         {ownerData &&
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
             {contactItems.map((item) =>
-              <BasicField key={v4()} item={item} />
+              <BasicField key={item.label} item={item} />
             )}
           </div>
         }
@@ -2184,7 +2348,7 @@ export default function BasicDataPage() {
 
  
 ----- Archivo: page.tsx ----- 
-// app/calendar/page.tsx (server component)
+// app/pages/pet/calendar/page.tsx (server component)
 "use client";
 import { Title } from "@/components/index";
 import React from "react";
@@ -2230,7 +2394,7 @@ export default function CalendarPage() {
     );
 } 
 ----- Archivo: page.tsx ----- 
-// app/conditions/page.tsx
+// app/pages/pet/conditions/page.tsx
 "use client";
 import React from "react";
 import { FaCloudSun } from "react-icons/fa";
@@ -2255,7 +2419,7 @@ export default function ConditionsPage() {
 }
  
 ----- Archivo: page.tsx ----- 
-// app/lab-tests/page.tsx
+// app/pages/pet/lab-tests/page.tsx
 "use client";
 import React from "react";
 import { FaFlask } from "react-icons/fa";
@@ -2280,7 +2444,7 @@ export default function LabTestsPage() {
 }
  
 ----- Archivo: page.tsx ----- 
-// app/surgeries/page.tsx
+// app/pages/pet/surgeries/page.tsx
 "use client";
 import React from "react";
 import { FaPills } from "react-icons/fa";
@@ -2305,11 +2469,12 @@ export default function MedicinesPage() {
 }
  
 ----- Archivo: page.tsx ----- 
+// app/pages/pet/register/page.tsx
 export default function PetRegisterPage(){
     return <div></div>
 } 
 ----- Archivo: page.tsx ----- 
-// app/surgeries/page.tsx
+// app/pages/pet/surgeries/page.tsx
 "use client";
 import React from "react";
 import { FaCut } from "react-icons/fa";
@@ -2333,7 +2498,7 @@ export default function SurgeriesPage() {
     );
 } 
 ----- Archivo: page.tsx ----- 
-// app/vaccines/page.tsx
+// app/pages/pet/vaccines/page.tsx
 "use client";
 import React from "react";
 import { FaSyringe } from "react-icons/fa";
@@ -2358,10 +2523,12 @@ export default function VaccinesPage() {
 }
  
 ----- Archivo: page.tsx ----- 
+// app/pages/vet/register/page.tsx
 export default function RegisterPage(){
     return <div></div>;
 } 
 ----- Archivo: page.tsx ----- 
+// app/pages/vet/[code]/page.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { usePetStorage } from "@/context/PetStorageProvider";
@@ -2430,6 +2597,7 @@ export default function VetPage({ params }: VetPageProps) {
 }
  
 ----- Archivo: PetEditForm.tsx ----- 
+// app/pages/vet/[code]/components/forms/PetEditForm.tsx
 "use client";
 import { putFetch } from "@/app/api";
 import { PetType } from "@/types/index";
@@ -2647,7 +2815,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   const [otherPetType, setOtherPetType] = useState<string>(initial.otherPetType);
   const [otherFood, setOtherFood] = useState<string>(initial.otherFood);
   const [otherRace, setOtherRace] = useState<string>(initial.otherRace);
-  const [loadedWithApi, setLoadedWithApi] = useState<boolean>(false);
+  const [loadedWithPreviusData, setLoadedWithPreviusData] = useState<boolean>(false);
   const [savedData, setSavedData] = useState<BasicDataType>(Empty.BasicData());
   const { isMobile, isDesktop, isTablet } = useDeviceDetect();
   const storage = usePetStorage();
@@ -2679,6 +2847,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   useEffect(() => {
     const fetchData = async () => {
       setLoadLoading(true);
+      if(stateEq(StepStateEnum.NotInitialize) && !basicData.pet_id)
       if (stateEq(StepStateEnum.NotInitialize)) {
         setState(StepStateEnum.Initialize);
         let basicDataSaved: BasicDataType = Empty.BasicData();
@@ -2686,16 +2855,15 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
           const petResponse = await fetch(`/api/pets/basic-data/${pet.id}`);
           if (!petResponse.ok) throw new Error("Falló fetch basic-data");
           basicDataSaved = await petResponse.json() as BasicDataType;
-          storage.setStoredBasicData(basicDataSaved);
         }
-        else {
+        else if (storage.storedBasicData.pet_id == pet.id) {
           basicDataSaved = storage.storedBasicData;
         }
-        if (basicDataSaved) {
+        if (basicDataSaved.pet_id) {
           setSavedData(basicDataSaved);
           setBasicData(basicDataSaved);
-          const initial = initials(basicDataSaved, loadedWithApi);
-          setLoadedWithApi(true);
+          const initial = initials(basicDataSaved, loadedWithPreviusData);
+          setLoadedWithPreviusData(true);
           setFormData({ ...basicDataSaved, pet_id: pet.id, pet_type: initial.petType, main_food: initial.food, race: initial.race });
           setWeight(parseFloat(basicDataSaved.weight.split(' ')[0]));
           setWeightUnit(basicDataSaved.weight.split(' ')[1]);
@@ -2726,13 +2894,13 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
           pet_type: finalPetType || '',
           race: finalRace || '',
         };
-        console.log(dataToSave);
         const basicDataResponse = await postFetch(`/api/pets/basic-data/${formData.pet_id}`, undefined, dataToSave);
-        console.log(basicDataResponse);
         if (!basicDataResponse.ok) throw new ApiError("Error actualizado datos básicos de la mascota");
         setSavedData(dataToSave);
         setBasicData(dataToSave);
-        storage.setStoredBasicData(dataToSave);
+        if (dataToSave.pet_id == storage.storedBasicData.pet_id) {
+          storage.setStoredBasicData(dataToSave);
+        }
         setState(StepStateEnum.Saved);
       }
       onNext();
@@ -3190,6 +3358,7 @@ export default function PetNameForm({
       if (stateEq(StepStateEnum.NotInitialize) && !pet.id) {
         setState(StepStateEnum.Initialize);
       } else if (stateEq(StepStateEnum.NotInitialize)) {
+        setState(StepStateEnum.Initialize);
         let petSaved: PetType = Empty.Pet();
         if (!storage.storedPet.id) {
           const response = await getFetch(`/api/pets/${pet.id}`);
@@ -3197,12 +3366,8 @@ export default function PetNameForm({
             throw new ApiError('Error al obtener la mascota');
           }
           petSaved = (await response.json())[0] as PetType;
-
-          storage.setStoredPet(petSaved);
-          const pets = storage.storedOwnerPets.filter((p: PetType) => p.id != petSaved.id);
-          storage.setStoredOwnerPets([...pets, petSaved]);
         }
-        else {
+        else if (storage.storedPet.id == pet.id) {
           petSaved = storage.storedPet;
         }
         if (petSaved) {
@@ -3210,7 +3375,6 @@ export default function PetNameForm({
           setSavedData(petSaved);
           setPreview(petSaved.image || preview);
         }
-        setState(StepStateEnum.Initialize);
       }
       setLoadLoading(false);
     };
@@ -3235,7 +3399,7 @@ export default function PetNameForm({
       if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
         const newId = pet.id || (await generateUniquePetId());
         const newPet: PetType = { id: newId, name: pet.name, image: pet.image, owner_id: ownerId };
-        if (JSON.stringify(newPet) != JSON.stringify(storage.storedPet)) {
+        if (JSON.stringify(newPet) != JSON.stringify(pet)) {
           const response = await postFetch('/api/pets', undefined, newPet);
           const result = await response.json();
           if (!response.ok) {
@@ -3243,7 +3407,8 @@ export default function PetNameForm({
           }
           const savedPet: PetType = result[0] as PetType;
           setSavedData(savedPet);
-          storage.setStoredPet(savedPet);
+          if (newPet.id)
+            storage.setStoredPet(savedPet);
           const pets = storage.storedOwnerPets.filter((p: PetType) => p.id != savedPet.id);
           storage.setStoredOwnerPets([...pets, savedPet]);
           setPet(savedPet);
@@ -3524,10 +3689,10 @@ export default function SideBar() {
 }
  
 ----- Archivo: addItem.tsx ----- 
+// src/components/lib/addItem.tsx
+
 import { tooltipStyles } from "@/styles/tooltip";
 import { FaInfoCircle } from "react-icons/fa";
-
-// src/components/lib/addItem.tsx
 interface AddItemProps {
     entityName: string;
     loadLoading: boolean;
@@ -3584,6 +3749,7 @@ export default function AddItemComponent({ entityName, loadLoading, handleAdd, c
     );
 } 
 ----- Archivo: basicField.tsx ----- 
+// src/components/lib/basicField.tsx
 import { FieldType } from "@/types/lib";
 
 interface BasicFieldProps {
@@ -3689,7 +3855,7 @@ export default function CircularImageComponent({ src, width, borderSize = '5px',
     );
 } 
 ----- Archivo: dataNotFound.tsx ----- 
-// components/DataNotFound.tsx
+// src/components/DataNotFound.tsx
 import React from "react";
 import { FaInbox } from "react-icons/fa";
 
@@ -3727,6 +3893,7 @@ export default function DataNotFoundComponent({ message }: DataNotFoundProps) {
 }
  
 ----- Archivo: display.tsx ----- 
+// src/components/lib/display.tsx
 import { FieldType, FormType as DisplayType } from "@/types/lib";
 import { Field } from "@/components/index";
 import { v4 } from "uuid";
@@ -3750,7 +3917,7 @@ export default function DisplayComponent(props: DisplayProps) {
     );
 } 
 ----- Archivo: entities.tsx ----- 
-// src/components/forms/VaccineForm.tsx
+// src/components/entities.tsx
 "use client";
 
 import React from "react";
@@ -3898,7 +4065,7 @@ export default function EntityFieldsComponent<T extends { id: string | undefined
 }
  
 ----- Archivo: entityForm.tsx ----- 
-// src/components/forms/entityForm.tsx
+// src/components/entityForm.tsx
 "use client";
 
 import React from "react";
@@ -4018,6 +4185,7 @@ export default function EntityFormComponent<T extends { id: string | undefined }
 }
  
 ----- Archivo: field.tsx ----- 
+// src/components/lib/field.tsx
 import { FieldType } from "@/types/lib";
 import React from "react";
 
@@ -4037,7 +4205,7 @@ export default function FieldComponent(props: FieldsProps) {
     );
 } 
 ----- Archivo: form.tsx ----- 
-// src/components/forms/VaccineForm.tsx
+// src/components/form.tsx
 "use client";
 import React from "react";
 import StepsComponent from "./steps";
@@ -4066,7 +4234,7 @@ export default function FormComponent<T extends { id: string | undefined }>({ en
 }
  
 ----- Archivo: loading.tsx ----- 
-// components/Loading.tsx
+// src/components/loading.tsx
 import React from "react";
 import { FaSpinner } from "react-icons/fa";
 
@@ -4170,7 +4338,7 @@ export default function ModalComponent({ children, title, description, setShowMo
 }
  
 ----- Archivo: page.tsx ----- 
-// src/components/PetRecordsPage.tsx
+// src/components/page.tsx
 "use client";
 import React, { useEffect, useState } from "react";
 import { v4 } from "uuid";
@@ -4330,12 +4498,13 @@ export default function StepsComponent({ children, submitLoading, loadLoading, s
 }
  
 ----- Archivo: title.tsx ----- 
+// src/components/lib/title.tsx
 interface TitleProps {
     icon: React.JSX.Element;
     title: string;
 }
 
-export default function renderTitle(props: TitleProps) {
+export default function TitleComponent(props: TitleProps) {
     return (
         <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             {props.icon} {props.title}
@@ -4740,8 +4909,8 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
   }, []);
 
   const handleSelect = (pet: PetType) => {
-    storage.setStoredPet(pet);
     storage.resetPet();
+    storage.setStoredPet(pet);
     setIsOpen(false);
     setShowChangePetModal(false);
     storage.setStoredVetAccess(Empty.VetAccess());
@@ -4922,6 +5091,7 @@ import { FaShareAlt, FaCopy } from "react-icons/fa";
 import ModalComponent from "../lib/modal";
 import { usePetStorage } from "@/context/PetStorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
+import { postFetch } from "@/app/api";
 
 interface PetCodeModalProps {
   setShowCodeModal: Dispatch<SetStateAction<boolean>>;
@@ -4938,14 +5108,7 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
   async function generar() {
     setError("");
     try {
-      const res = await fetch(
-        `${process.env.PROTOCOL}://${process.env.VERCEL_URL}/api/pets/me/code`,
-        {
-          method: 'POST',
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ owner_id: session?.db?.user.id, pet_id: storage.storedPet.id }),
-        }
-      );
+      const res = await postFetch('/api/pets/me/code', undefined, { owner_id: session?.db?.user.id, pet_id: storage.storedPet.id });
 
       if (res.status === 404) {
         setError("No se encontró la mascota.");
@@ -5240,13 +5403,13 @@ import { SessionProvider } from "./SessionProvider";
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <PetStorageProvider>
-        <OwnerSessionProvider>
-          <UIProvider>
+      <UIProvider>
+        <PetStorageProvider>
+          <OwnerSessionProvider>
             {children}
-          </UIProvider>
-        </OwnerSessionProvider>
-      </PetStorageProvider>
+          </OwnerSessionProvider>
+        </PetStorageProvider>
+      </UIProvider>
     </SessionProvider>
   );
 }
@@ -5344,10 +5507,13 @@ import { getFetch } from "@/app/api";
 import { isOwner } from "@/utils/roles";
 import { usePetStorage } from "./PetStorageProvider";
 import { useSessionContext } from "./SessionProvider";
+import { useUI } from "./UIProvider";
 
+//TODO: Why is not loading after log in
 export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }) => {
     const session = useSessionContext();
     const storage = usePetStorage();
+    const { setShowAddPetModal } = useUI();
     const ownerId = session?.db?.user?.id;
 
     useEffect(() => {
@@ -5363,15 +5529,22 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
                 }
             }
 
-            let initialPet = Empty.Pet();
-            if (storage.storedOwnerPets.length > 0) initialPet = storage.storedOwnerPets[0];
-            if (storage.storedPet.id) initialPet = storage.storedPet;
-            if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
-                storage.setStoredPet(initialPet);
-            }
         })();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session, ownerId]);
+
+    useEffect(() => {
+        let initialPet = Empty.Pet();
+        if (storage.storedOwnerPets.length > 0) initialPet = storage.storedOwnerPets[0];
+        if (storage.storedPet.id) initialPet = storage.storedPet;
+        if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
+            storage.setStoredPet(initialPet);
+        }
+        if(!initialPet.id){
+            setShowAddPetModal(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [storage.storedOwnerPets])
 
     return <>{children}</>;
 } 
@@ -5642,6 +5815,7 @@ import { Empty } from "../data";
 
 export function emptyStorage() {
     return {
+        resetSession: () => { },
         resetPet: () => { },
         storedPet: Empty.Pet(),
         setStoredPet: () => { },
@@ -5892,6 +6066,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType } from "@/types/index";
 import { Empty } from "@/data/index";
 export interface StorageContextType {
+    resetSession: () => void;
     resetPet: () => void;
     storedPet: PetType;
     setStoredPet: (value: PetType) => void;
@@ -5982,7 +6157,17 @@ export function useAppStorage() {
     setStoredVaccineData([]);
   }
 
+  const resetSession = () =>{
+    resetPet();
+    setStoredPetCode(Empty.PetCode());
+    setStoredVetAccess(Empty.VetAccess());
+    setStoredOwnerData(Empty.OwnerData());
+    setStoredOwnerPets([]);
+    setStoredPet(Empty.Pet());
+  }
+
   return {
+    resetSession,
     resetPet,
     storedPet,
     setStoredPet,
@@ -6380,7 +6565,6 @@ export function useSession(): Session | undefined {
     const getCurrentSession = async () => {
       const res = await fetch("/api/auth/session");
       const json = await res.json();
-      console.log(json.session);
       setSession(json.session || undefined);
     };
 
@@ -6640,7 +6824,7 @@ export default class PetRepository {
       .update(updates)
       .eq("id", id);
     if (error) throw new Error(error.message);
-    if(!data) return false;
+    if (!data) return false;
     return true;
   }
 
@@ -6674,8 +6858,31 @@ export default class PetRepository {
     // Devolvemos la primera mascota (puedes adaptar si quieres soportar varias)
     return data ?? [];
   }
-}
- 
+
+  /**
+   * Marca una mascota como eliminada (soft delete).
+   * @param id ID de la mascota a borrar
+   * @returns true si la operación no falló
+   */
+  static async deleteById(id: string): Promise<boolean> {
+    const now = new Date().toISOString();
+    try {
+      const { error } = await supabase
+        .from("pets")
+        .update({ deleted: true, deleted_at: now })
+        .eq("id", id);
+
+      if (error) {
+        console.error("Error al eliminar mascota:", error);
+        throw new Error(error.message);
+      }
+      return true;
+    }
+    catch {
+      return false;
+    }
+  }
+} 
 ----- Archivo: petCode.repository.ts ----- 
 // src/repositories/petCode.repository.ts
 
@@ -7231,6 +7438,20 @@ export async function getWithErrorHandling(
                 { status: 400 }
             )
         }
+        // 4) Falta de configuración en el step -> 500
+        if (err instanceof StepStateError) {
+            return NextResponse.json(
+                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { status: 500 }
+            )
+        }
+        // 5) Error con el patron repository -> 500
+        if (err instanceof RepositoryError) {
+            return NextResponse.json(
+                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { status: 500 }
+            )
+        }
         return NextResponse.json(
             { success: false, message: 'Error interno del servidor' },
             { status: 500 }
@@ -7418,7 +7639,6 @@ async function validateBody<T>(
 // src/services/authService.ts
 import { supabase } from "@/lib/client/supabase";
 import type { Session, User, AuthError, AuthChangeEvent } from "@supabase/supabase-js";
-import { Empty } from "@/data/index";
 import { StorageContextType } from "@/hooks/useAppStorage";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
@@ -7471,9 +7691,7 @@ export const handleLogout = async (storage: StorageContextType, router: AppRoute
     console.error("Error en logout:", err);
   }
   await signOut();
-  storage.setStoredPet(Empty.Pet());
-  storage.setStoredOwnerPets([]);
-  storage.setStoredVetAccess(Empty.VetAccess());
+  storage.resetSession();
   router.replace("/login");
 }; 
 ----- Archivo: emailService.ts ----- 
@@ -8051,10 +8269,12 @@ export function isVetWithoutSession(appSession: AppSession | null | undefined, v
     return (appSession == null || appSession == undefined) && vetAccess?.id != "";
 }
 
+//TODO: This should be a hook depending on the appSession and the vetaccess
 export function isVetWithUserSession(appSession: AppSession | null | undefined, vetAccess: VeterinaryAccessType): boolean {
     return vetAccess?.id != "" && isOwner(appSession);
 }
 
+//TODO: This should be a hook depending on the appSession
 export function isOwner(appSession: AppSession | null | undefined) {
     return appSession?.db?.user?.user_metadata?.role === "owner";
 }

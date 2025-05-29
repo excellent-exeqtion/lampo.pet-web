@@ -102,7 +102,7 @@ export default function LoginPage() {
   };
 
   const goToVetPage = () => {
-    router.replace("/pages/vet/access");
+    router.replace("/vet-access");
   }
 
   const goToRegister = () => {

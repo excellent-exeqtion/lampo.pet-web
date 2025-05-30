@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useStorageContext } from "@/context/StorageProvider";
 import PetEditForm from "./components/forms/PetEditForm";
 import { PetType } from "@/types/index";
+import { useRouter } from "next/navigation";
 
 interface VetPageProps {
   params: Promise<{ code: string }>;
@@ -14,6 +15,7 @@ export default function VetPage({ params }: VetPageProps) {
   const [pet, setPet] = useState<PetType | null>(null);
   const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   const storage = useStorageContext();
 
@@ -38,7 +40,9 @@ export default function VetPage({ params }: VetPageProps) {
         }
 
         setPet(data.pet);
+        router.replace(`/pages/vet/consultation/${data.pet.id}`);
         setIsValid(true);
+
       } catch (err) {
         console.error("Error validando código veterinario:", err);
         setMessage("Ocurrió un error al validar el código.");

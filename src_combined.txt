@@ -1,28 +1,74 @@
 ----- Archivo: middleware.ts ----- 
-// middleware.ts
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-// 1) Importa la nueva función
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+// src/middleware.ts
+import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 export async function middleware(req: NextRequest) {
-    const res = NextResponse.next();
-    // 2) Usa createMiddlewareClient
-    const supabase = createMiddlewareClient({ req, res });
+    // Clonar la respuesta para poder modificar sus cookies
+    // NextResponse.next() crea una nueva respuesta basada en la solicitud
+    const response = NextResponse.next({
+        request: {
+            headers: req.headers, // Asegúrate de pasar los headers de la solicitud
+        },
+    });
 
-    // Ahora supabase.auth.getSession() leerá la cookie correcta
-    const {
-        data: { session },
-    } = await supabase.auth.getSession();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return req.cookies.get(name)?.value;
+                },
+                set(name: string, value: string, options: CookieOptions) {
+                    // Para la cadena de middleware y Route Handlers subsecuentes,
+                    // modificamos las cookies de la solicitud 'req'.
+                    // Para la respuesta final al cliente, modificamos 'response.cookies'.
+                    req.cookies.set({ name, value, ...options });
+                    response.cookies.set({ name, value, ...options });
+                },
+                remove(name: string, options: CookieOptions) {
+                    // Para eliminar, establece el valor a vacío y usa las opciones para expirar.
+                    // O usa el método delete si está disponible y es más semántico.
+                    req.cookies.set({ name, value: '', ...options }); // O req.cookies.delete(name, options) si la API lo permite para las opciones.
+                    response.cookies.set({ name, value: '', ...options }); // O response.cookies.delete(name, options)
+                },
+            },
+        }
+    );
 
-    // Ejemplo de protección de ruta:
-    if (!session && req.nextUrl.pathname.startsWith("/dashboard")) {
-        return NextResponse.redirect(new URL("/login", req.url));
+    // Es importante obtener la sesión DESPUÉS de haber creado el cliente Supabase
+    // con el adaptador de cookies, ya que getSession puede necesitar refrescar el token
+    // y, por lo tanto, usar los métodos set/remove del adaptador.
+    const { data: { session } } = await supabase.auth.getSession();
+
+    // Lógica de protección de rutas
+    if (!session && req.nextUrl.pathname.startsWith('/dashboard')) {
+        return NextResponse.redirect(new URL('/login', req.url));
+    }
+    if (session && (req.nextUrl.pathname === '/login' || req.nextUrl.pathname === '/register')) {
+        return NextResponse.redirect(new URL('/', req.url)); // Redirigir si ya hay sesión y está en login/register
     }
 
-    return res;
+
+    // Si Supabase actualizó la sesión (ej. refresh de token),
+    // las funciones `set` o `remove` del adaptador de cookies habrán sido llamadas,
+    // actualizando `response.cookies`. Devolvemos esa `response` modificada.
+    return response;
 }
- 
+
+export const config = {
+    matcher: [
+        /*
+         * Match all request paths except for the ones starting with:
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         * Feel free to modify this pattern to include more paths.
+         */
+        '/((?!_next/static|_next/image|favicon.ico|logo.png|images/).*)',
+    ],
+}; 
 ----- Archivo: layout.tsx ----- 
 // app/layout.tsx
 "use client";
@@ -491,6 +537,302 @@ export async function POST(req: NextRequest) {
     });
 }
  
+----- Archivo: route.ts ----- 
+// src/app/api/consultations/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { ConsultationRepository } from '@/repos/index';
+import { getRequiredQueryParam, getWithErrorHandling, withValidationAndErrorHandling } from '@/services/apiService';
+import { CreateConsultationPayloadSchema } from '@/schemas/validationSchemas';
+import type { CreateConsultationPayload } from '@/types/index';
+import { RepositoryError } from '@/types/lib';
+import { type CookieOptions, createServerClient } from '@supabase/ssr'; // Importar createServerClient y CookieOptions
+import { cookies } from 'next/headers';
+import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
+
+const supabase = (cookieStore: ReadonlyRequestCookies) => createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+        cookies: {
+            get(name: string) {
+                return cookieStore.get(name)?.value;
+            },
+            set(name: string, value: string, options: CookieOptions) {
+                // Cuando Supabase llama a esto en una Route Handler,
+                // está indicando que una cookie necesita ser establecida en la RESPUESTA.
+                // La instancia de `cookieStore` aquí puede ser usada para esto.
+                try {
+                    cookieStore.set(name, value, options); // Correcto para la respuesta
+                    // O si la API de cookieStore requiere un objeto:
+                    // cookieStore.set({ name, value, ...options });
+                } catch (error) {
+                    console.error(`SSR Error (Route Handler): Failed to set cookie ${name}`, error);
+                }
+            },
+            remove(name: string, options: CookieOptions) {
+                try {
+                    // Para eliminar, establece el valor a vacío y usa las opciones para expirar.
+                    cookieStore.set(name, '', options); // Correcto para la respuesta
+                    // O si la API de cookieStore requiere un objeto:
+                    // cookieStore.set({ name, value: '', ...options });
+                } catch (error) {
+                    console.error(`SSR Error (Route Handler): Failed to remove cookie ${name}`, error);
+                }
+            },
+        },
+    }
+);
+
+// POST /api/consultations : Crear una nueva consulta
+export async function POST(req: NextRequest) {
+
+    const cookieStore = await cookies(); // De next/headers
+
+    return withValidationAndErrorHandling(
+        'POST',
+        req,
+        CreateConsultationPayloadSchema,
+        async (payload: CreateConsultationPayload) => {
+            const { data: { session }, error: sessionError } = await supabase(cookieStore).auth.getSession();
+
+            if (sessionError) {
+                console.error("Error obteniendo sesión en API:", sessionError);
+                return NextResponse.json({ success: false, message: 'Error de autenticación al obtener sesión.' }, { status: 401 });
+            }
+
+            if (!payload.veterinarian_id && !payload.veterinary_access_id) {
+                if (session?.user?.user_metadata?.role === 'veterinarian') {
+                    payload.veterinarian_id = session.user.id;
+                } else {
+                    console.warn("Intento de crear consulta sin vet_id o vet_access_id, y sin sesión de veterinario.");
+                    return NextResponse.json(
+                        { success: false, message: 'Se requiere veterinarian_id o veterinary_access_id válido.' },
+                        { status: 403 }
+                    );
+                }
+            }
+
+            const { data, error } = await ConsultationRepository.create(payload);
+            if (error || !data) {
+                console.error(`Error creando consulta desde API: ${error?.message || 'No data returned'}`);
+                throw new RepositoryError(`Error creando consulta: ${error?.message || 'No data returned'}`);
+            }
+            return NextResponse.json({ success: true, consultation: data }, { status: 201 });
+        }
+    );
+}
+
+// GET /api/consultations?petId=mascota123 : Listar consultas de una mascota
+export async function GET(req: NextRequest) {
+
+    return getWithErrorHandling(
+        req,
+        async () => {
+            // Ejemplo de protección de ruta GET:
+            // const { data: { session } } = await supabase.auth.getSession();
+            // if (!session) {
+            //     return NextResponse.json({ success: false, message: 'No autenticado para ver consultas.' }, { status: 401 });
+            // }
+
+            const petId = getRequiredQueryParam(req, 'petId');
+            const { data, error } = await ConsultationRepository.findByPetId(petId);
+
+            if (error) {
+                throw new RepositoryError(`Error obteniendo consultas para la mascota ${petId}: ${error.message}`);
+            }
+            return NextResponse.json({ success: true, consultations: data || [] });
+        }
+    );
+} 
+----- Archivo: route.ts ----- 
+// src/app/api/consultations/[consultationId]/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { ConsultationRepository } from '@/repos/index';
+import { getWithErrorHandling } from '@/services/apiService';
+import { RepositoryError } from '@/types/lib';
+
+// GET /api/consultations/{consultationId} : Obtener una consulta específica
+export async function GET(
+    req: NextRequest,
+    { params }: { params: { consultationId: string } }
+) {
+    return getWithErrorHandling(
+        req,
+        async () => {
+            const { consultationId } = params;
+            if (!consultationId) {
+                return NextResponse.json({ success: false, message: 'consultationId es requerido' }, { status: 400 });
+            }
+
+            const { data, error } = await ConsultationRepository.findById(consultationId);
+
+            if (error) {
+                throw new RepositoryError(`Error obteniendo consulta ${consultationId}: ${error.message}`);
+            }
+            if (!data) {
+                return NextResponse.json({ success: false, message: `Consulta ${consultationId} no encontrada` }, { status: 404 });
+            }
+            return NextResponse.json({ success: true, consultation: data });
+        }
+    );
+}
+
+// TODO: PATCH /api/consultations/{consultationId} : Actualizar una consulta (más complejo)
+// export async function PATCH(req: NextRequest, { params }: { params: { consultationId: string } }) { ... }
+
+// TODO: DELETE /api/consultations/{consultationId} : Eliminar una consulta (considerar RLS)
+// export async function DELETE(req: NextRequest, { params }: { params: { consultationId: string } }) { ... } 
+----- Archivo: route.ts ----- 
+// src/app/api/consultations/[consultationId]/files/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { ConsultationFileRepository } from '@/repos/index';
+import { getWithErrorHandling } from '@/services/apiService';
+import { RepositoryError } from '@/types/lib';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf', 'image/webp', 'image/gif'];
+
+// POST /api/consultations/{consultationId}/files : Subir un archivo a una consulta
+export async function POST(
+    req: NextRequest,
+    { params }: { params: { consultationId: string } }
+) {
+    return getWithErrorHandling(req, async () => {
+        const { consultationId } = params;
+        if (!consultationId) {
+            return NextResponse.json({ success: false, message: 'consultationId es requerido' }, { status: 400 });
+        }
+
+        const formData = await req.formData();
+        const file = formData.get('file') as File | null;
+        const petId = formData.get('petId') as string | null; // Necesario para la ruta del archivo
+
+        if (!file) {
+            return NextResponse.json({ success: false, message: 'Archivo no proporcionado' }, { status: 400 });
+        }
+        if (!petId) {
+            return NextResponse.json({ success: false, message: 'petId no proporcionado en el FormData' }, { status: 400 });
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            return NextResponse.json({ success: false, message: `El archivo excede el tamaño máximo de ${MAX_FILE_SIZE / (1024 * 1024)}MB` }, { status: 413 });
+        }
+        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+            return NextResponse.json({ success: false, message: `Tipo de archivo no permitido. Permitidos: ${ALLOWED_FILE_TYPES.join(', ')}` }, { status: 415 });
+        }
+        
+        const supabase = createServerComponentClient({ cookies });
+        const { data: { user } } = await supabase.auth.getUser();
+        const uploadedByUserId = user?.id;
+
+        const { data, error } = await ConsultationFileRepository.uploadAndCreateRecord(
+            consultationId,
+            petId,
+            file,
+            uploadedByUserId
+        );
+
+        if (error || !data) {
+            throw new RepositoryError(`Error subiendo archivo: ${error?.message || 'No data returned'}`);
+        }
+        return NextResponse.json({ success: true, file: data }, { status: 201 });
+    });
+}
+
+// GET /api/consultations/{consultationId}/files : Listar archivos de una consulta
+export async function GET(
+    req: NextRequest,
+    { params }: { params: { consultationId: string } }
+) {
+    return getWithErrorHandling(
+        req,
+        async () => {
+            const { consultationId } = params;
+            if (!consultationId) {
+                return NextResponse.json({ success: false, message: 'consultationId es requerido' }, { status: 400 });
+            }
+
+            const { data, error } = await ConsultationFileRepository.findByConsultationId(consultationId);
+
+            if (error) {
+                throw new RepositoryError(`Error obteniendo archivos para consulta ${consultationId}: ${error.message}`);
+            }
+            return NextResponse.json({ success: true, files: data || [] });
+        }
+    );
+} 
+----- Archivo: route.ts ----- 
+// src/app/api/consultations/files/[fileId]/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { ConsultationFileRepository } from '@/repos/index';
+import { getWithErrorHandling } from '@/services/apiService';
+import { RepositoryError } from '@/types/lib';
+import { supabase } from '@/lib/client/supabase';
+
+// GET /api/consultations/files/{fileId}/download : Obtener URL firmada para descargar
+export async function GET(
+    req: NextRequest,
+    { params }: { params: { fileId: string } }
+) {
+    return getWithErrorHandling(req, async () => {
+        const { fileId } = params;
+        if (!fileId) {
+            return NextResponse.json({ success: false, message: 'fileId es requerido' }, { status: 400 });
+        }
+
+        // Primero, necesitamos el filePath del registro del archivo
+        const { data: fileRecord, error: findError } = await supabase
+            .from('consultation_files')
+            .select('file_path')
+            .eq('id', fileId)
+            .single();
+        
+        if (findError || !fileRecord) {
+             throw new RepositoryError(`Archivo con ID ${fileId} no encontrado o error al buscarlo: ${findError?.message}`);
+        }
+
+        const { signedURL, error: urlError } = await ConsultationFileRepository.getSignedUrl(fileRecord.file_path);
+
+        if (urlError || !signedURL) {
+            throw new RepositoryError(`Error generando URL firmada para archivo ${fileId}: ${urlError?.message || 'No URL returned'}`);
+        }
+        // Opción 1: Devolver la URL para que el cliente la use
+        return NextResponse.json({ success: true, downloadUrl: signedURL });
+
+        // Opción 2: Redirigir directamente a la URL firmada (el cliente descargará el archivo)
+        // return NextResponse.redirect(signedURL);
+    });
+}
+
+
+// DELETE /api/consultations/files/{fileId} : Eliminar un archivo
+export async function DELETE(
+    req: NextRequest,
+    { params }: { params: { fileId: string } }
+) {
+    return getWithErrorHandling(
+        req,
+        async () => {
+            const { fileId } = params;
+            if (!fileId) {
+                return NextResponse.json({ success: false, message: 'fileId es requerido' }, { status: 400 });
+            }
+
+            // Aquí deberías verificar permisos (RLS debería manejar esto también)
+            // Por ejemplo, solo el veterinario que subió el archivo o el dueño de la mascota
+            // pueden eliminarlo, o solo dentro de un tiempo límite.
+
+            const { error } = await ConsultationFileRepository.delete(fileId);
+
+            if (error) {
+                throw new RepositoryError(`Error eliminando archivo ${fileId}: ${error.message}`);
+            }
+            return NextResponse.json({ success: true, message: 'Archivo eliminado correctamente' });
+        }
+    );
+} 
 ----- Archivo: route.ts ----- 
 
 // src/app/api/feedback/route.ts
@@ -2597,6 +2939,1423 @@ export default function VaccinesPage() {
   );
 }
  
+----- Archivo: index.ts ----- 
+// src/components/forms/consultation/index.ts
+export * from './ConsultationForm';
+export * from './FileUploadItem';
+// También puedes exportar todas las secciones desde aquí si prefieres
+// export * from './sections';  
+----- Archivo: ConsultationForm.tsx ----- 
+// src/components/forms/consultation/ConsultationForm.tsx
+import React, { useState } from 'react';
+import type { PetType, CreateConsultationPayload, ConsultationProcedureType, ConsultationMedicationType, ConsultationFileType } from '@/types/index';
+
+import { useStorageContext } from '@/context/StorageProvider';
+import { useVetContext } from '@/context/VetContext';
+import { IdentitySection, OwnerPetSection, AnamnesisSection, PhysicalExamSection, ProceduresSection, MedicationsSection, DiagnosticApproachSection, ComplementaryExamsSection, DiagnosisPlanSection, ObservationsSignatureSection } from './sections';
+
+interface ConsultationFormProps {
+    pet: PetType;
+    onSubmit: (formData: CreateConsultationPayload) => Promise<void>;
+    isSubmitting: boolean;
+    // initialData?: Partial<CreateConsultationPayload>; // Para editar en el futuro
+}
+
+export function ConsultationForm({ pet, onSubmit, isSubmitting }: ConsultationFormProps) {
+    const { storedOwnerData } = useStorageContext(); // Para mostrar datos del dueño
+    const { vet: veterinarianProfessionalData } = useVetContext(); // Para mostrar datos del vet
+
+    const [formData, setFormData] = useState<Partial<CreateConsultationPayload>>(() => {
+        const today = new Date();
+        return {
+            consultation_date: today.toISOString().split('T')[0], // Fecha de hoy por defecto
+            consultation_time: today.toTimeString().split(' ')[0].substring(0, 5), // Hora actual por defecto
+            // Valores iniciales para procedimientos y medicamentos como arrays vacíos
+            procedures: [],
+            medications: [],
+        };
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [uploadedFiles, setUploadedFiles] = useState<ConsultationFileType[]>([]); // Para manejar archivos subidos
+
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+        section?: keyof CreateConsultationPayload // Para campos anidados si es necesario
+    ) => {
+        const { name, value, type } = e.target;
+
+        let processedValue: string | number | boolean = value;
+        if (type === 'checkbox') {
+            processedValue = (e.target as HTMLInputElement).checked;
+        } else if (type === 'number') {
+            processedValue = parseFloat(value);
+            if (isNaN(processedValue)) processedValue = ''; // Evitar NaN en el estado
+        }
+
+        if (section) {
+            setFormData(prev => ({
+                ...prev,
+                [section]: {
+                    ...(prev[section] as object || {}),
+                    [name]: processedValue,
+                }
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: processedValue }));
+        }
+    };
+
+    const handleNumericChange = (name: keyof CreateConsultationPayload, value: string) => {
+        const numValue = value === '' ? null : parseFloat(value); // Permitir campo vacío o convertir a número
+        setFormData(prev => ({
+            ...prev,
+            [name]: numValue === null || isNaN(numValue as number) ? undefined : numValue,
+        }));
+    };
+
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Aquí podrías añadir validación del lado del cliente antes de enviar
+        // Aunque la validación principal estará en el backend con Zod.
+
+        // Asegurarse de que los campos numéricos vacíos se envíen como null o undefined
+        const cleanedFormData = { ...formData };
+        (Object.keys(cleanedFormData) as Array<keyof CreateConsultationPayload>).forEach(key => {
+            if (typeof cleanedFormData[key] === 'number' && isNaN(cleanedFormData[key] as number)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (cleanedFormData as any)[key] = undefined;
+            }
+        });
+
+        // TODO: Integrar los archivos subidos.
+        // Si la subida se hace ANTES de enviar este formulario, aquí deberías tener
+        // las URLs o IDs de los archivos para incluirlos en el payload.
+        // Si la subida es DESPUÉS, esta función onSubmit solo enviaría los datos textuales,
+        // y la página `ConsultationPage` orquestaría la subida de archivos después.
+        // Por ahora, asumimos que `CreateConsultationPayload` no lleva directamente los `File` objects.
+
+        onSubmit(cleanedFormData as CreateConsultationPayload);
+    };
+
+    // Handlers para procedimientos y medicamentos
+    const handleProceduresChange = (updatedProcedures: Array<Omit<ConsultationProcedureType, 'id' | 'consultation_id' | 'created_at'>>) => {
+        setFormData(prev => ({ ...prev, procedures: updatedProcedures }));
+    };
+
+    const handleMedicationsChange = (updatedMedications: Array<Omit<ConsultationMedicationType, 'id' | 'consultation_id' | 'created_at'>>) => {
+        setFormData(prev => ({ ...prev, medications: updatedMedications }));
+    };
+
+    const handleFilesUpdate = (newFiles: ConsultationFileType[]) => {
+        setUploadedFiles(prevFiles => [...prevFiles, ...newFiles]);
+        // Aquí podrías también actualizar formData si necesitas referenciar los archivos
+        // en el payload principal de la consulta, aunque es más común asociarlos por ID.
+    };
+
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-8 pico-form" style={{ marginTop: '2rem' }}>
+            {/* 
+                Pasar handleChange, formData y pet a cada sección.
+                Algunas secciones podrían necesitar datos adicionales como ownerData.
+            */}
+            <IdentitySection formData={formData} handleChange={handleChange} />
+            <OwnerPetSection owner={storedOwnerData} pet={pet} /> {/* Datos de solo lectura */}
+            <AnamnesisSection formData={formData} handleChange={handleChange} handleNumericChange={handleNumericChange} />
+            <PhysicalExamSection formData={formData} handleChange={handleChange} handleNumericChange={handleNumericChange} />
+
+            <ProceduresSection
+                procedures={formData.procedures || []}
+                onChange={handleProceduresChange}
+            />
+            <MedicationsSection
+                medications={formData.medications || []}
+                onChange={handleMedicationsChange}
+            />
+
+            <DiagnosticApproachSection formData={formData} handleChange={handleChange} />
+
+            <ComplementaryExamsSection
+                petId={pet.id} // Necesario para la subida de archivos
+                consultationId={""} // Se necesitará el ID de la consulta si se suben archivos *después* de crearla.
+                // O se suben a un ID temporal y se asocian luego.
+                // Por ahora, el componente de subida será independiente.
+                onFilesUpdate={handleFilesUpdate} // Para que el form sepa de los archivos
+                formData={formData}
+                handleChange={handleChange}
+            />
+
+            <DiagnosisPlanSection formData={formData} handleChange={handleChange} />
+            <ObservationsSignatureSection
+                formData={formData}
+                handleChange={handleChange}
+                professionalName={veterinarianProfessionalData ? `${veterinarianProfessionalData.first_name} ${veterinarianProfessionalData.last_name}` : "N/A"}
+                professionalRegistration={veterinarianProfessionalData?.registration || "N/A"}
+            />
+
+            <button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+                {isSubmitting ? 'Guardando Consulta...' : 'Guardar Consulta'}
+            </button>
+        </form>
+    );
+} 
+----- Archivo: FileUploadItem.tsx ----- 
+// src/components/forms/consultation/FileUploadItem.tsx
+import React from 'react';
+import { ConsultationFileType } from '@/types/index';
+import { FaFilePdf, FaFileImage, FaFileAlt, FaTrash } from 'react-icons/fa';
+
+interface FileUploadItemProps {
+    file: ConsultationFileType;
+    onDelete: (fileId: string) => void;
+    // onDownload?: (filePath: string) => void; // Opcional, si manejas la descarga
+}
+
+export function FileUploadItem({ file, onDelete /*, onDownload */ }: FileUploadItemProps) {
+    const getFileIcon = () => {
+        if (file.file_type?.startsWith('image/')) return <FaFileImage className="text-blue-500" />;
+        if (file.file_type === 'application/pdf') return <FaFilePdf className="text-red-500" />;
+        return <FaFileAlt className="text-gray-500" />;
+    };
+
+    // La URL de descarga vendría de una API que genere una URL firmada
+    // const handleDownload = () => {
+    //     if(onDownload) onDownload(file.file_path);
+    // };
+
+    return (
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.5rem',
+            border: '1px solid #eee',
+            borderRadius: '4px',
+            marginBottom: '0.5rem',
+            fontSize: '0.9rem'
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {getFileIcon()}
+                <span>{file.file_name}</span>
+                <span style={{ fontSize: '0.75rem', color: '#777' }}> ({(file.file_size_bytes! / 1024).toFixed(1)} KB)</span>
+            </div>
+            <div>
+                {/* 
+                // Botón de descarga (requiere API para URL firmada)
+                <button 
+                    type="button" 
+                    onClick={handleDownload} 
+                    className="outline secondary" 
+                    aria-label="Descargar archivo"
+                    style={{marginRight: '0.5rem', padding: '0.25rem 0.5rem'}}
+                >
+                    <FaDownload />
+                </button> 
+                */}
+                <button
+                    type="button"
+                    onClick={() => onDelete(file.id)}
+                    className="outline secondary"
+                    aria-label="Eliminar archivo"
+                    style={{ color: 'var(--pico-color-red-500)', borderColor: 'var(--pico-color-red-500)', padding: '0.25rem 0.5rem' }}
+                >
+                    <FaTrash />
+                </button>
+            </div>
+        </div>
+    );
+} 
+----- Archivo: index.ts ----- 
+// src/components/forms/consultation/sections/index.ts
+export * from './IdentitySection';
+export * from './OwnerPetSection';
+export * from './AnamnesisSection';
+export * from './PhysicalExamSection';
+export * from './DiagnosticApproachSection';
+export * from './ComplementaryExamsSection';
+export * from './DiagnosisPlanSection';
+export * from './ProceduresSection';
+export * from './MedicationsSection';
+export * from './ObservationsSignatureSection'; 
+----- Archivo: AnamnesisSection.tsx ----- 
+// src/components/forms/consultation/sections/AnamnesisSection.tsx
+import React from 'react';
+import type { CreateConsultationPayload } from '@/types/index';
+
+interface AnamnesisSectionProps {
+    formData: Partial<CreateConsultationPayload>;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+    handleNumericChange: (name: keyof CreateConsultationPayload, value: string) => void; // Para campos numéricos opcionales
+}
+
+export function AnamnesisSection({ formData, handleChange, handleNumericChange }: AnamnesisSectionProps) {
+    return (
+        <fieldset>
+            <legend>4. Anamnesis</legend>
+            <label htmlFor="current_diet">
+                Dieta Actual
+                <textarea
+                    id="current_diet"
+                    name="current_diet"
+                    value={formData.current_diet || ''}
+                    onChange={handleChange}
+                    rows={2}
+                />
+            </label>
+            <div className="grid">
+                <label htmlFor="previous_illnesses">
+                    Enfermedades Previas
+                    <textarea
+                        id="previous_illnesses"
+                        name="previous_illnesses"
+                        value={formData.previous_illnesses || ''}
+                        onChange={handleChange}
+                        rows={2}
+                    />
+                </label>
+                <label htmlFor="previous_surgeries">
+                    Cirugías Previas
+                    <textarea
+                        id="previous_surgeries"
+                        name="previous_surgeries"
+                        value={formData.previous_surgeries || ''}
+                        onChange={handleChange}
+                        rows={2}
+                    />
+                </label>
+            </div>
+            <div className="grid">
+                <label htmlFor="vaccination_history">
+                    Esquema Vacunal (Resumen)
+                    <textarea
+                        id="vaccination_history"
+                        name="vaccination_history"
+                        value={formData.vaccination_history || ''}
+                        onChange={handleChange}
+                        placeholder="Ej: Completo según edad, última revacunación Diciembre 2023"
+                        rows={2}
+                    />
+                </label>
+                <label htmlFor="last_deworming_product">
+                    Última Desparasitación y Producto
+                    <input
+                        type="text"
+                        id="last_deworming_product"
+                        name="last_deworming_product"
+                        value={formData.last_deworming_product || ''}
+                        onChange={handleChange}
+                        placeholder="Ej: Drontal Plus, hace 2 meses"
+                    />
+                </label>
+            </div>
+            <label htmlFor="recent_treatments">
+                Tratamientos Recientes
+                <textarea
+                    id="recent_treatments"
+                    name="recent_treatments"
+                    value={formData.recent_treatments || ''}
+                    onChange={handleChange}
+                    rows={2}
+                />
+            </label>
+            <div className="grid">
+                <label htmlFor="recent_travels">
+                    Viajes Recientes
+                    <input
+                        type="text"
+                        id="recent_travels"
+                        name="recent_travels"
+                        value={formData.recent_travels || ''}
+                        onChange={handleChange}
+                        placeholder="Ej: Finca en Clima Cálido hace 1 semana"
+                    />
+                </label>
+                <label htmlFor="lives_with_other_animals_details"> {/* Nuevo campo para detalles */}
+                    ¿Vive con otros animales? ¿Cuáles?
+                    <input
+                        type="text"
+                        id="lives_with_other_animals_details"
+                        name="lives_with_other_animals_details" // Añadir a types y schema
+                        value={formData.lives_with_other_animals_details || ''}
+                        onChange={handleChange}
+                        placeholder="Ej: Sí, un gato y un perro."
+                    />
+                </label>
+            </div>
+            <div className="grid">
+                <label>
+                    Esterilizado
+                    <select name="sterilized_status" value={formData.sterilized_status || ""} onChange={handleChange}> {/* Nuevo Campo */}
+                        <option value="" disabled>Seleccionar...</option>
+                        <option value="yes">Sí</option>
+                        <option value="no">No</option>
+                        <option value="unknown">No se sabe</option>
+                    </select>
+                </label>
+                <label htmlFor="birth_count">
+                    N° de Partos (si aplica)
+                    <input
+                        type="number"
+                        id="birth_count"
+                        name="birth_count" // Nuevo Campo
+                        value={formData.birth_count === undefined || formData.birth_count === null ? '' : formData.birth_count}
+                        onChange={(e) => handleNumericChange('birth_count', e.target.value)}
+                        min="0"
+                    />
+                </label>
+            </div>
+            <label htmlFor="animal_behavior_owner_description">
+                Comportamiento del Animal (según propietario)
+                <textarea
+                    id="animal_behavior_owner_description"
+                    name="animal_behavior_owner_description"
+                    value={formData.animal_behavior_owner_description || ''}
+                    onChange={handleChange}
+                    rows={3}
+                />
+            </label>
+            <label htmlFor="reason_for_consultation">
+                Motivo de Consulta (según propietario)
+                <textarea
+                    id="reason_for_consultation"
+                    name="reason_for_consultation"
+                    value={formData.reason_for_consultation || ''}
+                    onChange={handleChange}
+                    rows={3}
+                    required
+                />
+            </label>
+        </fieldset>
+    );
+} 
+----- Archivo: ComplementaryExamsSection.tsx ----- 
+// src/components/forms/consultation/sections/ComplementaryExamsSection.tsx
+import React, { useState, useRef } from 'react';
+import type { CreateConsultationPayload, ConsultationFileType } from '@/types/index';
+import { FaUpload, FaPaperclip, FaSpinner } from 'react-icons/fa';
+import { FileUploadItem } from '../FileUploadItem';
+
+interface ComplementaryExamsSectionProps {
+    petId: string; // Necesario para la ruta de subida de archivos
+    consultationId: string; // Será vacío inicialmente, se usa si se edita o se sube post-creación
+    formData: Partial<CreateConsultationPayload>;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    onFilesUpdate: (newFiles: ConsultationFileType[]) => void; // Para notificar al form padre
+}
+
+export function ComplementaryExamsSection({
+    petId,
+    consultationId, // Puede ser un ID temporal o se actualiza post-guardado
+    formData,
+    handleChange,
+    onFilesUpdate,
+}: ComplementaryExamsSectionProps) {
+    const [localFiles, setLocalFiles] = useState<File[]>([]);
+    const [uploading, setUploading] = useState<boolean[]>([]); // Para rastrear estado de subida por archivo
+    const [uploadedServerFiles, setUploadedServerFiles] = useState<ConsultationFileType[]>([]);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files) {
+            const newFiles = Array.from(event.target.files);
+            setLocalFiles(prev => [...prev, ...newFiles]);
+            setUploading(prev => [...prev, ...newFiles.map(() => false)]); // Inicializar estado de subida
+        }
+    };
+
+    const triggerFileInput = () => {
+        fileInputRef.current?.click();
+    };
+
+    // Simulación de subida. En una app real, llamarías a tu API.
+    const handleUploadFile = async (file: File, index: number) => {
+        if (!consultationId && !confirm("El ID de consulta aún no está disponible. ¿Desea subir el archivo ahora? Se asociará una vez guarde la consulta.")) {
+            // O podrías bloquear la subida hasta tener consultationId
+            // return;
+        }
+        setUploading(prev => prev.map((u, i) => i === index ? true : u));
+        setUploadError(null);
+
+        const formDataApi = new FormData();
+        formDataApi.append('file', file);
+        formDataApi.append('petId', petId);
+        // Si tuvieras un consultationId ya, lo enviarías aquí:
+        // formDataApi.append('consultationId', consultationId);
+
+
+        try {
+            // Si no hay consultationId real aún, podrías subir a una "staging area"
+            // o simplemente no crear el registro en `consultation_files` hasta después.
+            // Por ahora, simularemos que la API puede manejarlo o que se requiere `consultationId`.
+            // La API `/api/consultations/[consultationId]/files` espera un `consultationId` en la URL.
+            // Esto implica que el `consultationId` debe existir.
+
+            // Para este ejemplo, asumiremos que el `consultationId` es necesario.
+            // En un flujo real, podrías:
+            // 1. Guardar la consulta -> obtener ID -> luego permitir subir archivos.
+            // 2. Subir archivos a un ID temporal/staging -> guardar consulta -> asociar archivos.
+
+            // Si `consultationId` es una cadena vacía, la API fallará.
+            // Esto es un punto a mejorar en el flujo general de la aplicación.
+            if (!consultationId) {
+                throw new Error("Se requiere un ID de consulta para subir archivos. Guarde la consulta primero.");
+            }
+
+
+            const response = await fetch(`/api/consultations/${consultationId}/files`, {
+                method: 'POST',
+                body: formDataApi,
+                // No set Content-Type, el browser lo hace por FormData
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || `Error subiendo ${file.name}`);
+            }
+
+            setUploadedServerFiles(prev => [...prev, result.file as ConsultationFileType]);
+            onFilesUpdate([result.file as ConsultationFileType]); // Notificar al padre
+            setLocalFiles(prev => prev.filter((_, i) => i !== index)); // Remover de la lista local si tuvo éxito
+
+        } catch (err) {
+            console.error("Upload error:", err);
+            setUploadError(err instanceof Error ? err.message : "Error desconocido.");
+        } finally {
+            setUploading(prev => prev.map((u, i) => i === index ? false : u));
+        }
+    };
+
+    const removeUploadedFile = async (fileToRemove: ConsultationFileType) => {
+        if (!fileToRemove.id) return;
+        // Lógica para llamar a la API DELETE /api/consultations/files/[fileId]
+        try {
+            const response = await fetch(`/api/consultations/files/${fileToRemove.id}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Error eliminando archivo del servidor.");
+            }
+            setUploadedServerFiles(prev => prev.filter(f => f.id !== fileToRemove.id));
+            onFilesUpdate(uploadedServerFiles.filter(f => f.id !== fileToRemove.id)); // Notificar al padre
+        } catch (err) {
+            console.error("Error deleting file:", err);
+            alert(err instanceof Error ? err.message : "No se pudo eliminar el archivo.");
+        }
+    };
+
+
+    return (
+        <fieldset>
+            <legend>7. Exámenes Complementarios y Resultados</legend>
+            <label htmlFor="complementary_exams_summary">
+                Resumen de Exámenes Realizados / Hallazgos Principales (texto)
+                <textarea
+                    id="complementary_exams_summary"
+                    name="complementary_exams_summary"
+                    value={formData.complementary_exams_summary || ''}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Ej: Hemograma: Leucocitosis leve. Radiografía abdominal: Sin hallazgos significativos."
+                />
+            </label>
+
+            <div>
+                <h6 style={{ marginTop: '1rem' }}>Archivos Adjuntos:</h6>
+                <input
+                    type="file"
+                    multiple
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                    accept="image/*,application/pdf"
+                />
+                <button type="button" onClick={triggerFileInput} className="outline">
+                    <FaPaperclip style={{ marginRight: '0.5rem' }} /> Seleccionar Archivos
+                </button>
+
+                {uploadError && <p className="text-error" style={{ marginTop: '0.5rem' }}>{uploadError}</p>}
+
+                {/* Lista de archivos locales pendientes de subir */}
+                {localFiles.length > 0 && (
+                    <div style={{ marginTop: '1rem', border: '1px dashed #ccc', padding: '1rem' }}>
+                        <p>Archivos listos para subir:</p>
+                        <ul>
+                            {localFiles.map((file, index) => (
+                                <li key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                    <span>{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleUploadFile(file, index)}
+                                        disabled={uploading[index]}
+                                        className="secondary outline"
+                                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                                    >
+                                        {uploading[index] ? <FaSpinner className="animate-spin" /> : <FaUpload />} Subir
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* Lista de archivos ya subidos al servidor */}
+                {uploadedServerFiles.length > 0 && (
+                    <div style={{ marginTop: '1rem' }}>
+                        <p>Archivos adjuntados:</p>
+                        {uploadedServerFiles.map(file => (
+                            <FileUploadItem key={file.id} file={file} onDelete={() => removeUploadedFile(file)} />
+                        ))}
+                    </div>
+                )}
+            </div>
+        </fieldset>
+    );
+} 
+----- Archivo: DiagnosisPlanSection.tsx ----- 
+// src/components/forms/consultation/sections/DiagnosisPlanSection.tsx
+import React from 'react';
+import type { CreateConsultationPayload } from '@/types/index';
+
+interface DiagnosisPlanSectionProps {
+    formData: Partial<CreateConsultationPayload>;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+}
+
+export function DiagnosisPlanSection({ formData, handleChange }: DiagnosisPlanSectionProps) {
+    return (
+        <fieldset>
+            <legend>8. Diagnóstico y Plan</legend>
+            <label htmlFor="presumptive_diagnosis">
+                Diagnóstico Presuntivo Justificado
+                <textarea
+                    id="presumptive_diagnosis"
+                    name="presumptive_diagnosis"
+                    value={formData.presumptive_diagnosis || ''}
+                    onChange={handleChange}
+                    rows={3}
+                    required
+                    placeholder="Describa el diagnóstico presuntivo y la justificación basada en los hallazgos."
+                />
+            </label>
+            <label htmlFor="definitive_diagnosis">
+                Diagnóstico Definitivo (si se tiene)
+                <textarea
+                    id="definitive_diagnosis"
+                    name="definitive_diagnosis"
+                    value={formData.definitive_diagnosis || ''}
+                    onChange={handleChange}
+                    rows={3}
+                />
+            </label>
+            <label htmlFor="therapeutic_plan">
+                Plan Terapéutico
+                <textarea
+                    id="therapeutic_plan"
+                    name="therapeutic_plan"
+                    value={formData.therapeutic_plan || ''}
+                    onChange={handleChange}
+                    rows={4}
+                    required
+                    placeholder="Detallar el tratamiento, recomendaciones, próxima revisión, etc."
+                />
+            </label>
+            <label htmlFor="prognosis">
+                Pronóstico
+                <textarea
+                    id="prognosis"
+                    name="prognosis"
+                    value={formData.prognosis || ''}
+                    onChange={handleChange}
+                    rows={2}
+                    placeholder="Ej: Favorable, reservado, grave."
+                />
+            </label>
+            <label htmlFor="evolution_notes">
+                Evolución (Notas iniciales si aplica durante la consulta)
+                <textarea
+                    id="evolution_notes"
+                    name="evolution_notes"
+                    value={formData.evolution_notes || ''}
+                    onChange={handleChange}
+                    rows={3}
+                />
+            </label>
+        </fieldset>
+    );
+} 
+----- Archivo: DiagnosticApproachSection.tsx ----- 
+// src/components/forms/consultation/sections/DiagnosticApproachSection.tsx
+import React from 'react';
+import type { CreateConsultationPayload } from '@/types/index';
+
+interface DiagnosticApproachSectionProps {
+    formData: Partial<CreateConsultationPayload>;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+}
+
+export function DiagnosticApproachSection({ formData, handleChange }: DiagnosticApproachSectionProps) {
+    return (
+        <fieldset>
+            <legend>6. Abordaje Diagnóstico</legend>
+            <label htmlFor="problem_list">
+                Lista de Problemas
+                <textarea
+                    id="problem_list"
+                    name="problem_list"
+                    value={formData.problem_list || ''}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Ej: 1. Vómito agudo, 2. Letargia, 3. Deshidratación leve"
+                />
+            </label>
+            <label htmlFor="master_problem_list">
+                Lista Maestra (Problema Principal)
+                <textarea
+                    id="master_problem_list"
+                    name="master_problem_list"
+                    value={formData.master_problem_list || ''}
+                    onChange={handleChange}
+                    rows={2}
+                    placeholder="Ej: Síndrome gastrointestinal agudo"
+                />
+            </label>
+            <label htmlFor="differential_diagnoses">
+                Diagnósticos Diferenciales
+                <textarea
+                    id="differential_diagnoses"
+                    name="differential_diagnoses"
+                    value={formData.differential_diagnoses || ''}
+                    onChange={handleChange}
+                    rows={4}
+                    placeholder="Ej: 1. Gastroenteritis viral, 2. Cuerpo extraño, 3. Indiscreción alimentaria, 4. Pancreatitis"
+                />
+            </label>
+        </fieldset>
+    );
+} 
+----- Archivo: IdentitySection.tsx ----- 
+// src/components/forms/consultation/sections/IdentitySection.tsx
+import React from 'react';
+import type { CreateConsultationPayload } from '@/types/index';
+
+interface IdentitySectionProps {
+    formData: Partial<CreateConsultationPayload>;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+}
+
+export function IdentitySection({ formData, handleChange }: IdentitySectionProps) {
+    return (
+        <fieldset>
+            <legend>1. Identificación de la Institución e Historia Clínica</legend>
+            <div className="grid">
+                <label htmlFor="institution_name">
+                    Nombre de la Institución
+                    <input
+                        type="text"
+                        id="institution_name"
+                        name="institution_name" // Campo nuevo, añadir a CreateConsultationPayload y tabla
+                        value={formData.institution_name || ''}
+                        onChange={handleChange}
+                        placeholder="Ej: Clínica Veterinaria XYZ"
+                    />
+                </label>
+            </div>
+            <div className="grid">
+                <label htmlFor="hc_number">
+                    HC # (Número Consecutivo)
+                    <input
+                        type="text"
+                        id="hc_number"
+                        name="hc_number" // Campo nuevo
+                        value={formData.hc_number || ''}
+                        onChange={handleChange}
+                    />
+                </label>
+            </div>
+            <div className="grid">
+                <label htmlFor="consultation_date">
+                    Fecha
+                    <input
+                        type="date"
+                        id="consultation_date"
+                        name="consultation_date"
+                        value={formData.consultation_date || ''}
+                        onChange={handleChange}
+                        required
+                    />
+                </label>
+                <label htmlFor="consultation_time">
+                    Hora
+                    <input
+                        type="time"
+                        id="consultation_time"
+                        name="consultation_time" // Campo nuevo
+                        value={formData.consultation_time || ''}
+                        onChange={handleChange}
+                        required
+                    />
+                </label>
+            </div>
+        </fieldset>
+    );
+} 
+----- Archivo: MedicationsSection.tsx ----- 
+// src/components/forms/consultation/sections/MedicationsSection.tsx
+import React from 'react';
+import type { ConsultationMedicationType } from '@/types/index';
+import { FaPlus, FaTrash } from 'react-icons/fa';
+
+type MedicationFormItem = Omit<ConsultationMedicationType, 'id' | 'consultation_id' | 'created_at'>;
+
+interface MedicationsSectionProps {
+    medications: MedicationFormItem[];
+    onChange: (updatedMedications: MedicationFormItem[]) => void;
+}
+
+export function MedicationsSection({ medications, onChange }: MedicationsSectionProps) {
+    const addMedication = () => {
+        onChange([...medications, { medication_name: '', dosage: '', frequency: '', duration_days: null, notes: '' }]);
+    };
+
+    const removeMedication = (index: number) => {
+        onChange(medications.filter((_, i) => i !== index));
+    };
+
+    const handleMedicationChange = (
+        index: number,
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value } = e.target;
+        let processedValue: string | number | null = value;
+        if (name === "duration_days") {
+            processedValue = value === '' ? null : parseInt(value, 10);
+            if (isNaN(processedValue as number)) processedValue = null;
+        }
+
+        onChange(
+            medications.map((med, i) =>
+                i === index ? { ...med, [name]: processedValue } : med
+            )
+        );
+    };
+
+    return (
+        <fieldset>
+            <legend>Medicamentos Administrados/Prescritos en Consulta</legend>
+            {medications.map((med, index) => (
+                <div key={index} style={{ border: '1px solid #e0e0e0', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' }}>
+                    <div className="grid">
+                        <label htmlFor={`medication_name_${index}`}>
+                            Nombre del Medicamento
+                            <input
+                                type="text"
+                                id={`medication_name_${index}`}
+                                name="medication_name"
+                                value={med.medication_name}
+                                onChange={(e) => handleMedicationChange(index, e)}
+                                required
+                            />
+                        </label>
+                        <label htmlFor={`dosage_${index}`}>
+                            Dosis
+                            <input
+                                type="text"
+                                id={`dosage_${index}`}
+                                name="dosage"
+                                value={med.dosage}
+                                onChange={(e) => handleMedicationChange(index, e)}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="grid">
+                        <label htmlFor={`frequency_${index}`}>
+                            Frecuencia
+                            <input
+                                type="text"
+                                id={`frequency_${index}`}
+                                name="frequency"
+                                value={med.frequency}
+                                onChange={(e) => handleMedicationChange(index, e)}
+                                required
+                            />
+                        </label>
+                        <label htmlFor={`duration_days_${index}`}>
+                            Duración (días)
+                            <input
+                                type="number"
+                                id={`duration_days_${index}`}
+                                name="duration_days"
+                                value={med.duration_days === null || med.duration_days === undefined ? '' : med.duration_days}
+                                onChange={(e) => handleMedicationChange(index, e)}
+                                min="0"
+                            />
+                        </label>
+                    </div>
+                    <label htmlFor={`medication_notes_${index}`}>
+                        Notas Adicionales
+                        <textarea
+                            id={`medication_notes_${index}`}
+                            name="notes"
+                            value={med.notes || ''}
+                            onChange={(e) => handleMedicationChange(index, e)}
+                            rows={2}
+                        />
+                    </label>
+                    <button
+                        type="button"
+                        onClick={() => removeMedication(index)}
+                        className="secondary outline"
+                        style={{ marginTop: '0.5rem', maxWidth: 'fit-content' }}
+                        aria-label="Eliminar medicamento"
+                    >
+                        <FaTrash />
+                    </button>
+                </div>
+            ))}
+            <button type="button" onClick={addMedication} className="outline">
+                <FaPlus style={{ marginRight: '0.5rem' }} /> Agregar Medicamento
+            </button>
+        </fieldset>
+    );
+} 
+----- Archivo: ObservationsSignatureSection.tsx ----- 
+// src/components/forms/consultation/sections/ObservationsSignatureSection.tsx
+import React from 'react';
+import type { CreateConsultationPayload } from '@/types/index';
+
+interface ObservationsSignatureSectionProps {
+    formData: Partial<CreateConsultationPayload>;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    professionalName: string;
+    professionalRegistration: string;
+}
+
+export function ObservationsSignatureSection({
+    formData,
+    handleChange,
+    professionalName,
+    professionalRegistration
+}: ObservationsSignatureSectionProps) {
+    return (
+        <fieldset>
+            <legend>9. Observaciones y Profesional</legend>
+            <label htmlFor="general_observations">
+                Observaciones Adicionales / Anexos (descripción)
+                <textarea
+                    id="general_observations"
+                    name="general_observations"
+                    value={formData.general_observations || ''}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Consentimientos informados, recomendaciones de egreso, etc."
+                />
+            </label>
+
+            <div className="grid">
+                <label>
+                    Nombre MV o MVZ Tratante
+                    <input type="text" value={professionalName} readOnly disabled />
+                </label>
+                <label>
+                    Matrícula Profesional
+                    <input type="text" value={professionalRegistration} readOnly disabled />
+                </label>
+            </div>
+            <label>
+                Firma (Digital o constancia)
+                {/* Este campo es complejo de implementar digitalmente sin herramientas específicas.
+                    Podría ser un campo de texto donde el vet confirma su responsabilidad. */}
+                <input
+                    type="text"
+                    name="signature_confirmation" // Nuevo campo
+                    value={formData.signature_confirmation || ""}
+                    onChange={handleChange}
+                    placeholder="Confirmo la veracidad de esta consulta bajo mi matrícula profesional."
+                />
+            </label>
+        </fieldset>
+    );
+} 
+----- Archivo: OwnerPetSection.tsx ----- 
+// src/components/forms/consultation/sections/OwnerPetSection.tsx
+import React from 'react';
+import type { OwnerDataType, PetType } from '@/types/index';
+
+interface OwnerPetSectionProps {
+    owner: OwnerDataType | null;
+    pet: PetType;
+    // basicPetData?: BasicDataType; // Podrías pasar BasicDataType si ya la tienes cargada
+}
+
+export function OwnerPetSection({ owner, pet /*, basicPetData */ }: OwnerPetSectionProps) {
+    // Idealmente, los datos de 'Especie', 'Sexo', 'Fecha de nacimiento', 'Peso (gr.)', 'Chip #'
+    // vendrían de `BasicDataType` de la mascota.
+    // Aquí simulamos algunos o los dejamos como placeholder.
+    // En una implementación real, cargarías `BasicDataType` junto con `PetType`.
+
+    return (
+        <>
+            <fieldset>
+                <legend>2. Datos del Propietario</legend>
+                <div className="grid">
+                    <label>
+                        Nombre Propietario
+                        <input type="text" value={`${owner?.name || ''} ${owner?.last_name || ''}`} readOnly disabled />
+                    </label>
+                    <label>
+                        Teléfono Celular
+                        <input type="text" value={owner?.phone || ''} readOnly disabled />
+                    </label>
+                </div>
+                <label>
+                    Correo Electrónico
+                    <input type="text" value={owner?.email || ''} readOnly disabled />
+                </label>
+                {/* Puedes añadir más campos del propietario si son relevantes y están disponibles */}
+            </fieldset>
+
+            <fieldset>
+                <legend>3. Reseña de la Mascota</legend>
+                <div className="grid">
+                    <label>
+                        Nombre Paciente
+                        <input type="text" value={pet.name} readOnly disabled />
+                    </label>
+                    <label>
+                        Especie
+                        {/* <input type="text" value={basicPetData?.pet_type || 'N/A'} readOnly disabled /> */}
+                        <input type="text" value={'N/A'} readOnly disabled />
+                    </label>
+                </div>
+                <div className="grid">
+                    <label>
+                        Raza
+                        {/* <input type="text" value={basicPetData?.race || 'N/A'} readOnly disabled /> */}
+                        <input type="text" value={'N/A'} readOnly disabled />
+                    </label>
+                    <label>
+                        Sexo
+                        {/* <input type="text" value={basicPetData?.gender || 'N/A'} readOnly disabled /> */}
+                        <input type="text" value={'N/A'} readOnly disabled />
+                    </label>
+                </div>
+                <div className="grid">
+                    <label>
+                        Fecha de Nacimiento
+                        {/* <input type="date" value={basicPetData?.birth_date ? Dates.format(basicPetData.birth_date) : ''} readOnly disabled /> */}
+                        <input type="text" value={'N/A'} readOnly disabled />
+                    </label>
+                    <label>
+                        Peso (gr.)
+                        {/* <input type="text" value={basicPetData?.weight || 'N/A'} readOnly disabled /> */}
+                        <input type="text" value={'N/A'} readOnly disabled />
+                    </label>
+                </div>
+                <div className="grid">
+                    <label>
+                        Color y Tipo de Pelaje
+                        <input type="text" name="coat_description" placeholder="Describir color y pelaje" readOnly disabled />
+                    </label>
+                    <label>
+                        Chip #
+                        {/* <input type="text" value={basicPetData?.chip_number || 'N/A'} readOnly disabled /> */}
+                        <input type="text" value={'N/A'} readOnly disabled />
+                    </label>
+                </div>
+                {/* Añade más campos de la reseña según sea necesario */}
+            </fieldset>
+        </>
+    );
+} 
+----- Archivo: PhysicalExamSection.tsx ----- 
+// src/components/forms/consultation/sections/PhysicalExamSection.tsx
+import React from 'react';
+import type { CreateConsultationPayload } from '@/types/index';
+
+interface PhysicalExamSectionProps {
+    formData: Partial<CreateConsultationPayload>;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+    handleNumericChange: (name: keyof CreateConsultationPayload, value: string) => void;
+}
+
+export function PhysicalExamSection({ formData, handleChange, handleNumericChange }: PhysicalExamSectionProps) {
+    return (
+        <fieldset>
+            <legend>5. Examen Físico General</legend>
+            
+            {/* Sub-sección: Constantes Fisiológicas y Estado General */}
+            <div className="grid">
+                <label htmlFor="body_condition_score">
+                    Condición Corporal (1-5)
+                    <input
+                        type="number"
+                        id="body_condition_score"
+                        name="body_condition_score"
+                        value={formData.body_condition_score === undefined || formData.body_condition_score === null ? '' : formData.body_condition_score}
+                        onChange={(e) => handleNumericChange('body_condition_score', e.target.value)}
+                        min="1" max="5" step="0.5"
+                        placeholder="Ej: 3"
+                    />
+                </label>
+                <label htmlFor="temperature_celsius">
+                    T (°C)
+                    <input
+                        type="number"
+                        id="temperature_celsius"
+                        name="temperature_celsius"
+                        value={formData.temperature_celsius === undefined || formData.temperature_celsius === null ? '' : formData.temperature_celsius}
+                        onChange={(e) => handleNumericChange('temperature_celsius', e.target.value)}
+                        step="0.1"
+                        placeholder="Ej: 38.5"
+                    />
+                </label>
+            </div>
+            <div className="grid">
+                 <label htmlFor="heart_rate_bpm">
+                    FC (L/min)
+                    <input
+                        type="number"
+                        id="heart_rate_bpm"
+                        name="heart_rate_bpm"
+                        value={formData.heart_rate_bpm === undefined || formData.heart_rate_bpm === null ? '' : formData.heart_rate_bpm}
+                        onChange={(e) => handleNumericChange('heart_rate_bpm', e.target.value)}
+                        min="0"
+                        placeholder="Ej: 120"
+                    />
+                </label>
+                <label htmlFor="respiratory_rate_rpm">
+                    FR (R/min)
+                    <input
+                        type="number"
+                        id="respiratory_rate_rpm"
+                        name="respiratory_rate_rpm"
+                        value={formData.respiratory_rate_rpm === undefined || formData.respiratory_rate_rpm === null ? '' : formData.respiratory_rate_rpm}
+                        onChange={(e) => handleNumericChange('respiratory_rate_rpm', e.target.value)}
+                        min="0"
+                        placeholder="Ej: 20"
+                    />
+                </label>
+            </div>
+            <div className="grid">
+                <label htmlFor="capillary_refill_time_sec">
+                    TRPC (seg) / TLLC (seg)
+                    <input
+                        type="number"
+                        id="capillary_refill_time_sec"
+                        name="capillary_refill_time_sec"
+                        value={formData.capillary_refill_time_sec === undefined || formData.capillary_refill_time_sec === null ? '' : formData.capillary_refill_time_sec}
+                        onChange={(e) => handleNumericChange('capillary_refill_time_sec', e.target.value)}
+                        min="0" step="0.1"
+                        placeholder="Ej: 1.5"
+                    />
+                </label>
+                <label htmlFor="pulse_description"> {/* Nuevo campo para descripción del pulso */}
+                    Pulso (descripción)
+                    <input
+                        type="text"
+                        id="pulse_description"
+                        name="pulse_description"
+                        value={formData.pulse_description || ''}
+                        onChange={handleChange}
+                        placeholder="Ej: Fuerte, rítmico"
+                    />
+                </label>
+            </div>
+            <div className="grid">
+                <label htmlFor="mucous_membranes_description">
+                    Mucosas
+                    <input
+                        type="text"
+                        id="mucous_membranes_description"
+                        name="mucous_membranes_description"
+                        value={formData.mucous_membranes_description || ''}
+                        onChange={handleChange}
+                        placeholder="Ej: Rosadas, húmedas"
+                    />
+                </label>
+                <label htmlFor="hydration_percentage_description"> {/* Cambiado para ser descripción */}
+                    Porcentaje Deshidratación (descripción)
+                    <input
+                        type="text"
+                        id="hydration_percentage_description"
+                        name="hydration_percentage_description" // Renombrar en types/schema
+                        value={formData.hydration_percentage_description || ''}
+                        onChange={handleChange}
+                        placeholder="Ej: 5% estimado, leve"
+                    />
+                </label>
+            </div>
+             <label htmlFor="sense_organs_description">
+                Órganos de los Sentidos (general)
+                <textarea
+                    id="sense_organs_description"
+                    name="sense_organs_description"
+                    value={formData.sense_organs_description || ''}
+                    onChange={handleChange}
+                    rows={2}
+                    placeholder="Observaciones generales sobre ojos, oídos, nariz..."
+                />
+            </label>
+            
+            {/* Sub-sección: Examen por Sistemas */}
+            <h6 style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>Examen por Sistemas:</h6>
+            <label htmlFor="skin_and_coat_description">
+                Piel y Pelaje
+                <textarea id="skin_and_coat_description" name="skin_and_coat_description" value={formData.skin_and_coat_description || ''} onChange={handleChange} rows={2} />
+            </label>
+            <label htmlFor="lymph_nodes_description">
+                Ganglios Linfáticos
+                <textarea id="lymph_nodes_description" name="lymph_nodes_description" value={formData.lymph_nodes_description || ''} onChange={handleChange} rows={2} />
+            </label>
+            <label htmlFor="digestive_system_findings">
+                Sistema Digestivo
+                <textarea id="digestive_system_findings" name="digestive_system_findings" value={formData.digestive_system_findings || ''} onChange={handleChange} rows={2} />
+            </label>
+            <label htmlFor="respiratory_system_findings">
+                Sistema Respiratorio
+                <textarea id="respiratory_system_findings" name="respiratory_system_findings" value={formData.respiratory_system_findings || ''} onChange={handleChange} rows={2} />
+            </label>
+            <label htmlFor="endocrine_system_findings">
+                Sistema Endocrino
+                <textarea id="endocrine_system_findings" name="endocrine_system_findings" value={formData.endocrine_system_findings || ''} onChange={handleChange} rows={2} />
+            </label>
+            <label htmlFor="musculoskeletal_system_findings">
+                Sistema Músculo Esquelético
+                <textarea id="musculoskeletal_system_findings" name="musculoskeletal_system_findings" value={formData.musculoskeletal_system_findings || ''} onChange={handleChange} rows={2} />
+            </label>
+            <label htmlFor="nervous_system_findings">
+                Sistema Nervioso
+                <textarea id="nervous_system_findings" name="nervous_system_findings" value={formData.nervous_system_findings || ''} onChange={handleChange} rows={2} />
+            </label>
+            <label htmlFor="urinary_system_findings">
+                Sistema Urinario
+                <textarea id="urinary_system_findings" name="urinary_system_findings" value={formData.urinary_system_findings || ''} onChange={handleChange} rows={2} />
+            </label>
+            <label htmlFor="reproductive_system_findings">
+                Sistema Reproductivo
+                <textarea id="reproductive_system_findings" name="reproductive_system_findings" value={formData.reproductive_system_findings || ''} onChange={handleChange} rows={2} />
+            </label>
+            <label htmlFor="rectal_palpation_findings">
+                Palpación Rectal (si aplica)
+                <textarea id="rectal_palpation_findings" name="rectal_palpation_findings" value={formData.rectal_palpation_findings || ''} onChange={handleChange} rows={2} />
+            </label>
+            <label htmlFor="other_physical_findings">
+                Otros Hallazgos Físicos
+                <textarea id="other_physical_findings" name="other_physical_findings" value={formData.other_physical_findings || ''} onChange={handleChange} rows={2} />
+            </label>
+        </fieldset>
+    );
+} 
+----- Archivo: ProceduresSection.tsx ----- 
+// src/components/forms/consultation/sections/ProceduresSection.tsx
+import React from 'react';
+import type { ConsultationProcedureType } from '@/types/index'; // Usaremos el tipo base
+import { FaPlus, FaTrash } from 'react-icons/fa';
+
+// El tipo para el formulario interno, sin los campos generados por BD
+type ProcedureFormItem = Omit<ConsultationProcedureType, 'id' | 'consultation_id' | 'created_at'>;
+
+interface ProceduresSectionProps {
+    procedures: ProcedureFormItem[];
+    onChange: (updatedProcedures: ProcedureFormItem[]) => void;
+}
+
+export function ProceduresSection({ procedures, onChange }: ProceduresSectionProps) {
+    const addProcedure = () => {
+        onChange([...procedures, { procedure_name: '', description: '' }]);
+    };
+
+    const removeProcedure = (index: number) => {
+        const updated = procedures.filter((_, i) => i !== index);
+        onChange(updated);
+    };
+
+    const handleProcedureChange = (
+        index: number,
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value } = e.target;
+        const updated = procedures.map((proc, i) =>
+            i === index ? { ...proc, [name]: value } : proc
+        );
+        onChange(updated);
+    };
+
+    return (
+        <fieldset>
+            <legend>Procedimientos Realizados en Consulta</legend>
+            {procedures.map((proc, index) => (
+                <div key={index} className="grid" style={{ alignItems: 'flex-end', marginBottom: '1rem', border: '1px solid #e0e0e0', padding: '1rem', borderRadius: '4px' }}>
+                    <label htmlFor={`procedure_name_${index}`}>
+                        Nombre del Procedimiento
+                        <input
+                            type="text"
+                            id={`procedure_name_${index}`}
+                            name="procedure_name"
+                            value={proc.procedure_name}
+                            onChange={(e) => handleProcedureChange(index, e)}
+                            placeholder="Ej: Limpieza de oídos"
+                            required
+                        />
+                    </label>
+                    <label htmlFor={`procedure_description_${index}`} className="pico-col-span-2"> {/* Ocupa más espacio si es necesario */}
+                        Descripción/Notas
+                        <textarea
+                            id={`procedure_description_${index}`}
+                            name="description"
+                            value={proc.description || ''}
+                            onChange={(e) => handleProcedureChange(index, e)}
+                            rows={2}
+                        />
+                    </label>
+                    <button
+                        type="button"
+                        onClick={() => removeProcedure(index)}
+                        className="secondary outline"
+                        style={{ maxWidth: 'fit-content', marginBottom: '0.5rem' }} // PicoCSS a veces necesita ajustes para botones pequeños
+                        aria-label="Eliminar procedimiento"
+                    >
+                        <FaTrash />
+                    </button>
+                </div>
+            ))}
+            <button type="button" onClick={addProcedure} className="outline">
+                <FaPlus style={{ marginRight: '0.5rem' }} /> Agregar Procedimiento
+            </button>
+        </fieldset>
+    );
+} 
+----- Archivo: page.tsx ----- 
+// src/app/pages/vet/consultation/[petId]/page.tsx
+"use client";
+import React, { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { Title, Loading, DataNotFound } from "@/components/index";
+import { PetType, CreateConsultationPayload } from "@/types/index";
+import { useSessionContext } from "@/context/SessionProvider";
+import { useStorageContext } from "@/context/StorageProvider";
+import { useVetContext } from "@/context/VetContext"; // Si los datos del vet vienen de aquí
+import { getFetch, postFetch } from "@/app/api";
+import { FaClipboardList } from "react-icons/fa";
+import { ConsultationForm } from "../ConsultationForm";
+
+export default function ConsultationPage() {
+    const router = useRouter();
+    const params = useParams();
+    const petId = params.petId as string;
+
+    const { db: session } = useSessionContext();
+    const { storedPet, storedVetAccess, setStoredPet } = useStorageContext();
+    const { vet: veterinarianData } = useVetContext(); // Datos del veterinario logueado
+
+    const [pet, setPet] = useState<PetType | null>(storedPet.id === petId ? storedPet : null);
+    const [loadingPet, setLoadingPet] = useState<boolean>(!pet);
+    const [errorPet, setErrorPet] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState<boolean>(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!petId) {
+            setErrorPet("ID de mascota no encontrado en la ruta.");
+            setLoadingPet(false);
+            return;
+        }
+
+        if (storedPet.id === petId) {
+            setPet(storedPet);
+            setLoadingPet(false);
+        } else {
+            const fetchPet = async () => {
+                try {
+                    const response = await getFetch(`/api/pets/${petId}`);
+                    const petData = await response.json();
+                    if (!response.ok || !petData) {
+                        throw new Error(petData.message || "Mascota no encontrada");
+                    }
+                    setPet(petData);
+                    setStoredPet(petData); // Actualizar el contexto si se carga una diferente
+                } catch (err) {
+                    console.error("Error fetching pet:", err);
+                    setErrorPet(err instanceof Error ? err.message : "Error cargando datos de la mascota.");
+                } finally {
+                    setLoadingPet(false);
+                }
+            };
+            fetchPet();
+        }
+    }, [petId, storedPet, setStoredPet]);
+
+    const handleFormSubmit = async (formData: CreateConsultationPayload) => {
+        setSubmitting(true);
+        setSubmitError(null);
+
+        const payload: CreateConsultationPayload = {
+            ...formData,
+            pet_id: petId,
+        };
+
+        // Determinar quién registra la consulta
+        if (veterinarianData?.vet_id && session?.user?.user_metadata?.role === 'veterinarian') {
+            payload.veterinarian_id = veterinarianData.vet_id;
+        } else if (storedVetAccess?.id) {
+            // Si se accedió con código y el usuario actual NO es un veterinario con sesión
+            // (o si queremos priorizar el vet_access_id si existe)
+            payload.veterinary_access_id = storedVetAccess.id;
+            // Opcionalmente, podrías querer también el ID del usuario que está usando el código si está logueado
+            // payload.uploaded_by_user_id = session?.user?.id;
+        } else {
+            setSubmitError("No se pudo identificar al veterinario responsable. Inicie sesión como veterinario o use un código de acceso válido.");
+            setSubmitting(false);
+            return;
+        }
+
+        try {
+            const response = await postFetch('/api/consultations', undefined, payload);
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Error al guardar la consulta.");
+            }
+
+            // Aquí podrías manejar la subida de archivos si se hace después de crear la consulta
+            // o si el `ConsultationForm` maneja la subida de archivos y pasa las URLs/IDs
+
+            alert("Consulta guardada exitosamente.");
+            // Redirigir a la página de la mascota o a una lista de consultas
+            router.push(`/pages/pet/basic-data`); // O una ruta más apropiada
+
+        } catch (err) {
+            console.error("Error submitting consultation:", err);
+            setSubmitError(err instanceof Error ? err.message : "Error desconocido al guardar.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (loadingPet) return <Loading />;
+    if (errorPet) return <DataNotFound message={errorPet} />;
+    if (!pet) return <DataNotFound message="Mascota no encontrada." />;
+
+    return (
+        <main style={{ padding: "2rem" }}>
+            <Title icon={<FaClipboardList />} title={`Nueva Consulta para ${pet.name}`} />
+
+            {submitError && <p className="text-error" style={{ marginTop: '1rem' }}>{submitError}</p>}
+
+            <ConsultationForm
+                pet={pet}
+                onSubmit={handleFormSubmit}
+                isSubmitting={submitting}
+            // Pasar datos del veterinario si se van a mostrar en el form (ej. nombre del profesional)
+            // veterinarianInfo={veterinarianData || storedVetAccess}
+            />
+        </main>
+    );
+} 
 ----- Archivo: page.tsx ----- 
 // app/pages/vet/[code]/page.tsx
 "use client";
@@ -2604,6 +4363,7 @@ import { useEffect, useState } from "react";
 import { useStorageContext } from "@/context/StorageProvider";
 import PetEditForm from "./components/forms/PetEditForm";
 import { PetType } from "@/types/index";
+import { useRouter } from "next/navigation";
 
 interface VetPageProps {
   params: Promise<{ code: string }>;
@@ -2614,6 +4374,7 @@ export default function VetPage({ params }: VetPageProps) {
   const [pet, setPet] = useState<PetType | null>(null);
   const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   const storage = useStorageContext();
 
@@ -2638,7 +4399,9 @@ export default function VetPage({ params }: VetPageProps) {
         }
 
         setPet(data.pet);
+        router.replace(`/pages/vet/consultation/${data.pet.id}`);
         setIsValid(true);
+
       } catch (err) {
         console.error("Error validando código veterinario:", err);
         setMessage("Ocurrió un error al validar el código.");
@@ -5590,7 +7353,7 @@ export default function VeterinarianPetCodeModal() {
                         city: vet.city
                     });
                     setShowVetPetCodeModal(false);
-                    router.push(`/pages/vet/${sanitizedCode}`);
+                    router.push(`/pages/vet/consultation/${petData.id}`);
                 }
             }
         } catch {
@@ -5718,7 +7481,7 @@ export default function VeterinaryModal() {
           city: codeData.city
         });
         setShowVetModal(false);
-        router.push(`/pages/vet/${sanitizedCode}`);
+        router.push(`/pages/vet/consultation/${petData.id}`);
       }
     } catch {
       setError("Ocurrió un error inesperado.");
@@ -7306,7 +9069,13 @@ export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
- 
+/*import { createBrowserClient } from '@supabase/ssr'
+
+export const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+*/ 
 ----- Archivo: basicData.repository.ts ----- 
 // src/repositories/basicData.repository.ts
 import { supabase } from '@/lib/client/supabase';
@@ -7373,6 +9142,408 @@ export default class ConditionRepository implements FormRepository<ConditionData
     }
 }
  
+----- Archivo: consultation.repository.ts ----- 
+// src/repos/consultation.repository.ts
+import { supabase } from '@/lib/client/supabase';
+import type { ConsultationType, CreateConsultationPayload } from '@/types/index';
+
+export default class ConsultationRepository {
+    static async create(payload: CreateConsultationPayload): Promise<{ data: ConsultationType | null; error: Error | null }> {
+        // Separar los campos principales para el JSONB y los arrays
+        const {
+            pet_id, // Este va como parámetro separado
+            veterinarian_id, // Este va como parámetro separado
+            veterinary_access_id, // Este va como parámetro separado
+            procedures, // Este va como parámetro de array separado
+            medications, // Este va como parámetro de array separado
+            ...consultation_data_fields // El resto va en el JSONB
+        } = payload;
+
+        // El objeto `consultation_data_fields` ya debería tener la estructura correcta
+        // si `CreateConsultationPayload` se define adecuadamente.
+        // Asegúrate de que las claves en `consultation_data_fields` coincidan con los
+        // nombres de campo en tu `CREATE TYPE public.consultation_input_type AS (...)`.
+        // Por ejemplo, si tu tipo tiene `consultation_date DATE`, tu objeto JS debe tener una clave `consultation_date`.
+
+        // Sanitización: Asegurar que los campos opcionales que no se envían sean null,
+        // y que los tipos de datos sean compatibles con lo que espera el tipo compuesto.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mainConsultDataForRPC: { [key: string]: any } = {};
+        const typeFields = [ // Lista de campos definidos en consultation_input_type
+            'p_consultation_date', 'p_consultation_time', 'p_hc_number', 'p_institution_name',
+            'p_reason_for_consultation', 'p_current_diet', 'p_previous_illnesses', 'p_previous_surgeries',
+            'p_vaccination_history', 'p_last_deworming_product', 'p_recent_treatments', 'p_recent_travels',
+            'p_animal_behavior_owner_description', 'p_lives_with_other_animals_details',
+            'p_sterilized_status', 'p_birth_count', 'p_body_condition_score', 'p_temperature_celsius',
+            'p_heart_rate_bpm', 'p_respiratory_rate_rpm', 'p_capillary_refill_time_sec', 'p_pulse_description',
+            'p_mucous_membranes_description', 'p_hydration_percentage_description', 'p_sense_organs_description',
+            'p_skin_and_coat_description', 'p_lymph_nodes_description', 'p_digestive_system_findings',
+            'p_respiratory_system_findings', 'p_endocrine_system_findings', 'p_musculoskeletal_system_findings',
+            'p_nervous_system_findings', 'p_urinary_system_findings', 'p_reproductive_system_findings',
+            'p_rectal_palpation_findings', 'p_other_physical_findings', 'p_problem_list', 'p_master_problem_list',
+            'p_differential_diagnoses', 'p_complementary_exams_summary', 'p_presumptive_diagnosis',
+            'p_definitive_diagnosis', 'p_therapeutic_plan', 'p_prognosis', 'p_evolution_notes',
+            'p_general_observations', 'p_signature_confirmation'
+        ];
+
+        for (const key of typeFields) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const value = (consultation_data_fields as any)[key.replace('p_', '')];
+            if (value === undefined || value === '') {
+                // Para campos numéricos o de fecha que son opcionales, un string vacío puede causar error en el CAST de SQL.
+                // Es mejor enviar `null` si el campo es opcional y está vacío.
+                if (['p_birth_count', 'p_body_condition_score', 'p_temperature_celsius', /* otros numéricos/fecha */].includes(key) && value === '') {
+                    mainConsultDataForRPC[key] = null;
+                } else if (value === undefined) {
+                    mainConsultDataForRPC[key] = null;
+                } else {
+                    mainConsultDataForRPC[key] = value; // Mantener string vacío si el tipo SQL es TEXT y se permite
+                }
+            } else {
+                mainConsultDataForRPC[key] = value;
+            }
+        }
+
+        const proceduresForRPC = procedures?.map(p => ({
+            procedure_name: p.procedure_name,
+            description: p.description ?? null
+        })) || [];
+
+        const medicationsForRPC = medications?.map(m => ({
+            medication_name: m.medication_name,
+            dosage: m.dosage,
+            frequency: m.frequency,
+            duration_days: m.duration_days ?? null,
+            notes: m.notes ?? null
+        })) || [];
+
+        const rpcParams = {
+            p_pet_id: pet_id,
+            p_veterinarian_id: veterinarian_id || null,
+            p_veterinary_access_id: veterinary_access_id || null,
+            p_consultation_main_data: mainConsultDataForRPC, 
+            p_procedures: proceduresForRPC,
+            p_medications: medicationsForRPC
+        };
+
+        try {
+            console.log("Parámetros enviados a RPC insert_consultation_with_type:", JSON.stringify(rpcParams, null, 2));
+            const { data, error } = await supabase.rpc('insert_consultation_with_type', rpcParams);
+
+            if (error) throw error;
+
+            return { data: data as ConsultationType, error: null };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationRepository.create (RPC call):', error);
+            return { data: null, error: new Error(error.message || 'RPC call to insert_consultation_with_type failed') };
+        }
+
+    }
+
+    // ... (tus otros métodos findByPetId, findById) ...
+    static async findByPetId(petId: string): Promise<{ data: ConsultationType[] | null; error: Error | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('consultations')
+                .select(`
+                *,
+                procedures:consultation_procedures(*),
+                medications:consultation_medications(*),
+                files:consultation_files(*)
+            `)
+                .eq('pet_id', petId)
+                .order('consultation_date', { ascending: false, nullsFirst: false })
+                .order('consultation_time', { ascending: false, nullsFirst: false });
+
+
+            if (error) throw error;
+            return { data, error: null };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationRepository.findByPetId:', error);
+            return { data: null, error };
+        }
+    }
+
+    static async findById(consultationId: string): Promise<{ data: ConsultationType | null; error: Error | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('consultations')
+                .select(`
+                *,
+                procedures:consultation_procedures(*),
+                medications:consultation_medications(*),
+                files:consultation_files(*)
+            `)
+                .eq('id', consultationId)
+                .single();
+
+            if (error) throw error;
+            return { data, error: null };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationRepository.findById:', error);
+            return { data: null, error };
+        }
+    }
+} 
+----- Archivo: consultationFile.repository.ts ----- 
+// src/repos/consultationFile.repository.ts
+import { supabase } from '@/lib/client/supabase';
+import type { ConsultationFileType } from '@/types/index';
+
+const CONSULTATION_FILES_BUCKET = 'consultation-files'; // Define tu bucket
+
+export default class ConsultationFileRepository {
+    static async uploadAndCreateRecord(
+        consultationId: string,
+        petId: string, // Necesario para la ruta del archivo
+        file: File,
+        uploadedByUserId?: string | null
+    ): Promise<{ data: ConsultationFileType | null; error: Error | null }> {
+        const fileName = `${file.name}`; // Podrías añadir un timestamp o UUID para unicidad
+        const filePath = `${petId}/${consultationId}/${fileName}`;
+
+        try {
+            // 1. Subir archivo a Supabase Storage
+            const { error: uploadError } = await supabase.storage
+                .from(CONSULTATION_FILES_BUCKET)
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            // 2. Crear registro en la tabla consultation_files
+            const fileRecord: Omit<ConsultationFileType, 'id' | 'created_at'> = {
+                consultation_id: consultationId,
+                file_name: fileName,
+                file_path: filePath,
+                file_type: file.type,
+                file_size_bytes: file.size,
+                uploaded_by_user_id: uploadedByUserId || undefined,
+            };
+
+            const { data: dbData, error: dbError } = await supabase
+                .from('consultation_files')
+                .insert(fileRecord)
+                .select()
+                .single();
+
+            if (dbError) {
+                // Si falla la inserción en BD, intentar eliminar el archivo de Storage (rollback)
+                await supabase.storage.from(CONSULTATION_FILES_BUCKET).remove([filePath]);
+                throw dbError;
+            }
+
+            return { data: dbData, error: null };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationFileRepository.uploadAndCreateRecord:', error);
+            return { data: null, error };
+        }
+    }
+
+    static async findByConsultationId(consultationId: string): Promise<{ data: ConsultationFileType[] | null; error: Error | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('consultation_files')
+                .select('*')
+                .eq('consultation_id', consultationId)
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+            return { data, error: null };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationFileRepository.findByConsultationId:', error);
+            return { data: null, error };
+        }
+    }
+
+    static async delete(fileId: string): Promise<{ error: Error | null }> {
+        try {
+            // 1. Obtener el path del archivo para eliminarlo de Storage
+            const { data: fileRecord, error: findError } = await supabase
+                .from('consultation_files')
+                .select('file_path')
+                .eq('id', fileId)
+                .single();
+
+            if (findError) throw findError;
+            if (!fileRecord) throw new Error('File record not found for deletion.');
+
+            // 2. Eliminar de la base de datos
+            const { error: dbDeleteError } = await supabase
+                .from('consultation_files')
+                .delete()
+                .eq('id', fileId);
+
+            if (dbDeleteError) throw dbDeleteError;
+
+            // 3. Eliminar de Supabase Storage
+            const { error: storageDeleteError } = await supabase.storage
+                .from(CONSULTATION_FILES_BUCKET)
+                .remove([fileRecord.file_path]);
+
+            // Incluso si la eliminación de storage falla, el registro en BD ya se fue.
+            // Podrías loggear el error de storage.
+            if (storageDeleteError) {
+                console.warn('Failed to delete file from storage, but DB record removed:', storageDeleteError);
+            }
+
+            return { error: null };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationFileRepository.delete:', error);
+            return { error };
+        }
+    }
+
+    /**
+     * Genera una URL firmada para descargar un archivo.
+     * La URL tiene un tiempo de expiración.
+     */
+    static async getSignedUrl(filePath: string, expiresInSeconds = 3600): Promise<{ signedURL: string | null; error: Error | null }> {
+        try {
+            const { data, error } = await supabase
+                .storage
+                .from(CONSULTATION_FILES_BUCKET)
+                .createSignedUrl(filePath, expiresInSeconds);
+
+            if (error) throw error;
+            return { signedURL: data?.signedUrl || null, error: null };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error creating signed URL:', error);
+            return { signedURL: null, error };
+        }
+    }
+} 
+----- Archivo: consultationMedication.repository.ts ----- 
+// src/repos/consultationMedication.repository.ts
+import { supabase } from '@/lib/client/supabase';
+import type { ConsultationMedicationType } from '@/types/index';
+
+export default class ConsultationMedicationRepository {
+    static async createAll(
+        consultationId: string,
+        medications: Omit<ConsultationMedicationType, 'id' | 'consultation_id' | 'created_at'>[]
+    ): Promise<{ data: ConsultationMedicationType[] | null; error: Error | null }> {
+        const medicationsToInsert = medications.map(med => ({
+            ...med,
+            consultation_id: consultationId,
+        }));
+
+        try {
+            const { data, error } = await supabase
+                .from('consultation_medications')
+                .insert(medicationsToInsert)
+                .select();
+
+            if (error) throw error;
+            return { data, error: null };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationMedicationRepository.createAll:', error);
+            return { data: null, error };
+        }
+    }
+
+    static async findByConsultationId(consultationId: string): Promise<{ data: ConsultationMedicationType[] | null; error: Error | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('consultation_medications')
+                .select('*')
+                .eq('consultation_id', consultationId)
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+            return { data, error: null };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationMedicationRepository.findByConsultationId:', error);
+            return { data: null, error };
+        }
+    }
+     static async delete(medicationId: string): Promise<{ error: Error | null }> {
+        try {
+            const { error } = await supabase
+                .from('consultation_medications')
+                .delete()
+                .eq('id', medicationId);
+
+            if (error) throw error;
+            return { error: null };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationMedicationRepository.delete:', error);
+            return { error };
+        }
+    }
+} 
+----- Archivo: consultationProcedure.repository.ts ----- 
+// src/repos/consultationProcedure.repository.ts
+import { supabase } from '@/lib/client/supabase';
+import type { ConsultationProcedureType } from '@/types/index';
+
+export default class ConsultationProcedureRepository {
+    static async createAll(
+        consultationId: string,
+        procedures: Omit<ConsultationProcedureType, 'id' | 'consultation_id' | 'created_at'>[]
+    ): Promise<{ data: ConsultationProcedureType[] | null; error: Error | null }> {
+        const proceduresToInsert = procedures.map(proc => ({
+            ...proc,
+            consultation_id: consultationId,
+        }));
+
+        try {
+            const { data, error } = await supabase
+                .from('consultation_procedures')
+                .insert(proceduresToInsert)
+                .select();
+
+            if (error) throw error;
+            return { data, error: null };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationProcedureRepository.createAll:', error);
+            return { data: null, error };
+        }
+    }
+
+    static async findByConsultationId(consultationId: string): Promise<{ data: ConsultationProcedureType[] | null; error: Error | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('consultation_procedures')
+                .select('*')
+                .eq('consultation_id', consultationId)
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+            return { data, error: null };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationProcedureRepository.findByConsultationId:', error);
+            return { data: null, error };
+        }
+    }
+
+    static async delete(procedureId: string): Promise<{ error: Error | null }> {
+        try {
+            const { error } = await supabase
+                .from('consultation_procedures')
+                .delete()
+                .eq('id', procedureId);
+
+            if (error) throw error;
+            return { error: null };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            console.error('Error in ConsultationProcedureRepository.delete:', error);
+            return { error };
+        }
+    }
+} 
 ----- Archivo: index.ts ----- 
 export { default as BasicDataRepository } from './basicData.repository';
 export { default as ConditionRepository } from './condition.repository';
@@ -7385,7 +9556,12 @@ export { default as PlanRepository } from './plan.repository';
 export { default as SubscriptionRepository } from './subscription.repository';
 export { default as SurgeryRepository } from './surgery.repository';
 export { default as VaccineRepository } from './vaccine.repository';
-export { default as VeterinaryAccessRepository } from './veterinaryAccess.repository'; 
+export { default as VeterinaryAccessRepository } from './veterinaryAccess.repository';
+
+export { default as ConsultationRepository } from './consultation.repository';
+export { default as ConsultationProcedureRepository } from './consultationProcedure.repository';
+export { default as ConsultationMedicationRepository } from './consultationMedication.repository';
+export { default as ConsultationFileRepository } from './consultationFile.repository'; 
 ----- Archivo: labTest.repository.ts ----- 
 // src/repositories/labTest.repository.ts
 import { supabase } from '@/lib/client/supabase';
@@ -8174,7 +10350,82 @@ export const SubscriptionTypeSchema = z.object({
   expires_at: z.string().nullable(),
   updated_at: z.string(),
 });
- 
+
+
+export const ConsultationProcedurePayloadSchema = z.object({
+    procedure_name: z.string().min(1, "El nombre del procedimiento es requerido."),
+    description: z.string().optional().nullable(),
+    // No incluyas consultation_id aquí, se añade en el backend
+});
+
+export const ConsultationMedicationPayloadSchema = z.object({
+    medication_name: z.string().min(1, "El nombre del medicamento es requerido."),
+    dosage: z.string().min(1, "La dosis es requerida."),
+    frequency: z.string().min(1, "La frecuencia es requerida."),
+    duration_days: z.number().int().positive().optional().nullable(),
+    notes: z.string().optional().nullable(),
+});
+
+export const CreateConsultationPayloadSchema = z.object({
+    pet_id: z.string(),
+    consultation_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
+        message: "Fecha de consulta inválida.",
+    }), // o z.date() si envías objetos Date
+    reason_for_consultation: z.string().min(1, "El motivo de la consulta es requerido."),
+    current_diet: z.string().optional().nullable(),
+    previous_illnesses: z.string().optional().nullable(),
+    previous_surgeries: z.string().optional().nullable(),
+    vaccination_history: z.string().optional().nullable(), // Podría ser más estructurado
+    last_deworming_product: z.string().optional().nullable(),
+    recent_treatments: z.string().optional().nullable(),
+    recent_travels: z.string().optional().nullable(),
+    animal_behavior_owner_description: z.string().optional().nullable(),
+    
+    // Examen Físico General
+    body_condition_score: z.number().min(1).max(5).optional().nullable(), // Asumiendo escala 1-5
+    temperature_celsius: z.number().optional().nullable(),
+    heart_rate_bpm: z.number().int().positive().optional().nullable(),
+    respiratory_rate_rpm: z.number().int().positive().optional().nullable(),
+    capillary_refill_time_sec: z.number().positive().optional().nullable(),
+    mucous_membranes_description: z.string().optional().nullable(),
+    hydration_percentage: z.number().min(0).max(100).optional().nullable(), // O descripción
+    sense_organs_description: z.string().optional().nullable(),
+    skin_and_coat_description: z.string().optional().nullable(),
+    lymph_nodes_description: z.string().optional().nullable(),
+    digestive_system_findings: z.string().optional().nullable(),
+    respiratory_system_findings: z.string().optional().nullable(),
+    endocrine_system_findings: z.string().optional().nullable(),
+    musculoskeletal_system_findings: z.string().optional().nullable(),
+    nervous_system_findings: z.string().optional().nullable(),
+    urinary_system_findings: z.string().optional().nullable(),
+    reproductive_system_findings: z.string().optional().nullable(),
+    rectal_palpation_findings: z.string().optional().nullable(),
+    other_physical_findings: z.string().optional().nullable(),
+
+    // Abordaje Diagnóstico
+    problem_list: z.string().optional().nullable(), // Podría ser un array de strings
+    master_problem_list: z.string().optional().nullable(),
+    differential_diagnoses: z.string().optional().nullable(), // Podría ser un array
+
+    // Exámenes Complementarios (se manejan con subida de archivos, o podrían ser campos de texto)
+    // Aquí solo información textual si no se suben archivos para todo
+    complementary_exams_summary: z.string().optional().nullable(),
+
+    presumptive_diagnosis: z.string().min(1, "El diagnóstico presuntivo es requerido."),
+    definitive_diagnosis: z.string().optional().nullable(),
+    therapeutic_plan: z.string().min(1, "El plan terapéutico es requerido."),
+    prognosis: z.string().optional().nullable(),
+    evolution_notes: z.string().optional().nullable(), // Para la evolución inicial si aplica
+    general_observations: z.string().optional().nullable(),
+    
+    // Campos para identificar al veterinario, opcionales si se infieren de la sesión
+    veterinarian_id: z.string().uuid("ID de veterinario inválido.").optional().nullable(),
+    veterinary_access_id: z.string().uuid("ID de acceso veterinario inválido.").optional().nullable(),
+
+    // Arrays para procedimientos y medicamentos que se crearán junto con la consulta
+    procedures: z.array(ConsultationProcedurePayloadSchema).optional(),
+    medications: z.array(ConsultationMedicationPayloadSchema).optional(),
+}); 
 ----- Archivo: apiService.ts ----- 
 import { QueryParamError, StepStateError, RepositoryError, ValidationResult } from "@/types/lib";
 import { NextRequest, NextResponse } from "next/server";
@@ -8723,13 +10974,13 @@ export interface VeterinaryAccessType {
 }
 
 export interface VeterinarianType {
-  vet_id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  registration: string;
-  clinic_name: string;
-  city: string;
+    vet_id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    registration: string;
+    clinic_name: string;
+    city: string;
 }
 
 export interface FeatureType {
@@ -8786,7 +11037,121 @@ export enum PetStep {
     LabTests = 4,
     Conditions = 5,
     Surgeries = 6
-} 
+}
+
+export interface ConsultationProcedureType {
+    id: string; // uuid
+    consultation_id: string; // uuid, FK to consultations
+    procedure_name: string;
+    description?: string | null;
+    created_at: string; // timestamptz
+}
+
+export interface ConsultationMedicationType {
+    id: string; // uuid
+    consultation_id: string; // uuid, FK to consultations
+    medication_name: string;
+    dosage: string;
+    frequency: string;
+    duration_days?: number | null;
+    notes?: string | null;
+    created_at: string; // timestamptz
+}
+
+export interface ConsultationFileType {
+    id: string; // uuid
+    consultation_id: string; // uuid, FK to consultations
+    file_name: string;
+    file_path: string; // Path en Supabase Storage
+    file_type?: string | null; // MIME type
+    file_size_bytes?: number | null;
+    uploaded_by_user_id?: string | null; // uuid, FK to auth.users (quien subió el archivo)
+    created_at: string; // timestamptz
+}
+
+export interface ConsultationType {
+    id: string; // uuid, PK
+    pet_id: string; // uuid, FK to pets
+    veterinarian_id?: string | null; // uuid, FK to auth.users (si es un vet con cuenta)
+    veterinary_access_id?: string | null; // uuid, FK to veterinary_accesses (si se usó código)
+
+    consultation_date: string; // date
+    consultation_time?: string | null; // time
+    hc_number?: string | null; // Número de historia clínica si aplica
+    institution_name?: string | null; // Nombre de la clínica/institución
+
+    // Anamnesis (basado en el formato)
+    reason_for_consultation: string;
+    current_diet?: string | null;
+    previous_illnesses?: string | null;
+    previous_surgeries?: string | null;
+    vaccination_history?: string | null; // Podría ser un resumen, los detalles están en su propia sección
+    last_deworming_product?: string | null;
+    recent_treatments?: string | null;
+    recent_travels?: string | null;
+    animal_behavior_owner_description?: string | null;
+    lives_with_other_animals_details?: string | null; // ej: "Sí, un perro y un gato"
+    sterilized_status?: 'yes' | 'no' | 'unknown' | null; // o booleano si es más simple
+    birth_count?: number | null;
+
+    // Examen Físico General
+    body_condition_score?: number | null; // Escala 1-5 o 1-9
+    temperature_celsius?: number | null;
+    heart_rate_bpm?: number | null; // FC
+    respiratory_rate_rpm?: number | null; // FR
+    capillary_refill_time_sec?: number | null; // TRPC / TLLC
+    pulse_description?: string | null; // Descripción del pulso (fuerte, débil, rítmico)
+    mucous_membranes_description?: string | null;
+    hydration_percentage_description?: string | null; // Descripción o % estimado
+    sense_organs_description?: string | null;
+
+    // Examen Físico por Sistemas
+    skin_and_coat_description?: string | null;
+    lymph_nodes_description?: string | null;
+    digestive_system_findings?: string | null;
+    respiratory_system_findings?: string | null;
+    endocrine_system_findings?: string | null;
+    musculoskeletal_system_findings?: string | null;
+    nervous_system_findings?: string | null;
+    urinary_system_findings?: string | null;
+    reproductive_system_findings?: string | null;
+    rectal_palpation_findings?: string | null;
+    other_physical_findings?: string | null;
+
+    // Abordaje Diagnóstico
+    problem_list?: string | null; // Podría ser un array de strings JSON.stringify
+    master_problem_list?: string | null;
+    differential_diagnoses?: string | null; // Podría ser un array de strings JSON.stringify
+
+    // Exámenes Complementarios (Resumen textual, los archivos van en otra tabla)
+    complementary_exams_summary?: string | null;
+
+    // Diagnóstico y Plan
+    presumptive_diagnosis: string;
+    definitive_diagnosis?: string | null;
+    therapeutic_plan: string;
+    prognosis?: string | null;
+    evolution_notes?: string | null; // Evolución durante la consulta o plan de seguimiento inmediato
+    general_observations?: string | null; // Observaciones generales, recomendaciones de egreso, etc.
+    signature_confirmation?: string | null; // Campo para que el vet confirme digitalmente (texto)
+
+
+    // Relaciones (pobladas al hacer fetch si se usa SELECT anidado)
+    procedures?: ConsultationProcedureType[];
+    medications?: ConsultationMedicationType[];
+    files?: ConsultationFileType[];
+
+    created_at: string; // timestamptz
+    updated_at: string; // timestamptz
+}
+
+// Payload para crear una consulta, puede ser un subconjunto o incluir arrays para sub-registros
+export type CreateConsultationPayload = Omit<ConsultationType, 'id' | 'created_at' | 'updated_at' | 'procedures' | 'medications' | 'files'> & {
+    procedures?: Array<Omit<ConsultationProcedureType, 'id' | 'consultation_id' | 'created_at'>>;
+    medications?: Array<Omit<ConsultationMedicationType, 'id' | 'consultation_id' | 'created_at'>>;
+    // Los archivos se manejarán con un endpoint separado después de crear la consulta,
+    // o podrías tener un array de `File` objects aquí si tu API lo maneja en un solo paso.
+}; 
 ----- Archivo: index.ts ----- 
 import { StorageContextType } from "@/hooks/useAppStorage";
 import { PostgrestError, Session } from "@supabase/supabase-js";

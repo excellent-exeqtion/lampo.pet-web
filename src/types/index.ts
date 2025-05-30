@@ -99,13 +99,13 @@ export interface VeterinaryAccessType {
 }
 
 export interface VeterinarianType {
-  vet_id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  registration: string;
-  clinic_name: string;
-  city: string;
+    vet_id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    registration: string;
+    clinic_name: string;
+    city: string;
 }
 
 export interface FeatureType {
@@ -163,3 +163,117 @@ export enum PetStep {
     Conditions = 5,
     Surgeries = 6
 }
+
+export interface ConsultationProcedureType {
+    id: string; // uuid
+    consultation_id: string; // uuid, FK to consultations
+    procedure_name: string;
+    description?: string | null;
+    created_at: string; // timestamptz
+}
+
+export interface ConsultationMedicationType {
+    id: string; // uuid
+    consultation_id: string; // uuid, FK to consultations
+    medication_name: string;
+    dosage: string;
+    frequency: string;
+    duration_days?: number | null;
+    notes?: string | null;
+    created_at: string; // timestamptz
+}
+
+export interface ConsultationFileType {
+    id: string; // uuid
+    consultation_id: string; // uuid, FK to consultations
+    file_name: string;
+    file_path: string; // Path en Supabase Storage
+    file_type?: string | null; // MIME type
+    file_size_bytes?: number | null;
+    uploaded_by_user_id?: string | null; // uuid, FK to auth.users (quien subió el archivo)
+    created_at: string; // timestamptz
+}
+
+export interface ConsultationType {
+    id: string; // uuid, PK
+    pet_id: string; // uuid, FK to pets
+    veterinarian_id?: string | null; // uuid, FK to auth.users (si es un vet con cuenta)
+    veterinary_access_id?: string | null; // uuid, FK to veterinary_accesses (si se usó código)
+
+    consultation_date: string; // date
+    consultation_time?: string | null; // time
+    hc_number?: string | null; // Número de historia clínica si aplica
+    institution_name?: string | null; // Nombre de la clínica/institución
+
+    // Anamnesis (basado en el formato)
+    reason_for_consultation: string;
+    current_diet?: string | null;
+    previous_illnesses?: string | null;
+    previous_surgeries?: string | null;
+    vaccination_history?: string | null; // Podría ser un resumen, los detalles están en su propia sección
+    last_deworming_product?: string | null;
+    recent_treatments?: string | null;
+    recent_travels?: string | null;
+    animal_behavior_owner_description?: string | null;
+    lives_with_other_animals_details?: string | null; // ej: "Sí, un perro y un gato"
+    sterilized_status?: 'yes' | 'no' | 'unknown' | null; // o booleano si es más simple
+    birth_count?: number | null;
+
+    // Examen Físico General
+    body_condition_score?: number | null; // Escala 1-5 o 1-9
+    temperature_celsius?: number | null;
+    heart_rate_bpm?: number | null; // FC
+    respiratory_rate_rpm?: number | null; // FR
+    capillary_refill_time_sec?: number | null; // TRPC / TLLC
+    pulse_description?: string | null; // Descripción del pulso (fuerte, débil, rítmico)
+    mucous_membranes_description?: string | null;
+    hydration_percentage_description?: string | null; // Descripción o % estimado
+    sense_organs_description?: string | null;
+
+    // Examen Físico por Sistemas
+    skin_and_coat_description?: string | null;
+    lymph_nodes_description?: string | null;
+    digestive_system_findings?: string | null;
+    respiratory_system_findings?: string | null;
+    endocrine_system_findings?: string | null;
+    musculoskeletal_system_findings?: string | null;
+    nervous_system_findings?: string | null;
+    urinary_system_findings?: string | null;
+    reproductive_system_findings?: string | null;
+    rectal_palpation_findings?: string | null;
+    other_physical_findings?: string | null;
+
+    // Abordaje Diagnóstico
+    problem_list?: string | null; // Podría ser un array de strings JSON.stringify
+    master_problem_list?: string | null;
+    differential_diagnoses?: string | null; // Podría ser un array de strings JSON.stringify
+
+    // Exámenes Complementarios (Resumen textual, los archivos van en otra tabla)
+    complementary_exams_summary?: string | null;
+
+    // Diagnóstico y Plan
+    presumptive_diagnosis: string;
+    definitive_diagnosis?: string | null;
+    therapeutic_plan: string;
+    prognosis?: string | null;
+    evolution_notes?: string | null; // Evolución durante la consulta o plan de seguimiento inmediato
+    general_observations?: string | null; // Observaciones generales, recomendaciones de egreso, etc.
+    signature_confirmation?: string | null; // Campo para que el vet confirme digitalmente (texto)
+
+
+    // Relaciones (pobladas al hacer fetch si se usa SELECT anidado)
+    procedures?: ConsultationProcedureType[];
+    medications?: ConsultationMedicationType[];
+    files?: ConsultationFileType[];
+
+    created_at: string; // timestamptz
+    updated_at: string; // timestamptz
+}
+
+// Payload para crear una consulta, puede ser un subconjunto o incluir arrays para sub-registros
+export type CreateConsultationPayload = Omit<ConsultationType, 'id' | 'created_at' | 'updated_at' | 'procedures' | 'medications' | 'files'> & {
+    procedures?: Array<Omit<ConsultationProcedureType, 'id' | 'consultation_id' | 'created_at'>>;
+    medications?: Array<Omit<ConsultationMedicationType, 'id' | 'consultation_id' | 'created_at'>>;
+    // Los archivos se manejarán con un endpoint separado después de crear la consulta,
+    // o podrías tener un array de `File` objects aquí si tu API lo maneja en un solo paso.
+};

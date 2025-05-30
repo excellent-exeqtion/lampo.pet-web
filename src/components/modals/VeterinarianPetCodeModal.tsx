@@ -67,7 +67,7 @@ export default function VeterinarianPetCodeModal() {
                         city: vet.city
                     });
                     setShowVetPetCodeModal(false);
-                    router.push(`/pages/vet/${sanitizedCode}`);
+                    router.push(`/pages/vet/consultation/${petData.id}`);
                 }
             }
         } catch {

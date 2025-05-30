@@ -10,3 +10,8 @@ export { default as SubscriptionRepository } from './subscription.repository';
 export { default as SurgeryRepository } from './surgery.repository';
 export { default as VaccineRepository } from './vaccine.repository';
 export { default as VeterinaryAccessRepository } from './veterinaryAccess.repository';
+
+export { default as ConsultationRepository } from './consultation.repository';
+export { default as ConsultationProcedureRepository } from './consultationProcedure.repository';
+export { default as ConsultationMedicationRepository } from './consultationMedication.repository';
+export { default as ConsultationFileRepository } from './consultationFile.repository';

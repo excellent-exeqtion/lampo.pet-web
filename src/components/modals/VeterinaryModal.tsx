@@ -69,7 +69,7 @@ export default function VeterinaryModal() {
           city: codeData.city
         });
         setShowVetModal(false);
-        router.push(`/pages/vet/${sanitizedCode}`);
+        router.push(`/pages/vet/consultation/${petData.id}`);
       }
     } catch {
       setError("Ocurrió un error inesperado.");

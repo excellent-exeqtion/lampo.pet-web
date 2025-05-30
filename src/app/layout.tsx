@@ -5,7 +5,7 @@ import "./globals.css";
 import "@picocss/pico";
 import { tooltipStyles } from "@/styles/tooltip";
 import { geistMono, geistSans } from "@/styles/geist";
-import ClientAppProvider from "@/context/ClientAppProvider";
+import { ClientAppProvider } from "../components";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,8 +15,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <style>{tooltipStyles}</style>
-        <ClientAppProvider>{children}</ClientAppProvider>
+        <ClientAppProvider>
+          {children}
+        </ClientAppProvider>
       </body>
-    </html>
+    </html >
   );
 }

@@ -39,9 +39,9 @@ const PageComponent = <T,>({
         const fetchData = async () => {
             try {
                 let data: T[] = [];
-                if (storedList.length == 0) {
+                if (storedList == null) {
                     const response = await getFetch(`${apiUrl}${parentId}`);
-                    if(!response.ok) throw new ApiError(`Error llamando al api: ${apiUrl}${parentId}`);
+                    if (!response.ok) throw new ApiError(`Error llamando al api: ${apiUrl}${parentId}`);
                     const data = await response.json();
                     setItems(data);
                     setStoredList(data);

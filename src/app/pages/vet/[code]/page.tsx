@@ -23,7 +23,7 @@ export default function VetPage({ params }: VetPageProps) {
       setValidatedCode(code);
 
       try {
-        const res = await fetch(`/api/vet-access/validate?code=${code}`);
+        const res = await fetch(`/api/vet/validate?code=${code}`);
         const data = await res.json();
 
         if (!res.ok || !data.success) {

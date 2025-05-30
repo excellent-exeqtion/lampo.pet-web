@@ -1,53 +1,27 @@
-// src/hooks/useRole.ts
-import { useMemo } from "react";
-import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export function useRole() {
-    const session = useSessionContext();
-    const storage = useStorageContext();
+  const { db: session } = useSessionContext();
+  const { storedVetAccess } = useStorageContext();
 
-    const isOwner = useMemo(
-        () => session?.db?.user?.user_metadata?.role === "owner",
-        [session]
-    );
+  const isOwner = session?.user.user_metadata.role === "owner";
+  const isVetWithSession = session?.user.user_metadata.role === "veterinarian";
+  const hasVetAccessWithoutSession = !session && Boolean(storedVetAccess?.id);
+  const isVetWithUserSession = Boolean(storedVetAccess?.id) && isOwner;
+  const isVetWithoutUserSession =
+    (isVetWithSession || hasVetAccessWithoutSession) && !isVetWithUserSession;
+  const isVet =
+    isVetWithSession || 
+    isVetWithoutUserSession || 
+    isVetWithUserSession;
 
-    const isVetWithSession = useMemo(
-        () => session?.db?.user?.user_metadata?.role === "veterinarian",
-        [session]
-    );
-
-    const hasVetAccessWithoutSession = useMemo(
-        () => !session && storage.storedVetAccess?.id !== "",
-        [session, storage.storedVetAccess]
-    );
-
-    const isVetWithUserSession = useMemo(
-        () => storage.storedVetAccess?.id !== "" && isOwner,
-        [storage.storedVetAccess, isOwner]
-    );
-
-    const isVetWithoutUserSession = useMemo(
-        () =>
-            (isVetWithSession || hasVetAccessWithoutSession) &&
-            !isVetWithUserSession,
-        [isVetWithSession, hasVetAccessWithoutSession, isVetWithUserSession]
-    );
-
-    const isVet = useMemo(
-        () =>
-            isVetWithSession ||
-            isVetWithoutUserSession ||
-            isVetWithUserSession,
-        [isVetWithSession, isVetWithoutUserSession, isVetWithUserSession]
-    );
-
-    return {
-        isOwner,
-        isVet,
-        isVetWithSession,
-        isVetWithoutSession: hasVetAccessWithoutSession,
-        isVetWithUserSession,
-        isVetWithoutUserSession,
-    } as const;
+  return {
+    isOwner,
+    isVet,
+    isVetWithSession,
+    isVetWithoutSession: hasVetAccessWithoutSession,
+    isVetWithUserSession,
+    isVetWithoutUserSession,
+  } as const;
 }

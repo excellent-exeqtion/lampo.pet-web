@@ -4,12 +4,11 @@ import React from "react";
 import { AppContextProvider } from "@/context/AppContextProvider";
 import { Bubbles, SideBar } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
-import { isVetWithoutUserSession } from "@/utils/roles";
 import LoadingComponent from "@/components/lib/loading";
 import { usePathname } from "next/navigation";
-import { useStorageContext } from "./StorageProvider";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
 import { useSessionContext } from "./SessionProvider";
+import { useRoleContext } from "./RoleProvider";
 
 interface Props {
     children: React.ReactNode;
@@ -19,9 +18,9 @@ export default function ClientAppProvider({ children }: Props) {
     useAuthRedirect();
 
     const { isMobile, isDesktop } = useDeviceDetect();
-    const session = useSessionContext();                      // undefined | null | AppSession
-    const { storedVetAccess } = useStorageContext();
+    const session = useSessionContext();
     const pathname = usePathname();
+    const { isVetWithoutUserSession } = useRoleContext();
 
     const isLoginRoute = pathname === "/login" || pathname.endsWith("/login");
     const isVetRoute = pathname.startsWith("/vet-access");
@@ -42,7 +41,7 @@ export default function ClientAppProvider({ children }: Props) {
     }
 
     // Si es vet-user con sesión y no está en vet-access, bloquear hasta redirect
-    const isVetUserNow = isVetWithoutUserSession(session, storedVetAccess);
+    const isVetUserNow = isVetWithoutUserSession;
     if (isVetUserNow) {
         return null;
     }

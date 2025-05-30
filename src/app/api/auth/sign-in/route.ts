@@ -12,12 +12,14 @@ const SignInSchema = z.object({
 
 export async function POST(req: NextRequest) {
     return withValidationAndErrorHandling('POST', req, SignInSchema, async ({ email, password }: LogInType) => {
-        const { data, error } = await signIn(email, password!);
-        if (error) {
-            return NextResponse.json({ success: false, message: error.message }, { status: 401 });
+        // signIn lanza si hay error, y retorna la Session directamente
+        const { data } = await signIn(email, password!);
+        if (data) {
+            // Persistimos la sesión en cookies HTTP-only
+            await setSession(data.session);
+            // Respondemos con la sesión (o con session.user si quieres exponer solo al usuario)
+            return NextResponse.json({ success: true, session: data.session });
         }
-        // Persist tokens in HTTP-only cookies:
-        await setSession(data.session!);
-        return NextResponse.json({ success: true, user: data.session });
+        return NextResponse.json({ success: false });
     });
 }

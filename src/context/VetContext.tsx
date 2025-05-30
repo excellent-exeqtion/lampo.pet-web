@@ -38,14 +38,19 @@ export function VetProvider({ children }: VetProviderProps) {
                     setVet(null);
                     return;
                 }
-                const res = await getFetch(`/api/vet/${session.db?.user.id}`);
-                if (!res.ok) {
-                    console.error("Error fetching veterinarian profile");
-                    setVet(null);
-                } else {
-                    const data: VeterinarianType = await res.json();
-                    storage.setStoredVetData(data);
-                    setVet(data);
+                if (!storage.storedVetData.vet_id) {
+                    const res = await getFetch(`/api/vet/${session.db?.user.id}`);
+                    if (!res.ok) {
+                        console.error("Error fetching veterinarian profile");
+                        setVet(null);
+                    } else {
+                        const data: VeterinarianType = await res.json();
+                        storage.setStoredVetData(data);
+                        setVet(data);
+                    }
+                }
+                else{
+                    setVet(storage.storedVetData);
                 }
                 if (!storage.storedVetAccess.id) {
                     setShowVetPetCodeModal(true);

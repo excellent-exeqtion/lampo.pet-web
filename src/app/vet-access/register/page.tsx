@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import ModalComponent from "@/components/lib/modal";
 import { postFetch } from "@/app/api";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { ownerSignUp } from "@/services/authService";
 
 export default function VetRegisterPage() {
   const router = useRouter();
@@ -38,14 +39,16 @@ export default function VetRegisterPage() {
     setLoading(true);
     try {
       // 1) Crear cuenta en auth
+      const { data: { user } } = await ownerSignUp(email, password, 'veterinarian');
+      const vetId = user?.id;
+      /*
       const signUpRes = await postFetch("/api/auth/sign-up", undefined, { email, password, role: 'veterinarian' });
       const signUpJson = await signUpRes.json();
       if (!signUpRes.ok || !signUpJson.success) {
         setError("Error al registrar la cuenta.");
         return;
       }
-
-      const vetId = signUpJson.user?.id;
+      const vetId = signUpJson.user?.id;*/
       if (vetId) {
         // 2) Guardar perfil de veterinario
         const profileRes = await postFetch("/api/vet", undefined, {

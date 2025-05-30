@@ -2,7 +2,8 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getFetch, postFetch } from "@/app/api";
+//import { getFetch, postFetch } from "@/app/api";
+import { getSession, setSession } from "@/services/authService";
 
 export default function VerifyEmail() {
   const router = useRouter();
@@ -15,6 +16,8 @@ export default function VerifyEmail() {
 
     const trySetSession = async () => {
       try {
+        await setSession({ access_token: access_token!, refresh_token: refresh_token! });
+        /*
         const response = await postFetch("/api/auth/set-session", undefined, { access_token, refresh_token });
         const result = await response.json();
 
@@ -22,8 +25,7 @@ export default function VerifyEmail() {
           console.error("Error al establecer sesión:", result.message);
           router.replace("/login");
           return;
-        }
-
+        }*/
         router.replace("/owners/register");
       } catch (err) {
         console.error("Error de red al establecer sesión:", err);
@@ -33,6 +35,7 @@ export default function VerifyEmail() {
 
     const checkSession = async () => {
       try {
+        /*
         const response = await getFetch("/api/auth/session");
         const result = await response.json();
 
@@ -41,6 +44,8 @@ export default function VerifyEmail() {
         } else {
           router.replace("/login");
         }
+        */
+        await getSession();
       } catch (err) {
         console.error("Error al verificar sesión:", err);
         router.replace("/login");

@@ -40,7 +40,7 @@ export default function AddPetModal({ editPet }: AddPetModalProps) {
     const session = useSessionContext();
     const storage = useStorageContext();
     const [step, setStep] = useState<PetStep>(PetStep.Name);
-    const { showAddPetModal, setShowAddPetModal } = useUI();
+    const { showAddPetModal, setShowAddPetModal, setShowEditPetModal } = useUI();
 
     // Estados por entidad
     const [pet, setPet] = useState<PetType>(editPet == undefined ? Empty.Pet() : editPet);
@@ -69,6 +69,7 @@ export default function AddPetModal({ editPet }: AddPetModalProps) {
         pet.owner_id = ownerId;
         storage.setStoredOwnerPets([...(storage.storedOwnerPets ?? []), pet]);
         setShowAddPetModal(false);
+        setShowEditPetModal(false);
         setStepStates(Empty.Steps());
     };
 
@@ -214,7 +215,7 @@ export default function AddPetModal({ editPet }: AddPetModalProps) {
     };
 
     return (
-        <ModalComponent title={stepTitle()} setShowModal={setShowAddPetModal} maxWidth="1000px">
+        <ModalComponent title={stepTitle()} setShowModal={editPet == undefined ? setShowAddPetModal : setShowEditPetModal} maxWidth="1000px">
             {renderStep()}
         </ModalComponent>
     );

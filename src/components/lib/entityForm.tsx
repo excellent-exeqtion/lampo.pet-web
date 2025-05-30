@@ -12,7 +12,7 @@ import type { FieldConfig, StepsStateType } from "@/types/lib";
 export interface EntityFormProps<T extends { id?: string }> {
   id: string;
   storedList: T[];
-  setStoredList: (list: T[]) => void;
+  setStoredList: (list: T[] | null) => void;
   data: T[];
   setData: Dispatch<SetStateAction<T[]>>;
   step: number;

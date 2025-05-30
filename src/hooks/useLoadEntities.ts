@@ -11,7 +11,7 @@ export function useLoadEntities<T>(
     id: string,
     entityName: string,
     storedList: T[],
-    setStoredList: (list: T[]) => void,
+    setStoredList: (list: T[] | null) => void,
     initialData: T[],
     setDataCallback: (data: T[]) => void,
     stepNumber: number,
@@ -29,17 +29,19 @@ export function useLoadEntities<T>(
     const stateEq = (state: StepStateEnum) =>
         stepStates.find(x => x.step === stepNumber)?.state === state;
     const getUrl = () =>
-        stepStates.find(x=> x.step == stepNumber)?.url;
+        stepStates.find(x => x.step == stepNumber)?.url;
 
     useEffect(() => {
         const fetch = async () => {
             if (stateEq(StepStateEnum.NotInitialize)) {
                 setState(StepStateEnum.Initialize);
                 let saved: T[] = [];
-                if (storedList.length == 0) {
+                if (storedList == null) {
                     const response = await getFetch(`${getUrl()}}${id}`);
-                    if(!response.ok) throw new ApiError(`Fallo al obtener información de ${entityName}`);
-                    setStoredList(saved);
+                    if (!response.ok) throw new ApiError(`Fallo al obtener información de ${entityName}`);
+                    if (saved.length > 0) {
+                        setStoredList(saved);
+                    }
                 }
                 else {
                     saved = storedList;

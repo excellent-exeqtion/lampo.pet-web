@@ -437,12 +437,13 @@ import { LogInType } from '@/types/lib';
 
 const SignUpSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(6)
+    password: z.string().min(6),
+    role: z.enum(['owner', 'veterinarian']).optional().nullable()
 });
 
 export async function POST(req: NextRequest) {
-    return withValidationAndErrorHandling('POST', req, SignUpSchema, async ({ email, password }: LogInType) => {
-        const { data, error } = await ownerSignUp(email, password!);
+    return withValidationAndErrorHandling('POST', req, SignUpSchema, async ({ email, password, role }: LogInType) => {
+        const { data, error } = await ownerSignUp(email, password!, role ?? 'owner');
         if (error) {
             return NextResponse.json({ success: false, message: error.message }, { status: 400 });
         }
@@ -582,16 +583,11 @@ export async function GET(
                 throw new QueryParamError(`Falta parámetro OwnerId`);
             }
 
-            try {
-                const ownerData = await OwnerRepository.findById(id);
-                if (!ownerData) {
-                    throw new RepositoryError(`Owner no encontrado: ${id}`);
-                }
-                return NextResponse.json(ownerData);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
-                throw new RepositoryError(`Error fetching owner: ${error.message}`);
+            const ownerData = await OwnerRepository.findById(id);
+            if (!ownerData) {
+                throw new RepositoryError(`Owner no encontrado: ${id}`);
             }
+            return NextResponse.json(ownerData);
         }
     );
 }
@@ -761,7 +757,6 @@ export async function DELETE(req: NextRequest,
         req,
         async () => {
             const { id } = await params;
-            console.log(step.repository)
             if (step.repository) {
                 const response = await step.repository.delete(id);
                 if (!response) {
@@ -918,6 +913,38 @@ export async function POST(req: NextRequest) {
   });
 }
  
+----- Archivo: route.ts ----- 
+// src/app/api/veterinarians/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { withValidationAndErrorHandling } from '@/services/apiService';
+import { RepositoryError } from '@/types/lib';
+import type { VeterinarianType } from '@/types/index';
+import { VeterinarianTypeSchema } from '@/schemas/validationSchemas';
+import VeterinarianRepository from '@/repos/veterinarian.repository';
+
+export async function POST(req: NextRequest) {
+    return withValidationAndErrorHandling(
+        'POST',
+        req,
+        VeterinarianTypeSchema,
+        async (vetData: VeterinarianType) => {
+            try {
+                const { data, error } = await VeterinarianRepository.create(vetData);
+                if (error) {
+                    console.log(error);
+                    throw new RepositoryError(
+                        `Error creating veterinarian: ${JSON.stringify(vetData)}`
+                    );
+                }
+                return NextResponse.json(data, { status: 201 });
+            } catch(err) {
+                console.log(err);
+                throw new RepositoryError('Error creating veterinarian');
+            }
+        }
+    );
+}
+ 
 ----- Archivo: route.tsx ----- 
 // app/api/pets/[id]/route.tsx
 import { NextResponse } from "next/server";
@@ -1001,7 +1028,7 @@ export async function POST(req: Request) {
     await PetCodeRepository.markUsed(code);
 
     // 3) Registrar acceso veterinario
-    await VeterinaryAccessRepository.create({
+    const vetAccess = await VeterinaryAccessRepository.create({
       pet_id: data.pet_id,
       pet_code_id: data.id,
       vet_first_name: firstName,
@@ -1012,7 +1039,7 @@ export async function POST(req: Request) {
     });
 
     // 4) Devolver petId
-    return NextResponse.json({ success: true, pet_id: data.pet_id });
+    return NextResponse.json({ success: true, pet_id: data.pet_id, pet_code: data.id, vet_access: vetAccess.id });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return NextResponse.json(
@@ -1061,6 +1088,34 @@ export async function GET(req: NextRequest) {
   });
 }
  
+----- Archivo: route.ts ----- 
+// src/app/api/veterinarians/[id]/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import VeterinarianRepository from '@/repos/veterinarian.repository';
+import { getWithErrorHandling } from '@/services/apiService';
+import { QueryParamError, RepositoryError } from '@/types/lib';
+
+export async function GET(
+    req: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
+    return getWithErrorHandling(
+        req,
+        async () => {
+            const { id } = await context.params;
+            if (!id) {
+                throw new QueryParamError('Falta parámetro VeterinarianId');
+            }
+
+            const vetData = await VeterinarianRepository.findById(id);
+            if (!vetData) {
+                throw new RepositoryError(`Veterinario no encontrado: ${id}`);
+            }
+            return NextResponse.json(vetData);
+        }
+    );
+}
+ 
 ----- Archivo: layout.tsx ----- 
 // app/login/layout.tsx
 export default function LoginLayout({ children }: { children: React.ReactNode }) {
@@ -1082,6 +1137,7 @@ import type { OwnerDataType } from "@/types/index";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { postFetch } from "@/app/api";
 import { setSession } from "@/services/authService";
+import ModalComponent from "@/components/lib/modal";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -1148,7 +1204,7 @@ export default function LoginPage() {
       if (!loginResponse.ok || !loginJson.success) {
         setError(loginJson?.message || "Error iniciando sesión");
       } else {
-        setSession({access_token: loginJson.user.access_token, refresh_token: loginJson.user.refresh_token });
+        setSession({ access_token: loginJson.user.access_token, refresh_token: loginJson.user.refresh_token });
         router.refresh();
         router.push("/");
       }
@@ -1185,43 +1241,19 @@ export default function LoginPage() {
   // 4) Mostrar modal de “verifica tu correo”
   if (showConfirmModal) {
     return (
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.5)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-        }}
+      <ModalComponent
+        title="Confirma tu correo"
+        description={`Te hemos enviado un correo de verificación a ${email}. Por favor revisa tu bandeja (y carpeta de spam) y haz clic en el enlace.`}
+        setShowModal={setShowConfirmModal}
       >
-        <div
-          style={{
-            background: "#fff",
-            padding: "2rem",
-            borderRadius: "0.5rem",
-            maxWidth: "500px",
-            textAlign: "center",
-          }}
+        <button
+          className="contrast"
+          onClick={goToRegister}
+          style={{ width: "100%", marginTop: "1rem" }}
         >
-          <h2>Confirma tu correo</h2>
-          <p>
-            Te hemos enviado un correo de verificación a <strong>{email}</strong>.{" "}
-            <br />
-            Por favor revisa tu bandeja (y carpeta de spam) y haz clic en el enlace.
-          </p>
-          <button
-            onClick={() => {
-              setShowConfirmModal(false);
-              goToRegister();
-            }}
-            style={{ marginTop: "1rem", width: "100%" }}
-          >
-            Ya confirmé, continuar
-          </button>
-        </div>
-      </div>
+          Ya confirmé, continuar
+        </button>
+      </ModalComponent>
     );
   }
 
@@ -1841,7 +1873,7 @@ import { getFetch, putFetch } from "@/app/api";
 import type { OwnerDataType, PetType } from "@/types/index";
 import React, { FormEvent, useEffect, useState } from "react";
 import { FaCog, FaExclamationTriangle } from "react-icons/fa";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
 import { Empty } from "@/data/index";
 import { useRouter } from "next/navigation";
@@ -1850,7 +1882,7 @@ export default function SettingsPage() {
   const { isMobile } = useDeviceDetect();
   const router = useRouter();
   const session = useSessionContext();
-  const storage = usePetStorage();
+  const storage = useStorageContext();
   const userId = session?.db?.user.id;
   const userEmail = session?.db?.user.email;
 
@@ -1882,7 +1914,6 @@ export default function SettingsPage() {
           const res = await getFetch(`/api/owners/${encodeURIComponent(userId)}`);
           const json = await res.json();
           if (res.ok) {
-            console.log(json);
             storage.setStoredOwnerData(json);
             setOwnerInfo(json);
           } else {
@@ -1936,7 +1967,6 @@ export default function SettingsPage() {
 
         if (res.ok) {
           setError("Datos actualizados correctamente.");
-          console.log(payload);
           storage.setStoredOwnerData(payload);
           setFormFailed(false);
         } else {
@@ -2215,22 +2245,17 @@ import { BasicDataType, OwnerDataType } from "@/types/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch } from "@/app/api";
 import { useSession } from "@/hooks/useSession";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export default function BasicDataPage() {
   useSession();
 
   const { isMobile } = useDeviceDetect();
-  const storage = usePetStorage();
+  const storage = useStorageContext();
   const [petData, setPetData] = useState<BasicDataType | null>(null);
   const [ownerData, setOwnerData] = useState<OwnerDataType | null>(null);
   const [basicDataItems, setBasicDataItems] = useState<FieldType[]>([]);
   const [contactItems, setContactItems] = useState<FieldType[]>([]);
-
-  
-  useEffect(() => {
-    console.log('BasicDataPage');
-  }, []);
 
   useEffect(() => {
     const petId = storage.storedPet.id;
@@ -2268,7 +2293,6 @@ export default function BasicDataPage() {
         const resOwner = await getFetch(`/api/owners/${storage.storedPet.owner_id}`);
         if (!resOwner.ok) throw new Error("Falló fetch owners");
         const owner: OwnerDataType = await resOwner.json();
-            console.log(owner);
         storage.setStoredOwnerData(owner);
         setOwnerData(owner);
       } catch (err) {
@@ -2400,10 +2424,10 @@ import React from "react";
 import { FaCloudSun } from "react-icons/fa";
 import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export default function ConditionsPage() {
-    const storage = usePetStorage();
+    const storage = useStorageContext();
     return (
         <PageComponent
             parentId={storage.storedPet.id}
@@ -2425,10 +2449,10 @@ import React from "react";
 import { FaFlask } from "react-icons/fa";
 import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export default function LabTestsPage() {
-    const storage = usePetStorage();
+    const storage = useStorageContext();
     return (
         <PageComponent
             parentId={storage.storedPet.id}
@@ -2450,10 +2474,10 @@ import React from "react";
 import { FaPills } from "react-icons/fa";
 import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export default function MedicinesPage() {
-    const storage = usePetStorage();
+    const storage = useStorageContext();
     return (
         <PageComponent
             parentId={storage.storedPet.id}
@@ -2480,10 +2504,10 @@ import React from "react";
 import { FaCut } from "react-icons/fa";
 import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export default function SurgeriesPage() {
-    const storage = usePetStorage();
+    const storage = useStorageContext();
     return (
         <PageComponent
             parentId={storage.storedPet.id}
@@ -2504,10 +2528,10 @@ import React from "react";
 import { FaSyringe } from "react-icons/fa";
 import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export default function VaccinesPage() {
-  const storage = usePetStorage();
+  const storage = useStorageContext();
   return (
     <PageComponent
       parentId={storage.storedPet.id}
@@ -2523,15 +2547,10 @@ export default function VaccinesPage() {
 }
  
 ----- Archivo: page.tsx ----- 
-// app/pages/vet/register/page.tsx
-export default function RegisterPage(){
-    return <div></div>;
-} 
------ Archivo: page.tsx ----- 
 // app/pages/vet/[code]/page.tsx
 "use client";
 import { useEffect, useState } from "react";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 import PetEditForm from "./components/forms/PetEditForm";
 import { PetType } from "@/types/index";
 
@@ -2545,7 +2564,7 @@ export default function VetPage({ params }: VetPageProps) {
   const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState("");
 
-  const storage = usePetStorage();
+  const storage = useStorageContext();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -2713,7 +2732,7 @@ export default function VetAccessPage() {
         </button>
 
         {/* Enlace a registro de veterinario (implementa esta ruta si lo deseas) */}
-        <Link href="/vet-register" className="primary">
+        <Link href="/vet-access/register" className="primary">
           Registrarme como veterinario
         </Link>
       </div>
@@ -2723,8 +2742,215 @@ export default function VetAccessPage() {
        * y hacer el POST a VeterinaryAccessRepository.create  
        */}
       {showVetModal && (
-        <VeterinaryModal setShowVetModal={setShowVetModal} />
+        <VeterinaryModal />
       )}
+    </main>
+  );
+}
+ 
+----- Archivo: page.tsx ----- 
+// app/vet-access/register/page.tsx
+"use client";
+import React, { FormEvent, useState } from "react";
+import "@picocss/pico";
+import { useRouter } from "next/navigation";
+import ModalComponent from "@/components/lib/modal";
+import { postFetch } from "@/app/api";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
+export default function VetRegisterPage() {
+  const router = useRouter();
+
+  // Estados del formulario
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [registration, setRegistration] = useState("");
+  const [clinicName, setClinicName] = useState("");
+  const [city, setCity] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Estados UI
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // Validación básica
+    if (![firstName, lastName, registration, clinicName, city, email, password].every(Boolean)) {
+      setError("Por favor completa todos los campos.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1) Crear cuenta en auth
+      const signUpRes = await postFetch("/api/auth/sign-up", undefined, { email, password, role: 'veterinarian' });
+      const signUpJson = await signUpRes.json();
+      if (!signUpRes.ok || !signUpJson.success) {
+        setError("Error al registrar la cuenta.");
+        return;
+      }
+
+      const vetId = signUpJson.user?.id;
+      if (vetId) {
+        // 2) Guardar perfil de veterinario
+        const profileRes = await postFetch("/api/vet", undefined, {
+          vet_id: vetId,
+          first_name: firstName,
+          last_name: lastName,
+          registration,
+          clinic_name: clinicName,
+          city,
+          email
+        });
+        if (!profileRes.ok) {
+          setError("Error creando perfil de veterinario.");
+          return;
+        }
+      }
+
+      // 3) Mostrar modal de confirmación de correo
+      setShowConfirmModal(true);
+
+    } catch {
+      setError("Ocurrió un error inesperado.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Modal de “Confirma tu correo”
+  if (showConfirmModal) {
+    return (
+      <ModalComponent
+        title="Confirma tu correo"
+        description={`Te hemos enviado un correo de verificación a ${email}. Por favor revisa tu bandeja (y carpeta de spam) y haz clic en el enlace.`}
+        setShowModal={setShowConfirmModal}
+      >
+        <button
+          className="contrast"
+          onClick={() => router.push("/")}
+          style={{ width: "100%", marginTop: "1rem" }}
+        >
+          Ya confirmé, continuar
+        </button>
+      </ModalComponent>
+    );
+  }
+
+  // Formulario de registro
+  return (
+    <main style={{ maxWidth: 600, margin: "2rem auto", padding: '2rem' }}>
+      <h1>Registro Veterinario</h1>
+      <form onSubmit={handleSubmit}
+        style={{
+          background: "#fff",
+          padding: "2rem",
+          borderRadius: "0.5rem",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          width: "100%",
+          maxWidth: "550px",
+        }}>
+        <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <label>
+            Nombre
+            <input
+              type="text"
+              value={firstName}
+              onChange={e => setFirstName(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Apellido
+            <input
+              type="text"
+              value={lastName}
+              onChange={e => setLastName(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Registro profesional
+            <input
+              type="text"
+              value={registration}
+              onChange={e => setRegistration(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Clínica / Laboratorio
+            <input
+              type="text"
+              value={clinicName}
+              onChange={e => setClinicName(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Ciudad
+            <input
+              type="text"
+              value={city}
+              onChange={e => setCity(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+
+        <label>
+          Email
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+          />
+        </label>
+
+        <label style={{ position: 'relative' }}>
+          Contraseña
+          <input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            style={{
+              position: 'absolute',
+              right: '0.75rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+            }}
+          >
+            {showPassword ? <FaEyeSlash size={23} color={'#000'} style={{ marginTop: '16px' }} /> : <FaEye size={23} color={'#000'} style={{ marginTop: '16px' }} />}
+          </button>
+        </label>
+
+        {error && <p style={{ color: "red", marginTop: "0.5rem" }}>{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ width: "100%", marginTop: "1rem" }}
+        >
+          {loading ? "Registrando..." : "Registrarme"}
+        </button>
+      </form>
     </main>
   );
 }
@@ -2768,7 +2994,7 @@ import { Empty } from '@/data/index';
 import { useDeviceDetect } from '@/hooks/useDeviceDetect';
 import { postFetch } from '@/app/api';
 import StepsComponent from '../lib/steps';
-import { usePetStorage } from '@/context/PetStorageProvider';
+import { useStorageContext } from '@/context/StorageProvider';
 
 interface BasicDataFormProps {
   pet: PetType;
@@ -2818,7 +3044,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   const [loadedWithPreviusData, setLoadedWithPreviusData] = useState<boolean>(false);
   const [savedData, setSavedData] = useState<BasicDataType>(Empty.BasicData());
   const { isMobile, isDesktop, isTablet } = useDeviceDetect();
-  const storage = usePetStorage();
+  const storage = useStorageContext();
 
   // Estilo común de grid: en móvil siempre 2 columnas, en desktop auto-ajusta
   const sectionGridStyle: React.CSSProperties = {
@@ -3299,7 +3525,7 @@ import { Steps } from '@/utils/index';
 import { Empty } from '@/data/index';
 import { CircularImage } from "@/components/index";
 import { getFetch, postFetch } from '@/app/api';
-import { usePetStorage } from '@/context/PetStorageProvider';
+import { useStorageContext } from '@/context/StorageProvider';
 
 interface PetFormProps {
   ownerId: string;
@@ -3332,7 +3558,7 @@ export default function PetNameForm({
   const [submitLoading, setSubmitLoading] = useState(false);
   const [savedData, setSavedData] = useState<PetType>(Empty.Pet());
   const [preview, setPreview] = useState<string>(pet.image || '/pets/pet.jpg');
-  const storage = usePetStorage();
+  const storage = useStorageContext();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -3503,47 +3729,49 @@ import {
 } from "react-icons/fa";
 import Link from 'next/link';
 import Image from 'next/image';
-import { AppSession, MenuType } from "@/types/lib";
+import { MenuType } from "@/types/lib";
 import { v4 } from 'uuid';
 import { useRouter } from "next/navigation";
-import { VeterinaryAccessType } from "@/types/index";
-import { isOwner, isVet } from "@/utils/roles";
 import { FaPencil } from "react-icons/fa6";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { useUI } from "@/context/UIProvider";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 import { handleLogout } from "@/services/authService";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useRoleContext } from "@/context/RoleProvider";
 
 export default function SideBar() {
     const { isMobile, isTablet, isDesktop } = useDeviceDetect();
     const session = useSessionContext();
-    const storage = usePetStorage();
+    const storage = useStorageContext();
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
     const { setShowEditPetModal } = useUI();
+    const {isOwner, isVet}= useRoleContext();
 
-    const menuData = (show: boolean, session: AppSession | null | undefined, vetAccess: VeterinaryAccessType): MenuType[] => [
-        { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner(session) },
+    const menuData = (show: boolean): MenuType[] => [
+        { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner },
         { label: "Datos básicos", icon: <FaUser />, url: "/pages/pet/basic-data", show },
         { label: "Vacunas", icon: <FaSyringe />, url: "/pages/pet/vaccines", show },
         { label: "Cirugías", icon: <FaCut />, url: "/pages/pet/surgeries", show },
         { label: "Medicinas", icon: <FaPills />, url: "/pages/pet/medicines", show },
         { label: "Condiciones especiales", icon: <FaCloudSun />, url: "/pages/pet/conditions", show },
         { label: "Lab. de exámenes", icon: <FaFlask />, url: "/pages/pet/lab-tests", show },
-        { label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner(session) },
-        { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner(session) },
-        { label: "Agregar Consulta", icon: <FaCog />, url: "/pages/vet/diagnostic", show: isVet(session, vetAccess) }
+        { label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner },
+        { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },
+        { label: "Agregar Consulta", icon: <FaCog />, url: "/pages/vet/diagnostic", show: isVet }
     ];
     useEffect(() => {
-        const menu = menuData(storage.storedPet.id != "", session, storage.storedVetAccess);
+    console.log('isOwner', isOwner);
+        const menu = menuData(storage.storedPet.id != "");
 
         if (storage.storedPet) {
-            menu.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner(session) });
+            menu.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner });
         }
         setMenuItems(menu);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [storage.storedPet, storage.storedOwnerPets, session, storage.storedVetAccess, setShowEditPetModal]);
 
     const goToLogin = () => {
@@ -4542,20 +4770,19 @@ import {
 
 import type { StepsStateType, StepConfig } from "@/types/lib";
 import { Empty } from "@/data/index";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useUI } from "@/context/UIProvider";
 
 interface AddPetModalProps {
-    editPet?: PetType,
-    showAddPetModal: boolean;
-    setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
+    editPet?: PetType
 }
 
-
-export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetModal }: AddPetModalProps) {
+export default function AddPetModal({ editPet }: AddPetModalProps) {
     const session = useSessionContext();
-    const storage = usePetStorage();
+    const storage = useStorageContext();
     const [step, setStep] = useState<PetStep>(PetStep.Name);
+    const { showAddPetModal, setShowAddPetModal } = useUI();
 
     // Estados por entidad
     const [pet, setPet] = useState<PetType>(editPet == undefined ? Empty.Pet() : editPet);
@@ -4745,10 +4972,10 @@ import PetCodeModal from "./PetCodeModal";
 import VeterinaryModal from "./VeterinaryModal";
 import ChangePetModal from "./ChangePetModal";
 import AddPetModal from "./AddPetModal";
-import { isOwner, isVet } from "@/utils/roles";
 import { useUI } from "@/context/UIProvider";
-import { usePetStorage } from "@/context/PetStorageProvider";
-import { useSessionContext } from "@/context/SessionProvider";
+import { useStorageContext } from "@/context/StorageProvider";
+import { useRoleContext } from "@/context/RoleProvider";
+import VeterinarianPetCodeModal from "./VeterinarianPetCodeModal";
 
 const bubbleStyleBase: React.CSSProperties = {
   backgroundColor: "#ffffff",
@@ -4766,10 +4993,10 @@ const bubbleStyleBase: React.CSSProperties = {
 
 export default function Bubbles() {
 
-  const session = useSessionContext();
   const [showChangePetBubble, setShowChangePetBubble] = useState(false);
+  const { isOwner, isVet } = useRoleContext();
 
-  const storage = usePetStorage();
+  const storage = useStorageContext();
 
   const { setShowFeedbackModal,
     showFeedbackModal,
@@ -4779,10 +5006,11 @@ export default function Bubbles() {
     showCodeModal,
     setShowChangePetModal,
     showChangePetModal,
-    setShowAddPetModal,
     showAddPetModal,
-    setShowEditPetModal,
-    showEditPetModal, } = useUI();
+    showEditPetModal,
+    setShowVetPetCodeModal,
+    showVetPetCodeModal
+  } = useUI();
 
   useEffect(() => {
     const show = (storage.storedOwnerPets.length ?? 0) > 0;
@@ -4814,7 +5042,7 @@ export default function Bubbles() {
       </div>
 
       {/* Vet Bubble */}
-      {isOwner(session) && !isVet(session, storage.storedVetAccess) &&
+      {isOwner && !isVet &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowVetModal(true)}
@@ -4827,8 +5055,22 @@ export default function Bubbles() {
         </div>
       }
 
+      {/* Vet Bubble */}
+      {isVet &&
+        <div className="tooltip-container" draggable>
+          <button
+            onClick={() => setShowVetPetCodeModal(true)}
+            style={bubbleStyleBase}
+            aria-label="Veterinario"
+          >
+            <FaUserMd />
+          </button>
+          <span className="tooltip-text tooltip-left">Ingresar código de una mascota</span>
+        </div>
+      }
+
       {/* Code Bubble */}
-      {isOwner(session) && !isVet(session, storage.storedVetAccess) &&
+      {isOwner && !isVet &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowCodeModal(true)}
@@ -4856,12 +5098,13 @@ export default function Bubbles() {
       }
 
       {/* Modals */}
-      {showChangePetModal && <ChangePetModal setShowChangePetModal={setShowChangePetModal} setShowAddPetModal={setShowAddPetModal} />}
-      {showVetModal && <VeterinaryModal setShowVetModal={setShowVetModal} />}
-      {showCodeModal && <PetCodeModal setShowCodeModal={setShowCodeModal} />}
-      {showFeedbackModal && <FeedbackModal setShowFeedbackModal={setShowFeedbackModal} />}
-      {showAddPetModal && <AddPetModal showAddPetModal={showAddPetModal} setShowAddPetModal={setShowAddPetModal} />}
-      {showEditPetModal && <AddPetModal editPet={storage.storedPet} showAddPetModal={showAddPetModal} setShowAddPetModal={setShowEditPetModal} />}
+      {showChangePetModal && <ChangePetModal />}
+      {showVetModal && <VeterinaryModal />}
+      {showCodeModal && <PetCodeModal />}
+      {showFeedbackModal && <FeedbackModal />}
+      {showAddPetModal && <AddPetModal />}
+      {showEditPetModal && <AddPetModal editPet={storage.storedPet} />}
+      {showVetPetCodeModal && <VeterinarianPetCodeModal />}
     </div>
   );
 }
@@ -4870,8 +5113,6 @@ export default function Bubbles() {
 // app/components/modals/ChangePetModal.tsx
 "use client";
 import React, {
-  Dispatch,
-  SetStateAction,
   useState,
   useRef,
   useEffect,
@@ -4881,17 +5122,14 @@ import { PetType } from "@/types/index";
 import ModalComponent from "../lib/modal";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index"
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
+import { useUI } from "@/context/UIProvider";
 
-interface ChangePetModalProps {
-  setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
-  setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
-};
-
-export default function ChangePetModal({ setShowChangePetModal, setShowAddPetModal }: ChangePetModalProps) {
-  const storage = usePetStorage();
+export default function ChangePetModal() {
+  const storage = useStorageContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { setShowChangePetModal, setShowAddPetModal } = useUI();
 
   // close dropdown if you click outside
   useEffect(() => {
@@ -5011,20 +5249,19 @@ export default function ChangePetModal({ setShowChangePetModal, setShowAddPetMod
 ----- Archivo: FeedbackModal.tsx ----- 
 // app/components/modals/FeedbackModal.tsx
 "use client";
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import ModalComponent from "../lib/modal";
 import { postFetch } from "@/app/api";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useUI } from "@/context/UIProvider";
 
-interface FeedbackModalProps {
-  setShowFeedbackModal: Dispatch<SetStateAction<boolean>>;
-};
 
-export default function FeedbackModal({ setShowFeedbackModal }: FeedbackModalProps) {
+export default function FeedbackModal() {
   const [feedback, setFeedback] = useState("");
   const [sending, setSending] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const session = useSessionContext();
+  const { setShowFeedbackModal } = useUI();
 
   const sendFeedback = async (anonymous: boolean) => {
     if (!feedback.trim()) return;
@@ -5086,24 +5323,22 @@ export default function FeedbackModal({ setShowFeedbackModal }: FeedbackModalPro
 ----- Archivo: PetCodeModal.tsx ----- 
 // app/components/modals/PetCodeModal.tsx
 "use client";
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import { FaShareAlt, FaCopy } from "react-icons/fa";
 import ModalComponent from "../lib/modal";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
 import { postFetch } from "@/app/api";
+import { useUI } from "@/context/UIProvider";
 
-interface PetCodeModalProps {
-  setShowCodeModal: Dispatch<SetStateAction<boolean>>;
-};
-
-export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
+export default function PetCodeModal() {
   const [code, setCode] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const session = useSessionContext();
-  const storage = usePetStorage();
+  const storage = useStorageContext();
+  const { setShowCodeModal } = useUI();
 
   async function generar() {
     setError("");
@@ -5230,21 +5465,145 @@ export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
   );
 }
  
+----- Archivo: VeterinarianPetCodeModal.tsx ----- 
+// src/components/modals/VeterinarianPetCodeModal.tsx
+"use client";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import ModalComponent from "../lib/modal";
+import { postFetch, getFetch } from "@/app/api";
+import { useStorageContext } from "@/context/StorageProvider";
+import { useVetContext } from "@/context/VetContext";
+import { useUI } from "@/context/UIProvider";
+
+export default function VeterinarianPetCodeModal() {
+    const router = useRouter();
+    const { vet } = useVetContext();
+    const { setShowVetPetCodeModal } = useUI();
+
+    const storage = useStorageContext();
+
+    const [code, setCode] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    if (!vet) {
+        return;
+    }
+
+    const handleSubmit = async () => {
+        setError("");
+        const sanitizedCode = code.trim().toUpperCase();
+        if (!sanitizedCode) {
+            setError("Por favor ingresa el código de la mascota.");
+            return;
+        }
+        setLoading(true);
+
+        try {
+            // Envío de código junto con datos ocultos del veterinario
+            const vetPayload = {
+                code: sanitizedCode,
+                firstName: vet.first_name,
+                lastName: vet.last_name,
+                registration: vet.registration,
+                clinicName: vet.clinic_name,
+                city: vet.city
+            };
+            const res = await postFetch("/api/vet/use-code", undefined, vetPayload);
+            const data = await res.json();
+
+            if (!res.ok || data.error) {
+                setError(data.error || "Código inválido o expirado.");
+            } else {
+                // Obtener datos de la mascota y almacenar
+                const petRes = await getFetch(`/api/pets/${data.pet_id}`);
+                if (!petRes.ok) {
+                    setError("No se encontró la mascota.");
+                } else {
+                    const petData = await petRes.json();
+                    storage.setStoredPet(petData);
+                    storage.setStoredOwnerPets([]);
+                    storage.setStoredVetAccess({
+                        id: data.vet_access,
+                        pet_id: petData.id,
+                        pet_code_id: data.pet_code,
+                        vet_first_name: vet.first_name,
+                        vet_last_name: vet.last_name,
+                        professional_registration: vet.registration,
+                        clinic_name: vet.clinic_name,
+                        city: vet.city
+                    });
+                    setShowVetPetCodeModal(false);
+                    router.push(`/pages/vet/${sanitizedCode}`);
+                }
+            }
+        } catch {
+            setError("Ocurrió un error inesperado.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <ModalComponent
+            title="Acceder a mascota"
+            description="Solo ingresa el código de la mascota para acceder a su historial"
+            setShowModal={setShowVetPetCodeModal}
+        >
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSubmit();
+                }}
+            >
+                {/* Inputs ocultos con datos del veterinario */}
+                <input type="hidden" name="firstName" value={vet.first_name} />
+                <input type="hidden" name="lastName" value={vet.last_name} />
+                <input type="hidden" name="registration" value={vet.registration} />
+                <input type="hidden" name="clinicName" value={vet.clinic_name} />
+                <input type="hidden" name="city" value={vet.city} />
+
+                {/* Input visible para el código */}
+                <label className="label">
+                    Código de la mascota
+                    <input
+                        type="text"
+                        className="input"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        placeholder="e.g. U8Y499"
+                        required
+                    />
+                </label>
+
+                {error && <p className="error">{error}</p>}
+
+                <button
+                    type="submit"
+                    className="submit-btn"
+                    disabled={loading}
+                >
+                    {loading ? "Validando..." : "Acceder"}
+                </button>
+            </form>
+        </ModalComponent>
+    );
+}
+ 
 ----- Archivo: VeterinaryModal.tsx ----- 
 // app/components/modals/VeterinaryModal.tsx
 "use client";
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { veterinaryStyles } from "../../styles/veterinary";
 import ModalComponent from "../lib/modal";
 import { postFetch, getFetch } from "@/app/api";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
+import { useUI } from "@/context/UIProvider";
 
-interface VeterinaryModalProps {
-  setShowVetModal: Dispatch<SetStateAction<boolean>>;
-}
 
-export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProps) {
+export default function VeterinaryModal() {
   const [code, setCode] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -5254,7 +5613,8 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const storage = usePetStorage();
+  const storage = useStorageContext();
+  const { setShowVetModal } = useUI();
 
   const handleSubmit = async () => {
     setError("");
@@ -5289,9 +5649,19 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
           setError("No se encontró la mascota.");
         }
         const petData = await petResponse.json();
-
-        storage.setStoredPet(petData)
+        storage.setStoredPet(petData);
         storage.setStoredOwnerPets([]);
+
+        storage.setStoredVetAccess({
+          id: codeData.vet_access,
+          pet_id: petData.id,
+          pet_code_id: codeData.pet_code,
+          vet_first_name: codeData.firstName,
+          vet_last_name: codeData.lastName,
+          professional_registration: codeData.registration,
+          clinic_name: codeData.clinicName,
+          city: codeData.city
+        });
         setShowVetModal(false);
         router.push(`/pages/vet/${sanitizedCode}`);
       }
@@ -5395,20 +5765,26 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
 ----- Archivo: AppContextProvider.tsx ----- 
 // src/context/AppContext.tsx
 
-import { PetStorageProvider } from "./PetStorageProvider";
+import { StorageProvider } from "./StorageProvider";
 import { UIProvider } from "./UIProvider";
 import { OwnerSessionProvider } from "./OwnerSessionProvider";
 import { SessionProvider } from "./SessionProvider";
+import { RoleProvider } from "./RoleProvider";
+import { VetProvider } from "./VetContext";
 
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <UIProvider>
-        <PetStorageProvider>
-          <OwnerSessionProvider>
-            {children}
-          </OwnerSessionProvider>
-        </PetStorageProvider>
+        <StorageProvider>
+          <RoleProvider>
+            <OwnerSessionProvider>
+              <VetProvider>
+                {children}
+              </VetProvider>
+            </OwnerSessionProvider>
+          </RoleProvider>
+        </StorageProvider>
       </UIProvider>
     </SessionProvider>
   );
@@ -5424,7 +5800,7 @@ import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { isVetWithoutUserSession } from "@/utils/roles";
 import LoadingComponent from "@/components/lib/loading";
 import { usePathname } from "next/navigation";
-import { usePetStorage } from "./PetStorageProvider";
+import { useStorageContext } from "./StorageProvider";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
 import { useSessionContext } from "./SessionProvider";
 
@@ -5437,7 +5813,7 @@ export default function ClientAppProvider({ children }: Props) {
 
     const { isMobile, isDesktop } = useDeviceDetect();
     const session = useSessionContext();                      // undefined | null | AppSession
-    const { storedVetAccess } = usePetStorage();
+    const { storedVetAccess } = useStorageContext();
     const pathname = usePathname();
 
     const isLoginRoute = pathname === "/login" || pathname.endsWith("/login");
@@ -5504,23 +5880,23 @@ import { Empty } from "@/data/index";
 import { ApiError } from "@/types/lib";
 import type { PetType } from "@/types/index";
 import { getFetch } from "@/app/api";
-import { isOwner } from "@/utils/roles";
-import { usePetStorage } from "./PetStorageProvider";
+import { useStorageContext } from "./StorageProvider";
 import { useSessionContext } from "./SessionProvider";
 import { useUI } from "./UIProvider";
+import { useRoleContext } from "./RoleProvider";
 
-//TODO: Why is not loading after log in
 export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }) => {
     const session = useSessionContext();
-    const storage = usePetStorage();
+    const storage = useStorageContext();
     const { setShowAddPetModal } = useUI();
+    const { isOwner } = useRoleContext();
     const ownerId = session?.db?.user?.id;
 
     useEffect(() => {
         if (!session.db || !ownerId) return;
 
         (async () => {
-            if (isOwner(session)) {
+            if (isOwner) {
                 if (storage.storedOwnerPets.length === 0) {
                     const response = await getFetch(`/api/owners/pets/${ownerId}`);
                     if (!response.ok) throw new ApiError(`Fallo al obtener las mascotas del dueño: ${ownerId}`);
@@ -5540,7 +5916,7 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
         if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
             storage.setStoredPet(initialPet);
         }
-        if(!initialPet.id){
+        if (!initialPet.id) {
             setShowAddPetModal(true);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -5548,18 +5924,18 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
 
     return <>{children}</>;
 } 
------ Archivo: PetStorageProvider.tsx ----- 
-// src/context/PetStorageProvider.tsx
+----- Archivo: RoleProvider.tsx ----- 
+// src/context/RoleProvider.tsx
 "use client";
-import { useAppStorage } from "@/hooks/useAppStorage";
+import { useRole } from "@/hooks/useRole";
 import { createContext, useContext } from "react";
 
-export const Petstorage = createContext({} as ReturnType<typeof useAppStorage>);
-export const usePetStorage = () => useContext(Petstorage);
+export const Role = createContext({} as ReturnType<typeof useRole>);
+export const useRoleContext = () => useContext(Role);
 
-export function PetStorageProvider({ children }: { children: React.ReactNode }) {
-    const storage = useAppStorage();
-    return <Petstorage.Provider value={storage}>{children}</Petstorage.Provider>;
+export function RoleProvider({ children }: { children: React.ReactNode }) {
+    const storage = useRole();
+    return <Role.Provider value={storage}>{children}</Role.Provider>;
 } 
 ----- Archivo: SessionProvider.tsx ----- 
 // src/context/SessionProvider.tsx
@@ -5580,6 +5956,19 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         </SessionContext.Provider>
     );
 } 
+----- Archivo: StorageProvider.tsx ----- 
+// src/context/PetStorageProvider.tsx
+"use client";
+import { useAppStorage } from "@/hooks/useAppStorage";
+import { createContext, useContext } from "react";
+
+export const Petstorage = createContext({} as ReturnType<typeof useAppStorage>);
+export const useStorageContext = () => useContext(Petstorage);
+
+export function StorageProvider({ children }: { children: React.ReactNode }) {
+    const storage = useAppStorage();
+    return <Petstorage.Provider value={storage}>{children}</Petstorage.Provider>;
+} 
 ----- Archivo: UIProvider.tsx ----- 
 // src/context/UIProvider.tsx
 "use client";
@@ -5598,6 +5987,8 @@ export interface UIState {
     setShowAddPetModal: React.Dispatch<React.SetStateAction<boolean>>;
     showEditPetModal: boolean;
     setShowEditPetModal: React.Dispatch<React.SetStateAction<boolean>>;
+    showVetPetCodeModal: boolean;
+    setShowVetPetCodeModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const UIContext = createContext({} as UIState);
@@ -5610,6 +6001,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     const [showChangePetModal, setShowChangePetModal] = useState(false);
     const [showAddPetModal, setShowAddPetModal] = useState(false);
     const [showEditPetModal, setShowEditPetModal] = useState(false);
+    const [showVetPetCodeModal, setShowVetPetCodeModal] = useState(false);
 
     return (
         <UIContext.Provider value={{
@@ -5624,16 +6016,100 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
             showAddPetModal,
             setShowAddPetModal,
             showEditPetModal,
-            setShowEditPetModal
+            setShowEditPetModal,
+            showVetPetCodeModal,
+            setShowVetPetCodeModal
         }}>
             {children}
         </UIContext.Provider>
     );
 }
  
+----- Archivo: VetContext.tsx ----- 
+// src/context/VetContext.tsx
+"use client";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { getFetch } from "@/app/api";
+import type { VeterinarianType } from "@/types/index";
+import { useSessionContext } from "./SessionProvider";
+import { useRoleContext } from "./RoleProvider";
+import { useUI } from "./UIProvider";
+import { useStorageContext } from "./StorageProvider";
+
+interface VetContextType {
+    vet: VeterinarianType | null;
+    loading: boolean;
+    refresh: () => Promise<void>;
+}
+
+// Contexto para proveer datos del veterinario autenticado
+export const VetContext = createContext<VetContextType | undefined>(undefined);
+
+interface VetProviderProps {
+    children: ReactNode;
+}
+
+export function VetProvider({ children }: VetProviderProps) {
+    const session = useSessionContext();
+    const [vet, setVet] = useState<VeterinarianType | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const { isVetWithSession } = useRoleContext();
+    const { setShowVetPetCodeModal } = useUI();
+    const storage = useStorageContext();
+
+    // Función para obtener datos del veterinario desde API
+    const fetchVet = async () => {
+        setLoading(true);
+        try {
+            if (isVetWithSession) {
+                if (!session?.db?.user?.id) {
+                    setVet(null);
+                    return;
+                }
+                const res = await getFetch(`/api/vet/${session.db?.user.id}`);
+                if (!res.ok) {
+                    console.error("Error fetching veterinarian profile");
+                    setVet(null);
+                } else {
+                    const data: VeterinarianType = await res.json();
+                    storage.setStoredVetData(data);
+                    setVet(data);
+                }
+                if (!storage.storedVetAccess.id) {
+                    setShowVetPetCodeModal(true);
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            setVet(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchVet();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [session]);
+
+    return (
+        <VetContext.Provider value={{ vet, loading, refresh: fetchVet }}>
+            {children}
+        </VetContext.Provider>
+    );
+}
+
+// Hook para consumir el contexto de veterinario
+export function useVetContext(): VetContextType {
+    const context = useContext(VetContext);
+    if (!context) {
+        throw new Error("useVetContext debe usarse dentro de un VetProvider");
+    }
+    return context;
+} 
 ----- Archivo: empty.ts ----- 
 import { StepsStateType, StepStateEnum } from "@/types/lib";
-import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType, PetStep } from "@/types/index";
+import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType, PetStep, VeterinarianType } from "@/types/index";
 import { ConditionRepository, LabTestRepository, MedicineRepository, SurgeryRepository, VaccineRepository } from "../repositories";
 import { BasicDataTypeSchema, ConditionDataTypeSchema, LabTestDataTypeSchema, MedicineDataTypeSchema, PetTypeSchema, SurgeryDataTypeSchema, VaccineDataTypeSchema } from "@/schemas/validationSchemas";
 
@@ -5799,6 +6275,18 @@ export function VetAccess(): VeterinaryAccessType {
     }
 }
 
+export function VetData(): VeterinarianType {
+    return {
+        vet_id: '',
+        first_name: '',
+        last_name: '',
+        email: '',
+        registration: '',
+        clinic_name: '',
+        city: ''
+    }
+}
+
 export function Steps(): StepsStateType[] {
     return [
         { step: PetStep.Name, state: StepStateEnum.NotInitialize, schema: PetTypeSchema },
@@ -5823,6 +6311,8 @@ export function emptyStorage() {
         setStoredBasicData: () => { },
         storedOwnerData: Empty.OwnerData(),
         setStoredOwnerData: () => { },
+        storedVetData: Empty.VetData(),
+        setStoredVetData: () => { },
         storedVetAccess: Empty.VetAccess(),
         setStoredVetAccess: () => { },
         storedPetCode: Empty.PetCode(),
@@ -6063,7 +6553,7 @@ export const sizeOptions = ['Pequeño', 'Mediano', 'Grande', 'Extra Grande'];
 ----- Archivo: useAppStorage.ts ----- 
 // hooks/useAppStorage.ts
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType } from "@/types/index";
+import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType, VeterinarianType } from "@/types/index";
 import { Empty } from "@/data/index";
 export interface StorageContextType {
     resetSession: () => void;
@@ -6074,6 +6564,8 @@ export interface StorageContextType {
     setStoredBasicData: (value: BasicDataType) => void;
     storedOwnerData: OwnerDataType;
     setStoredOwnerData: (value: OwnerDataType) => void;
+    storedVetData: VeterinarianType;
+    setStoredVetData: (value: VeterinarianType) => void;
     storedVetAccess: VeterinaryAccessType;
     setStoredVetAccess: (value: VeterinaryAccessType) => void;
     storedPetCode: PetCodeType;
@@ -6148,6 +6640,11 @@ export function useAppStorage() {
     Empty.PetCode()
   );
 
+  const [storedVetData, setStoredVetData] = useLocalStorage<VeterinarianType>(
+    "vetData",
+    Empty.VetData()
+  );
+
   const resetPet = () => {
     setStoredBasicData(Empty.BasicData());
     setStoredConditionData([]);
@@ -6175,6 +6672,8 @@ export function useAppStorage() {
     setStoredBasicData,
     storedOwnerData,
     setStoredOwnerData,
+    storedVetData,
+    setStoredVetData,
     storedOwnerPets,
     setStoredOwnerPets,
     storedVaccineData,
@@ -6199,15 +6698,16 @@ export function useAppStorage() {
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { usePetStorage } from "@/context/PetStorageProvider";
-import { isVetWithoutUserSession } from "@/utils/roles";
+import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useRoleContext } from "@/context/RoleProvider";
 
 export default function useAuthRedirect() {
     const router = useRouter();
     const pathname = usePathname();
     const session = useSessionContext();                      // undefined | null | AppSession
-    const { storedVetAccess } = usePetStorage();
+    const { storedVetAccess } = useStorageContext();
+    const { isVetWithoutUserSession } = useRoleContext();
 
     useEffect(() => {
         // 1) Espera a que la sesión esté cargada
@@ -6218,8 +6718,6 @@ export default function useAuthRedirect() {
         const isVetRoute = pathname.startsWith("/vet-access");
         const isRoot = pathname === "/";
 
-        const isVetUser = isVetWithoutUserSession(session, storedVetAccess);
-
         // 3) Redirigir a /login sólo desde la raíz si no hay sesión
         if (session === null && isRoot) {
             router.replace("/login");
@@ -6227,7 +6725,7 @@ export default function useAuthRedirect() {
         }
 
         // 4) Redirigir a vet-access si es vet-user
-        if (isVetUser && !isVetRoute && !isLoginRoute) {
+        if (isVetWithoutUserSession && !isVetRoute && !isLoginRoute) {
             router.replace("/vet-access");
             return;
         }
@@ -6236,6 +6734,7 @@ export default function useAuthRedirect() {
         if (session === null && !isLoginRoute && !isVetRoute && !isRoot) {
             router.replace("/login");
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session, storedVetAccess, pathname, router]);
 } 
 ----- Archivo: useDeviceDetect.ts ----- 
@@ -6476,6 +6975,61 @@ export function useLoadEntities<T>(
     }, [list]);
 
     return { list, setList, error, setError, loading, setState, stateEq };
+}
+ 
+----- Archivo: useRole.ts ----- 
+// src/hooks/useRole.ts
+import { useMemo } from "react";
+import { useStorageContext } from "@/context/StorageProvider";
+import { useSessionContext } from "@/context/SessionProvider";
+
+export function useRole() {
+    const session = useSessionContext();
+    const storage = useStorageContext();
+
+    const isOwner = useMemo(
+        () => session?.db?.user?.user_metadata?.role === "owner",
+        [session]
+    );
+
+    const isVetWithSession = useMemo(
+        () => session?.db?.user?.user_metadata?.role === "veterinarian",
+        [session]
+    );
+
+    const hasVetAccessWithoutSession = useMemo(
+        () => !session && storage.storedVetAccess?.id !== "",
+        [session, storage.storedVetAccess]
+    );
+
+    const isVetWithUserSession = useMemo(
+        () => storage.storedVetAccess?.id !== "" && isOwner,
+        [storage.storedVetAccess, isOwner]
+    );
+
+    const isVetWithoutUserSession = useMemo(
+        () =>
+            (isVetWithSession || hasVetAccessWithoutSession) &&
+            !isVetWithUserSession,
+        [isVetWithSession, hasVetAccessWithoutSession, isVetWithUserSession]
+    );
+
+    const isVet = useMemo(
+        () =>
+            isVetWithSession ||
+            isVetWithoutUserSession ||
+            isVetWithUserSession,
+        [isVetWithSession, isVetWithoutUserSession, isVetWithUserSession]
+    );
+
+    return {
+        isOwner,
+        isVet,
+        isVetWithSession,
+        isVetWithoutSession: hasVetAccessWithoutSession,
+        isVetWithUserSession,
+        isVetWithoutUserSession,
+    } as const;
 }
  
 ----- Archivo: useLocalStorage.tsx ----- 
@@ -7191,6 +7745,45 @@ export default class VaccineRepository implements FormRepository<VaccineDataType
     }
 }
  
+----- Archivo: veterinarian.repository.ts ----- 
+// src/repositories/veterinarian.repository.ts
+import { supabase } from '@/lib/client/supabase';
+import type { VeterinarianType } from '@/types/index';
+
+export default class VeterinarianRepository {
+    /** Inserta un nuevo veterinario */
+    static async create(vet: VeterinarianType) {
+        return supabase.from('veterinarians').insert(vet);
+    }
+
+    /** Busca un veterinario por su ID */
+    static async findById(vet_id: string): Promise<VeterinarianType | null> {
+        if (!vet_id) return null;
+        const { data, error } = await supabase
+            .from('veterinarians')
+            .select('*')
+            .eq('vet_id', vet_id);
+        if (error) throw new Error(error.message);
+        return data && data.length > 0 ? data[0] : null;
+    }
+
+    /** Actualiza todos los campos de un veterinario */
+    static async update(vet: VeterinarianType) {
+        return supabase
+            .from('veterinarians')
+            .update(vet)
+            .eq('vet_id', vet.vet_id);
+    }
+
+    /** Elimina un veterinario por su ID */
+    static async delete(vet_id: string) {
+        return supabase
+            .from('veterinarians')
+            .delete()
+            .eq('vet_id', vet_id);
+    }
+}
+ 
 ----- Archivo: veterinaryAccess.repository.ts ----- 
 // src/repositories/veterinaryAccess.repository.ts
 import { supabase } from "@/lib/client/supabase";
@@ -7206,7 +7799,8 @@ export default class VeterinaryAccessRepository {
         const { data, error } = await supabase
             .from("veterinary_accesses")
             .insert(access)
-            .single();
+            .select("*")
+            .single();  
 
         if (error) throw new Error(error.message);
         return data;
@@ -7364,6 +7958,17 @@ export const VeterinaryAccessTypeSchema = z.object({
   clinic_name: z.string(),
   city: z.string(),
   created_at: z.string(),
+});
+
+//Veterinarian
+export const VeterinarianTypeSchema = z.object({
+  vet_id: z.string().uuid(),
+  first_name: z.string(),
+  last_name: z.string(),
+  email: z.string().email(),
+  registration: z.string(),
+  clinic_name: z.string(),
+  city: z.string(),
 });
 
 // FeatureType
@@ -7651,12 +8256,13 @@ export const signIn = async (
 
 export const ownerSignUp = async (
   email: string,
-  password: string
+  password: string,
+  role: string = 'owner'
 ): Promise<{ data: { user: User | null }; error: AuthError | null }> => {
   return supabase.auth.signUp({
     email, password,
     options: {
-      data: { role: "owner" }
+      data: { role: role }
     }
   });
 };
@@ -7957,8 +8563,18 @@ export interface VeterinaryAccessType {
     professional_registration: string;
     clinic_name: string;
     city: string;
-    created_at: string;
 }
+
+export interface VeterinarianType {
+  vet_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  registration: string;
+  clinic_name: string;
+  city: string;
+}
+
 export interface FeatureType {
     text: string;
     badge?: string;
@@ -8100,6 +8716,7 @@ export interface FormRepository<T> {
 export interface LogInType {
   email: string;
   password?: string;
+  role: 'owner' | 'veterinarian';
 }
 export interface SetSesionType {
   access_token: string;

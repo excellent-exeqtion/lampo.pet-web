@@ -20,15 +20,15 @@ export interface StorageContextType {
     storedOwnerPets: PetType[];
     setStoredOwnerPets: (value: PetType[]) => void;
     storedVaccineData: VaccineDataType[],
-    setStoredVaccineData: (value: VaccineDataType[]) => void,
+    setStoredVaccineData: (value: VaccineDataType[] | null) => void,
     storedConditionData: ConditionDataType[],
-    setStoredConditionData: (value: ConditionDataType[]) => void,
+    setStoredConditionData: (value: ConditionDataType[] | null) => void,
     storedLabTestData: LabTestDataType[],
-    setStoredLabTestData: (value: LabTestDataType[]) => void,
+    setStoredLabTestData: (value: LabTestDataType[] | null) => void,
     storedMedicineData: MedicineDataType[],
-    setStoredMedicineData: (value: MedicineDataType[]) => void,
+    setStoredMedicineData: (value: MedicineDataType[] | null) => void,
     storedSurgeryData: SurgeryDataType[],
-    setStoredSurgeryData: (value: SurgeryDataType[]) => void,
+    setStoredSurgeryData: (value: SurgeryDataType[] | null) => void,
 }
 
 export function useAppStorage() {
@@ -52,29 +52,29 @@ export function useAppStorage() {
     []
   );
 
-  const [storedVaccineData, setStoredVaccineData] = useLocalStorage<VaccineDataType[]>(
+  const [storedVaccineData, setStoredVaccineData] = useLocalStorage<VaccineDataType[] | null>(
     "petVaccineData",
-    []
+    null
   );
 
-  const [storedConditionData, setStoredConditionData] = useLocalStorage<ConditionDataType[]>(
+  const [storedConditionData, setStoredConditionData] = useLocalStorage<ConditionDataType[] | null>(
     "petConditionData",
-    []
+    null
   );
 
-  const [storedLabTestData, setStoredLabTestData] = useLocalStorage<LabTestDataType[]>(
+  const [storedLabTestData, setStoredLabTestData] = useLocalStorage<LabTestDataType[] | null>(
     "petLabTestData",
-    []
+    null
   );
 
-  const [storedMedicineData, setStoredMedicineData] = useLocalStorage<MedicineDataType[]>(
+  const [storedMedicineData, setStoredMedicineData] = useLocalStorage<MedicineDataType[] | null>(
     "petMedicineData",
-    []
+    null
   );
 
-  const [storedSurgeryData, setStoredSurgeryData] = useLocalStorage<SurgeryDataType[]>(
+  const [storedSurgeryData, setStoredSurgeryData] = useLocalStorage<SurgeryDataType[] | null>(
     "petSurgeryData",
-    []
+    null
   );
 
   const [storedVetAccess, setStoredVetAccess] = useLocalStorage<VeterinaryAccessType>(
@@ -94,11 +94,11 @@ export function useAppStorage() {
 
   const resetPet = () => {
     setStoredBasicData(Empty.BasicData());
-    setStoredConditionData([]);
-    setStoredLabTestData([]);
-    setStoredMedicineData([]);
-    setStoredSurgeryData([]);
-    setStoredVaccineData([]);
+    setStoredConditionData(null);
+    setStoredLabTestData(null);
+    setStoredMedicineData(null);
+    setStoredSurgeryData(null);
+    setStoredVaccineData(null);
   }
 
   const resetSession = () =>{

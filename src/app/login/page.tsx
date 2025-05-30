@@ -8,7 +8,7 @@ import Image from "next/image";
 import type { OwnerDataType } from "@/types/index";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { postFetch } from "@/app/api";
-import { setSession } from "@/services/authService";
+import { ownerSignUp, resetPassword, signIn } from "@/services/authService";
 import ModalComponent from "@/components/lib/modal";
 
 export default function LoginPage() {
@@ -41,6 +41,7 @@ export default function LoginPage() {
 
     if (isRegistering) {
       // 1) Registro vía API
+      /*
       const signUpResponse = await postFetch("/api/auth/sign-up", undefined, { email, password });
       const signUpJson = await signUpResponse.json();
 
@@ -49,9 +50,10 @@ export default function LoginPage() {
         setError("Ocurrió un error al registrar el usuario.");
         setLoading(false);
         return;
-      }
+      }*/
+      const { data: { user } } = await ownerSignUp(email, password);
 
-      const ownerId = signUpJson.user?.id;
+      const ownerId = user?.id;
 
       // 2) Guardar datos del owner
       if (ownerId) {
@@ -70,16 +72,18 @@ export default function LoginPage() {
       setShowConfirmModal(true);
     } else {
       // Inicio de sesión
+      /*
       const loginResponse = await postFetch("/api/auth/sign-in", undefined, { email, password });
       const loginJson = await loginResponse.json();
-
       if (!loginResponse.ok || !loginJson.success) {
         setError(loginJson?.message || "Error iniciando sesión");
       } else {
-        setSession({ access_token: loginJson.user.access_token, refresh_token: loginJson.user.refresh_token });
-        router.refresh();
-        router.push("/");
-      }
+        setSession({ access_token: loginJson.access_token, refresh_token: loginJson.refresh_token });
+       */
+      await signIn(email, password);
+      router.refresh();
+      router.push("/");
+      //}
     }
 
     setLoading(false);
@@ -91,7 +95,7 @@ export default function LoginPage() {
       setError("Ingresa tu correo para restablecer la contraseña.");
       return;
     }
-
+/*
     const resetResponse = await postFetch("/api/auth/reset-password", undefined, { email });
     const resetJson = await resetResponse.json();
 
@@ -100,6 +104,8 @@ export default function LoginPage() {
     } else {
       setError("Revisa tu correo para restablecer la contraseña.");
     }
+      */
+     await resetPassword(email);
   };
 
   const goToVetPage = () => {

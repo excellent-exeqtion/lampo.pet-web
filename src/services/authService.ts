@@ -1,49 +1,47 @@
 // src/services/authService.ts
-import { supabase } from "@/lib/client/supabase";
-import type { Session, User, AuthError, AuthChangeEvent } from "@supabase/supabase-js";
 import { StorageContextType } from "@/hooks/useAppStorage";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { AuthClientChangeEvent, AuthClientError, AuthSession, SignInResponse, SignUpResponse, authClient } from '@/lib/auth';
 
 export const signIn = async (
   email: string,
   password: string
-): Promise<{ data: { session: Session | null; user: User | null }; error: AuthError | null }> => {
-  return supabase.auth.signInWithPassword({ email, password });
+): Promise<SignInResponse> => {
+  const { data, error } = await authClient.signIn(email, password);
+  if (data) {
+    setSession(data.session);
+  }
+  return { data, error };
 };
 
 export const ownerSignUp = async (
   email: string,
   password: string,
   role: string = 'owner'
-): Promise<{ data: { user: User | null }; error: AuthError | null }> => {
-  return supabase.auth.signUp({
-    email, password,
-    options: {
-      data: { role: role }
-    }
-  });
+): Promise<SignUpResponse> => {
+  return authClient.signUp(email, password, role);
 };
 
 export const resetPassword = async (
   email: string
-): Promise<{ data: object | null; error: AuthError | null }> => {
-  return supabase.auth.resetPasswordForEmail(email);
+): Promise<{ data: object | null; error: AuthClientError | null }> => {
+  return authClient.resetPassword(email);
 };
-export const signOut = () => supabase.auth.signOut();
+export const signOut = () => authClient.signOut();
 
-export const getSession = () => supabase.auth.getSession();
+export const getSession = () => authClient.getSession();
 
 export const onAuthStateChange = (
-  cb: (event: AuthChangeEvent, session: Session | null) => void
-) => supabase.auth.onAuthStateChange(cb).data.subscription;
+  cb: (event: AuthClientChangeEvent, session: AuthSession | null) => void
+) => authClient.onAuthStateChange(cb);
 
 export const setSession = (session: {
   access_token: string;
   refresh_token: string;
-}) => supabase.auth.setSession(session);
+}) => authClient.setSession(session);
 
 export const handleLogout = async (storage: StorageContextType, router: AppRouterInstance) => {
-  try {
+  /*try {
     const response = await fetch("/api/auth/sign-out", { method: "POST" });
     const result = await response.json();
 
@@ -52,8 +50,8 @@ export const handleLogout = async (storage: StorageContextType, router: AppRoute
     }
   } catch (err) {
     console.error("Error en logout:", err);
-  }
-  await signOut();
+  }*/
+  await authClient.signOut();
   storage.resetSession();
   router.replace("/login");
 };

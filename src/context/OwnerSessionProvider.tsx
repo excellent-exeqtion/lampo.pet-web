@@ -41,7 +41,7 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
         if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
             storage.setStoredPet(initialPet);
         }
-        if (!initialPet.id) {
+        if (!initialPet.id && isOwner) {
             setShowAddPetModal(true);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

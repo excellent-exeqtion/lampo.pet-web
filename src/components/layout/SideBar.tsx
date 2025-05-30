@@ -67,7 +67,10 @@ export default function SideBar() {
     }
 
     function item({ label, icon, url, show, showModal }: MenuType) {
-        if (showModal) {
+        if (!show) {
+            return <div key={v4()}></div>;
+        }
+        else if (showModal) {
             return (
                 <li key={label} style={{ marginBottom: "0.5rem" }}>
                     <a onClick={() => showModal(true)} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -75,9 +78,6 @@ export default function SideBar() {
                     </a>
                 </li>
             );
-        }
-        else if (!show) {
-            return <div key={v4()}></div>;
         }
         else {
             return (

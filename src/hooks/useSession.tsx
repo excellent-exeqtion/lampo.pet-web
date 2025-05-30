@@ -1,32 +1,23 @@
-// app/hooks/useSession.tsx
+// src/hooks/useSession.tsx
 "use client";
-
 import { useState, useEffect } from "react";
-import type { Session } from "@supabase/supabase-js";
-import { onAuthStateChange } from "@/services/authService";
+import type { Session as SupabaseSession } from "@supabase/supabase-js";
+import { getSession, onAuthStateChange } from "@/services/authService";
 
-export function useSession(): Session | undefined {
-  const [session, setSession] = useState<Session | undefined>(undefined);
+export function useSession(): SupabaseSession | null {
+  const [session, setSession] = useState<SupabaseSession | null>(null);
+
   useEffect(() => {
-    const getCurrentSession = async () => {
-      const res = await fetch("/api/auth/session");
-      const json = await res.json();
-      setSession(json.session || undefined);
-    };
+    // Inicializa con la sesión actual
+    getSession().then(setSession);
 
-    // 1. Obtiene sesión inicial
-    getCurrentSession();
-
-    // 2) Nos suscribimos a cambios
-    const subscription = onAuthStateChange((_event, newSession) => {
-      if (newSession) setSession(newSession);
+    // Envuelve `setSession` para ignorar el primer parámetro (event)
+    const sub = onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => sub.unsubscribe();
   }, []);
-
 
   return session;
 }

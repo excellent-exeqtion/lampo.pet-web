@@ -1,6 +1,7 @@
 // src/context/UIProvider.tsx
 "use client";
-import { useState, createContext, useContext } from "react";
+import { useState, createContext, useContext, SetStateAction } from "react";
+import { useStorageContext } from "./StorageProvider";
 
 export interface UIState {
     showVetModal: boolean;
@@ -30,6 +31,14 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     const [showAddPetModal, setShowAddPetModal] = useState(false);
     const [showEditPetModal, setShowEditPetModal] = useState(false);
     const [showVetPetCodeModal, setShowVetPetCodeModal] = useState(false);
+    const storage = useStorageContext();
+
+    const closeEditPetModal: React.Dispatch<React.SetStateAction<boolean>> = (close: SetStateAction<boolean>) => {
+       if(!close){
+        storage.resetPet();
+       }
+        return setShowEditPetModal(close);
+    }
 
     return (
         <UIContext.Provider value={{
@@ -44,7 +53,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
             showAddPetModal,
             setShowAddPetModal,
             showEditPetModal,
-            setShowEditPetModal,
+            setShowEditPetModal: closeEditPetModal,
             showVetPetCodeModal,
             setShowVetPetCodeModal
         }}>

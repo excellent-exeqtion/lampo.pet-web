@@ -12,7 +12,7 @@ export interface AppContextType {
 }
 
 export interface AppSession {
-  db: Session | undefined;
+  db: Session | null;
 }
 
 export interface FormType {
@@ -57,7 +57,7 @@ export enum StepStateEnum {
 export type StepConfig<T> = {
   entityName: string;
   storedList: T[];
-  setStoredList: (list: T[]) => void;
+  setStoredList: (list: T[] | null) => void;
   emptyFactory: (petId: string) => T;
   fieldsConfig: FieldConfig<T>[];
 };

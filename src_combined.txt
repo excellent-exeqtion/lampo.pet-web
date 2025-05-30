@@ -1,3 +1,28 @@
+----- Archivo: middleware.ts ----- 
+// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+// 1) Importa la nueva función
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+
+export async function middleware(req: NextRequest) {
+    const res = NextResponse.next();
+    // 2) Usa createMiddlewareClient
+    const supabase = createMiddlewareClient({ req, res });
+
+    // Ahora supabase.auth.getSession() leerá la cookie correcta
+    const {
+        data: { session },
+    } = await supabase.auth.getSession();
+
+    // Ejemplo de protección de ruta:
+    if (!session && req.nextUrl.pathname.startsWith("/dashboard")) {
+        return NextResponse.redirect(new URL("/login", req.url));
+    }
+
+    return res;
+}
+ 
 ----- Archivo: layout.tsx ----- 
 // app/layout.tsx
 "use client";
@@ -6,7 +31,7 @@ import "./globals.css";
 import "@picocss/pico";
 import { tooltipStyles } from "@/styles/tooltip";
 import { geistMono, geistSans } from "@/styles/geist";
-import ClientAppProvider from "@/context/ClientAppProvider";
+import { ClientAppProvider } from "../components";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,9 +41,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <style>{tooltipStyles}</style>
-        <ClientAppProvider>{children}</ClientAppProvider>
+        <ClientAppProvider>
+          {children}
+        </ClientAppProvider>
       </body>
-    </html>
+    </html >
   );
 }
  
@@ -354,18 +381,28 @@ export async function POST(req: NextRequest) {
  
 ----- Archivo: route.ts ----- 
 // src/app/api/auth/session/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/services/authService";
-import { withErrorHandling } from "@/services/apiService";
+import { NextResponse } from "next/server";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+// Importa el helper de Next.js, no uses req.cookies
+import { cookies } from "next/headers";
 
-export async function GET(req: NextRequest) {
-    return withErrorHandling("GET", req, async () => {
-        const { data, error } = await getSession();
-        if (error) {
-            return NextResponse.json({ success: false, message: error.message }, { status: 401 });
-        }
-        return NextResponse.json({ success: true, session: data.session });
-    });
+export async function GET() {
+  // Cookies es una función que devuelve ReadonlyRequestCookies
+  const supabase = createServerComponentClient({ cookies });
+
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
+  if (error) {
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 401 }
+    );
+  }
+
+  return NextResponse.json({ success: true, session });
 }
  
 ----- Archivo: route.ts ----- 
@@ -405,15 +442,18 @@ const SignInSchema = z.object({
 
 export async function POST(req: NextRequest) {
     return withValidationAndErrorHandling('POST', req, SignInSchema, async ({ email, password }: LogInType) => {
-        const { data, error } = await signIn(email, password!);
-        if (error) {
-            return NextResponse.json({ success: false, message: error.message }, { status: 401 });
+        // signIn lanza si hay error, y retorna la Session directamente
+        const { data } = await signIn(email, password!);
+        if (data) {
+            // Persistimos la sesión en cookies HTTP-only
+            await setSession(data.session);
+            // Respondemos con la sesión (o con session.user si quieres exponer solo al usuario)
+            return NextResponse.json({ success: true, session: data.session });
         }
-        // Persist tokens in HTTP-only cookies:
-        await setSession(data.session!);
-        return NextResponse.json({ success: true, user: data.session });
+        return NextResponse.json({ success: false });
     });
-} 
+}
+ 
 ----- Archivo: route.ts ----- 
 // src/app/api/auth/sign-out/route.ts
 import { NextRequest, NextResponse } from 'next/server';
@@ -1136,7 +1176,7 @@ import Image from "next/image";
 import type { OwnerDataType } from "@/types/index";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { postFetch } from "@/app/api";
-import { setSession } from "@/services/authService";
+import { ownerSignUp, resetPassword, signIn } from "@/services/authService";
 import ModalComponent from "@/components/lib/modal";
 
 export default function LoginPage() {
@@ -1169,6 +1209,7 @@ export default function LoginPage() {
 
     if (isRegistering) {
       // 1) Registro vía API
+      /*
       const signUpResponse = await postFetch("/api/auth/sign-up", undefined, { email, password });
       const signUpJson = await signUpResponse.json();
 
@@ -1177,9 +1218,10 @@ export default function LoginPage() {
         setError("Ocurrió un error al registrar el usuario.");
         setLoading(false);
         return;
-      }
+      }*/
+      const { data: { user } } = await ownerSignUp(email, password);
 
-      const ownerId = signUpJson.user?.id;
+      const ownerId = user?.id;
 
       // 2) Guardar datos del owner
       if (ownerId) {
@@ -1198,16 +1240,18 @@ export default function LoginPage() {
       setShowConfirmModal(true);
     } else {
       // Inicio de sesión
+      /*
       const loginResponse = await postFetch("/api/auth/sign-in", undefined, { email, password });
       const loginJson = await loginResponse.json();
-
       if (!loginResponse.ok || !loginJson.success) {
         setError(loginJson?.message || "Error iniciando sesión");
       } else {
-        setSession({ access_token: loginJson.user.access_token, refresh_token: loginJson.user.refresh_token });
-        router.refresh();
-        router.push("/");
-      }
+        setSession({ access_token: loginJson.access_token, refresh_token: loginJson.refresh_token });
+       */
+      await signIn(email, password);
+      router.refresh();
+      router.push("/");
+      //}
     }
 
     setLoading(false);
@@ -1219,7 +1263,7 @@ export default function LoginPage() {
       setError("Ingresa tu correo para restablecer la contraseña.");
       return;
     }
-
+/*
     const resetResponse = await postFetch("/api/auth/reset-password", undefined, { email });
     const resetJson = await resetResponse.json();
 
@@ -1228,6 +1272,8 @@ export default function LoginPage() {
     } else {
       setError("Revisa tu correo para restablecer la contraseña.");
     }
+      */
+     await resetPassword(email);
   };
 
   const goToVetPage = () => {
@@ -1506,7 +1552,8 @@ export default function AuthVerifyLayout({ children }: { children: React.ReactNo
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getFetch, postFetch } from "@/app/api";
+//import { getFetch, postFetch } from "@/app/api";
+import { getSession, setSession } from "@/services/authService";
 
 export default function VerifyEmail() {
   const router = useRouter();
@@ -1519,6 +1566,8 @@ export default function VerifyEmail() {
 
     const trySetSession = async () => {
       try {
+        await setSession({ access_token: access_token!, refresh_token: refresh_token! });
+        /*
         const response = await postFetch("/api/auth/set-session", undefined, { access_token, refresh_token });
         const result = await response.json();
 
@@ -1526,8 +1575,7 @@ export default function VerifyEmail() {
           console.error("Error al establecer sesión:", result.message);
           router.replace("/login");
           return;
-        }
-
+        }*/
         router.replace("/owners/register");
       } catch (err) {
         console.error("Error de red al establecer sesión:", err);
@@ -1537,6 +1585,7 @@ export default function VerifyEmail() {
 
     const checkSession = async () => {
       try {
+        /*
         const response = await getFetch("/api/auth/session");
         const result = await response.json();
 
@@ -1545,6 +1594,8 @@ export default function VerifyEmail() {
         } else {
           router.replace("/login");
         }
+        */
+        await getSession();
       } catch (err) {
         console.error("Error al verificar sesión:", err);
         router.replace("/login");
@@ -2572,7 +2623,7 @@ export default function VetPage({ params }: VetPageProps) {
       setValidatedCode(code);
 
       try {
-        const res = await fetch(`/api/vet-access/validate?code=${code}`);
+        const res = await fetch(`/api/vet/validate?code=${code}`);
         const data = await res.json();
 
         if (!res.ok || !data.success) {
@@ -2757,6 +2808,7 @@ import { useRouter } from "next/navigation";
 import ModalComponent from "@/components/lib/modal";
 import { postFetch } from "@/app/api";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { ownerSignUp } from "@/services/authService";
 
 export default function VetRegisterPage() {
   const router = useRouter();
@@ -2789,14 +2841,16 @@ export default function VetRegisterPage() {
     setLoading(true);
     try {
       // 1) Crear cuenta en auth
+      const { data: { user } } = await ownerSignUp(email, password, 'veterinarian');
+      const vetId = user?.id;
+      /*
       const signUpRes = await postFetch("/api/auth/sign-up", undefined, { email, password, role: 'veterinarian' });
       const signUpJson = await signUpRes.json();
       if (!signUpRes.ok || !signUpJson.success) {
         setError("Error al registrar la cuenta.");
         return;
       }
-
-      const vetId = signUpJson.user?.id;
+      const vetId = signUpJson.user?.id;*/
       if (vetId) {
         // 2) Guardar perfil de veterinario
         const profileRes = await postFetch("/api/vet", undefined, {
@@ -3780,7 +3834,10 @@ export default function SideBar() {
     }
 
     function item({ label, icon, url, show, showModal }: MenuType) {
-        if (showModal) {
+        if (!show) {
+            return <div key={v4()}></div>;
+        }
+        else if (showModal) {
             return (
                 <li key={label} style={{ marginBottom: "0.5rem" }}>
                     <a onClick={() => showModal(true)} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -3788,9 +3845,6 @@ export default function SideBar() {
                     </a>
                 </li>
             );
-        }
-        else if (!show) {
-            return <div key={v4()}></div>;
         }
         else {
             return (
@@ -4307,7 +4361,7 @@ import type { FieldConfig, StepsStateType } from "@/types/lib";
 export interface EntityFormProps<T extends { id?: string }> {
   id: string;
   storedList: T[];
-  setStoredList: (list: T[]) => void;
+  setStoredList: (list: T[] | null) => void;
   data: T[];
   setData: Dispatch<SetStateAction<T[]>>;
   step: number;
@@ -4607,9 +4661,9 @@ const PageComponent = <T,>({
         const fetchData = async () => {
             try {
                 let data: T[] = [];
-                if (storedList.length == 0) {
+                if (storedList == null) {
                     const response = await getFetch(`${apiUrl}${parentId}`);
-                    if(!response.ok) throw new ApiError(`Error llamando al api: ${apiUrl}${parentId}`);
+                    if (!response.ok) throw new ApiError(`Error llamando al api: ${apiUrl}${parentId}`);
                     const data = await response.json();
                     setItems(data);
                     setStoredList(data);
@@ -4782,7 +4836,7 @@ export default function AddPetModal({ editPet }: AddPetModalProps) {
     const session = useSessionContext();
     const storage = useStorageContext();
     const [step, setStep] = useState<PetStep>(PetStep.Name);
-    const { showAddPetModal, setShowAddPetModal } = useUI();
+    const { showAddPetModal, setShowAddPetModal, setShowEditPetModal } = useUI();
 
     // Estados por entidad
     const [pet, setPet] = useState<PetType>(editPet == undefined ? Empty.Pet() : editPet);
@@ -4811,6 +4865,7 @@ export default function AddPetModal({ editPet }: AddPetModalProps) {
         pet.owner_id = ownerId;
         storage.setStoredOwnerPets([...(storage.storedOwnerPets ?? []), pet]);
         setShowAddPetModal(false);
+        setShowEditPetModal(false);
         setStepStates(Empty.Steps());
     };
 
@@ -4956,7 +5011,7 @@ export default function AddPetModal({ editPet }: AddPetModalProps) {
     };
 
     return (
-        <ModalComponent title={stepTitle()} setShowModal={setShowAddPetModal} maxWidth="1000px">
+        <ModalComponent title={stepTitle()} setShowModal={editPet == undefined ? setShowAddPetModal : setShowEditPetModal} maxWidth="1000px">
             {renderStep()}
         </ModalComponent>
     );
@@ -5765,27 +5820,27 @@ export default function VeterinaryModal() {
 ----- Archivo: AppContextProvider.tsx ----- 
 // src/context/AppContext.tsx
 
-import { StorageProvider } from "./StorageProvider";
 import { UIProvider } from "./UIProvider";
 import { OwnerSessionProvider } from "./OwnerSessionProvider";
-import { SessionProvider } from "./SessionProvider";
-import { RoleProvider } from "./RoleProvider";
 import { VetProvider } from "./VetContext";
+import { RoleProvider } from "./RoleProvider";
+import { SessionProvider } from "./SessionProvider";
+import { StorageProvider } from "./StorageProvider";
 
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <UIProvider>
-        <StorageProvider>
-          <RoleProvider>
+      <StorageProvider>
+        <RoleProvider>
+          <UIProvider>
             <OwnerSessionProvider>
               <VetProvider>
                 {children}
               </VetProvider>
             </OwnerSessionProvider>
-          </RoleProvider>
-        </StorageProvider>
-      </UIProvider>
+          </UIProvider>
+        </RoleProvider>
+      </StorageProvider>
     </SessionProvider>
   );
 }
@@ -5797,12 +5852,11 @@ import React from "react";
 import { AppContextProvider } from "@/context/AppContextProvider";
 import { Bubbles, SideBar } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
-import { isVetWithoutUserSession } from "@/utils/roles";
 import LoadingComponent from "@/components/lib/loading";
 import { usePathname } from "next/navigation";
-import { useStorageContext } from "./StorageProvider";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
 import { useSessionContext } from "./SessionProvider";
+import { useRoleContext } from "./RoleProvider";
 
 interface Props {
     children: React.ReactNode;
@@ -5812,9 +5866,9 @@ export default function ClientAppProvider({ children }: Props) {
     useAuthRedirect();
 
     const { isMobile, isDesktop } = useDeviceDetect();
-    const session = useSessionContext();                      // undefined | null | AppSession
-    const { storedVetAccess } = useStorageContext();
+    const session = useSessionContext();
     const pathname = usePathname();
+    const { isVetWithoutUserSession } = useRoleContext();
 
     const isLoginRoute = pathname === "/login" || pathname.endsWith("/login");
     const isVetRoute = pathname.startsWith("/vet-access");
@@ -5835,7 +5889,7 @@ export default function ClientAppProvider({ children }: Props) {
     }
 
     // Si es vet-user con sesión y no está en vet-access, bloquear hasta redirect
-    const isVetUserNow = isVetWithoutUserSession(session, storedVetAccess);
+    const isVetUserNow = isVetWithoutUserSession;
     if (isVetUserNow) {
         return null;
     }
@@ -5869,6 +5923,26 @@ export default function ClientAppProvider({ children }: Props) {
                 </main>
             </div>
         </AppContextProvider>
+    );
+}
+ 
+----- Archivo: MainAppProvider.tsx ----- 
+// src/context/MainAppProvider.tsx
+
+import ClientAppProvider from "./ClientAppProvider";
+import { RoleProvider } from "./RoleProvider";
+import { SessionProvider } from "./SessionProvider";
+import { StorageProvider } from "./StorageProvider";
+
+export function MainAppProvider({ children }: { children: React.ReactNode }) {
+    return (
+        <SessionProvider>
+            <StorageProvider>
+                <RoleProvider>
+                    <ClientAppProvider>{children}</ClientAppProvider>
+                </RoleProvider>
+            </StorageProvider>
+        </SessionProvider>
     );
 }
  
@@ -5916,7 +5990,7 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
         if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
             storage.setStoredPet(initialPet);
         }
-        if (!initialPet.id) {
+        if (!initialPet.id && isOwner) {
             setShowAddPetModal(true);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -5940,11 +6014,12 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
 ----- Archivo: SessionProvider.tsx ----- 
 // src/context/SessionProvider.tsx
 "use client";
+
 import { createContext, useContext } from "react";
 import { useSession } from "@/hooks/useSession";
 import { AppSession } from "@/types/lib";
 
-const SessionContext = createContext({} as AppSession);
+const SessionContext = createContext<AppSession>({ db: null });
 
 export const useSessionContext = () => useContext(SessionContext);
 
@@ -5957,22 +6032,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     );
 } 
 ----- Archivo: StorageProvider.tsx ----- 
-// src/context/PetStorageProvider.tsx
+// src/context/StorageProvider.tsx
 "use client";
 import { useAppStorage } from "@/hooks/useAppStorage";
 import { createContext, useContext } from "react";
 
-export const Petstorage = createContext({} as ReturnType<typeof useAppStorage>);
-export const useStorageContext = () => useContext(Petstorage);
+export const Storage = createContext({} as ReturnType<typeof useAppStorage>);
+export const useStorageContext = () => useContext(Storage);
 
 export function StorageProvider({ children }: { children: React.ReactNode }) {
     const storage = useAppStorage();
-    return <Petstorage.Provider value={storage}>{children}</Petstorage.Provider>;
+    return <Storage.Provider value={storage}>{children}</Storage.Provider>;
 } 
 ----- Archivo: UIProvider.tsx ----- 
 // src/context/UIProvider.tsx
 "use client";
-import { useState, createContext, useContext } from "react";
+import { useState, createContext, useContext, SetStateAction } from "react";
+import { useStorageContext } from "./StorageProvider";
 
 export interface UIState {
     showVetModal: boolean;
@@ -6002,6 +6078,14 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     const [showAddPetModal, setShowAddPetModal] = useState(false);
     const [showEditPetModal, setShowEditPetModal] = useState(false);
     const [showVetPetCodeModal, setShowVetPetCodeModal] = useState(false);
+    const storage = useStorageContext();
+
+    const closeEditPetModal: React.Dispatch<React.SetStateAction<boolean>> = (close: SetStateAction<boolean>) => {
+       if(!close){
+        storage.resetPet();
+       }
+        return setShowEditPetModal(close);
+    }
 
     return (
         <UIContext.Provider value={{
@@ -6016,7 +6100,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
             showAddPetModal,
             setShowAddPetModal,
             showEditPetModal,
-            setShowEditPetModal,
+            setShowEditPetModal: closeEditPetModal,
             showVetPetCodeModal,
             setShowVetPetCodeModal
         }}>
@@ -6066,14 +6150,19 @@ export function VetProvider({ children }: VetProviderProps) {
                     setVet(null);
                     return;
                 }
-                const res = await getFetch(`/api/vet/${session.db?.user.id}`);
-                if (!res.ok) {
-                    console.error("Error fetching veterinarian profile");
-                    setVet(null);
-                } else {
-                    const data: VeterinarianType = await res.json();
-                    storage.setStoredVetData(data);
-                    setVet(data);
+                if (!storage.storedVetData.vet_id) {
+                    const res = await getFetch(`/api/vet/${session.db?.user.id}`);
+                    if (!res.ok) {
+                        console.error("Error fetching veterinarian profile");
+                        setVet(null);
+                    } else {
+                        const data: VeterinarianType = await res.json();
+                        storage.setStoredVetData(data);
+                        setVet(data);
+                    }
+                }
+                else{
+                    setVet(storage.storedVetData);
                 }
                 if (!storage.storedVetAccess.id) {
                     setShowVetPetCodeModal(true);
@@ -6573,15 +6662,15 @@ export interface StorageContextType {
     storedOwnerPets: PetType[];
     setStoredOwnerPets: (value: PetType[]) => void;
     storedVaccineData: VaccineDataType[],
-    setStoredVaccineData: (value: VaccineDataType[]) => void,
+    setStoredVaccineData: (value: VaccineDataType[] | null) => void,
     storedConditionData: ConditionDataType[],
-    setStoredConditionData: (value: ConditionDataType[]) => void,
+    setStoredConditionData: (value: ConditionDataType[] | null) => void,
     storedLabTestData: LabTestDataType[],
-    setStoredLabTestData: (value: LabTestDataType[]) => void,
+    setStoredLabTestData: (value: LabTestDataType[] | null) => void,
     storedMedicineData: MedicineDataType[],
-    setStoredMedicineData: (value: MedicineDataType[]) => void,
+    setStoredMedicineData: (value: MedicineDataType[] | null) => void,
     storedSurgeryData: SurgeryDataType[],
-    setStoredSurgeryData: (value: SurgeryDataType[]) => void,
+    setStoredSurgeryData: (value: SurgeryDataType[] | null) => void,
 }
 
 export function useAppStorage() {
@@ -6605,29 +6694,29 @@ export function useAppStorage() {
     []
   );
 
-  const [storedVaccineData, setStoredVaccineData] = useLocalStorage<VaccineDataType[]>(
+  const [storedVaccineData, setStoredVaccineData] = useLocalStorage<VaccineDataType[] | null>(
     "petVaccineData",
-    []
+    null
   );
 
-  const [storedConditionData, setStoredConditionData] = useLocalStorage<ConditionDataType[]>(
+  const [storedConditionData, setStoredConditionData] = useLocalStorage<ConditionDataType[] | null>(
     "petConditionData",
-    []
+    null
   );
 
-  const [storedLabTestData, setStoredLabTestData] = useLocalStorage<LabTestDataType[]>(
+  const [storedLabTestData, setStoredLabTestData] = useLocalStorage<LabTestDataType[] | null>(
     "petLabTestData",
-    []
+    null
   );
 
-  const [storedMedicineData, setStoredMedicineData] = useLocalStorage<MedicineDataType[]>(
+  const [storedMedicineData, setStoredMedicineData] = useLocalStorage<MedicineDataType[] | null>(
     "petMedicineData",
-    []
+    null
   );
 
-  const [storedSurgeryData, setStoredSurgeryData] = useLocalStorage<SurgeryDataType[]>(
+  const [storedSurgeryData, setStoredSurgeryData] = useLocalStorage<SurgeryDataType[] | null>(
     "petSurgeryData",
-    []
+    null
   );
 
   const [storedVetAccess, setStoredVetAccess] = useLocalStorage<VeterinaryAccessType>(
@@ -6647,11 +6736,11 @@ export function useAppStorage() {
 
   const resetPet = () => {
     setStoredBasicData(Empty.BasicData());
-    setStoredConditionData([]);
-    setStoredLabTestData([]);
-    setStoredMedicineData([]);
-    setStoredSurgeryData([]);
-    setStoredVaccineData([]);
+    setStoredConditionData(null);
+    setStoredLabTestData(null);
+    setStoredMedicineData(null);
+    setStoredSurgeryData(null);
+    setStoredVaccineData(null);
   }
 
   const resetSession = () =>{
@@ -6922,7 +7011,7 @@ export function useLoadEntities<T>(
     id: string,
     entityName: string,
     storedList: T[],
-    setStoredList: (list: T[]) => void,
+    setStoredList: (list: T[] | null) => void,
     initialData: T[],
     setDataCallback: (data: T[]) => void,
     stepNumber: number,
@@ -6940,17 +7029,19 @@ export function useLoadEntities<T>(
     const stateEq = (state: StepStateEnum) =>
         stepStates.find(x => x.step === stepNumber)?.state === state;
     const getUrl = () =>
-        stepStates.find(x=> x.step == stepNumber)?.url;
+        stepStates.find(x => x.step == stepNumber)?.url;
 
     useEffect(() => {
         const fetch = async () => {
             if (stateEq(StepStateEnum.NotInitialize)) {
                 setState(StepStateEnum.Initialize);
                 let saved: T[] = [];
-                if (storedList.length == 0) {
+                if (storedList == null) {
                     const response = await getFetch(`${getUrl()}}${id}`);
-                    if(!response.ok) throw new ApiError(`Fallo al obtener información de ${entityName}`);
-                    setStoredList(saved);
+                    if (!response.ok) throw new ApiError(`Fallo al obtener información de ${entityName}`);
+                    if (saved.length > 0) {
+                        setStoredList(saved);
+                    }
                 }
                 else {
                     saved = storedList;
@@ -6978,58 +7069,32 @@ export function useLoadEntities<T>(
 }
  
 ----- Archivo: useRole.ts ----- 
-// src/hooks/useRole.ts
-import { useMemo } from "react";
-import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export function useRole() {
-    const session = useSessionContext();
-    const storage = useStorageContext();
+  const { db: session } = useSessionContext();
+  const { storedVetAccess } = useStorageContext();
 
-    const isOwner = useMemo(
-        () => session?.db?.user?.user_metadata?.role === "owner",
-        [session]
-    );
+  const isOwner = session?.user.user_metadata.role === "owner";
+  const isVetWithSession = session?.user.user_metadata.role === "veterinarian";
+  const hasVetAccessWithoutSession = !session && Boolean(storedVetAccess?.id);
+  const isVetWithUserSession = Boolean(storedVetAccess?.id) && isOwner;
+  const isVetWithoutUserSession =
+    (isVetWithSession || hasVetAccessWithoutSession) && !isVetWithUserSession;
+  const isVet =
+    isVetWithSession || 
+    isVetWithoutUserSession || 
+    isVetWithUserSession;
 
-    const isVetWithSession = useMemo(
-        () => session?.db?.user?.user_metadata?.role === "veterinarian",
-        [session]
-    );
-
-    const hasVetAccessWithoutSession = useMemo(
-        () => !session && storage.storedVetAccess?.id !== "",
-        [session, storage.storedVetAccess]
-    );
-
-    const isVetWithUserSession = useMemo(
-        () => storage.storedVetAccess?.id !== "" && isOwner,
-        [storage.storedVetAccess, isOwner]
-    );
-
-    const isVetWithoutUserSession = useMemo(
-        () =>
-            (isVetWithSession || hasVetAccessWithoutSession) &&
-            !isVetWithUserSession,
-        [isVetWithSession, hasVetAccessWithoutSession, isVetWithUserSession]
-    );
-
-    const isVet = useMemo(
-        () =>
-            isVetWithSession ||
-            isVetWithoutUserSession ||
-            isVetWithUserSession,
-        [isVetWithSession, isVetWithoutUserSession, isVetWithUserSession]
-    );
-
-    return {
-        isOwner,
-        isVet,
-        isVetWithSession,
-        isVetWithoutSession: hasVetAccessWithoutSession,
-        isVetWithUserSession,
-        isVetWithoutUserSession,
-    } as const;
+  return {
+    isOwner,
+    isVet,
+    isVetWithSession,
+    isVetWithoutSession: hasVetAccessWithoutSession,
+    isVetWithUserSession,
+    isVetWithoutUserSession,
+  } as const;
 }
  
 ----- Archivo: useLocalStorage.tsx ----- 
@@ -7106,37 +7171,131 @@ export function useLocalStorage<T>(
 }
  
 ----- Archivo: useSession.tsx ----- 
-// app/hooks/useSession.tsx
+// src/hooks/useSession.tsx
 "use client";
-
 import { useState, useEffect } from "react";
-import type { Session } from "@supabase/supabase-js";
-import { onAuthStateChange } from "@/services/authService";
+import type { Session as SupabaseSession } from "@supabase/supabase-js";
+import { getSession, onAuthStateChange } from "@/services/authService";
 
-export function useSession(): Session | undefined {
-  const [session, setSession] = useState<Session | undefined>(undefined);
+export function useSession(): SupabaseSession | null {
+  const [session, setSession] = useState<SupabaseSession | null>(null);
+
   useEffect(() => {
-    const getCurrentSession = async () => {
-      const res = await fetch("/api/auth/session");
-      const json = await res.json();
-      setSession(json.session || undefined);
-    };
+    // Inicializa con la sesión actual
+    getSession().then(setSession);
 
-    // 1. Obtiene sesión inicial
-    getCurrentSession();
-
-    // 2) Nos suscribimos a cambios
-    const subscription = onAuthStateChange((_event, newSession) => {
-      if (newSession) setSession(newSession);
+    // Envuelve `setSession` para ignorar el primer parámetro (event)
+    const sub = onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => sub.unsubscribe();
   }, []);
 
-
   return session;
+}
+ 
+----- Archivo: index.ts ----- 
+// src/lib/auth/index.ts
+import type { AuthChangeEvent, AuthError, Session as SupabaseSession, User } from "@supabase/supabase-js";
+import { SupabaseAuthClient } from "./supabase";
+
+export type SignInResponse = { data?: { session: AuthSession; user: User } | null; error?: AuthError | null };
+export type SignUpResponse = { data: { user: User | null }; error: AuthError | null };
+export type ResetPasswordResponse = { data: object | null; error: AuthError | null };
+export type AuthSession = SupabaseSession;
+export type AuthClientError = AuthError;
+export type AuthClientChangeEvent = AuthChangeEvent;
+// o incluso podrías saltarte el alias y usar SupabaseSession directamente
+
+export interface AuthClient {
+    getSession(): Promise<AuthSession | null>;
+    onAuthStateChange(
+        cb: (event: AuthClientChangeEvent | undefined, session: AuthSession | null) => void
+    ): { unsubscribe(): void };
+    signIn(email: string, password: string): Promise<SignInResponse>;
+    signOut(): Promise<void>;
+    resetPassword(email: string): Promise<ResetPasswordResponse>;
+    signUp(email: string, password: string, role: string): Promise<SignUpResponse>;
+    setSession(session: { access_token: string; refresh_token: string;}): void;
+}
+
+export const authClientImpl = new SupabaseAuthClient();
+export { authClientImpl as authClient };
+
+ 
+----- Archivo: supabase.ts ----- 
+// src/lib/auth/supabase.ts
+import {
+    createServerComponentClient,
+    createClientComponentClient,
+} from "@supabase/auth-helpers-nextjs";
+import type { AuthClient, AuthSession } from "./index";
+import type { AuthChangeEvent, AuthError, User } from "@supabase/supabase-js";
+
+export class SupabaseAuthClient implements AuthClient {
+    private browser = createClientComponentClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private server = (ctx: { cookies: any }) => createServerComponentClient({ cookies: ctx.cookies });
+
+    async getSession(): Promise<AuthSession | null> {
+        const { data } = await this.browser.auth.getSession();
+        return data.session as AuthSession | null;
+    }
+
+    onAuthStateChange(
+        cb: (event: AuthChangeEvent, session: AuthSession | null) => void
+    ) {
+        const {
+            data: { subscription },
+        } = this.browser.auth.onAuthStateChange((event, session) => {
+            cb(event, session as AuthSession | null);
+        });
+        return { unsubscribe: () => subscription.unsubscribe() };
+    }
+
+    async signIn(email: string, password: string): Promise<{ data?: { session: AuthSession; user: User } | null; error?: AuthError | null }> {
+        const { data, error } = await this.browser.auth.signInWithPassword({ email, password });
+        if (error) {
+            return {
+                error: error
+            }
+        };
+        return {
+            data: {
+                session: data.session as AuthSession,
+                user: data.user as User
+            }
+        };
+    }
+
+    async signOut(): Promise<void> {
+        await this.browser.auth.signOut();
+    }
+
+    async resetPassword(email: string): Promise<{ data: object | null; error: AuthError | null }> {
+        return this.browser.auth.resetPasswordForEmail(email);
+    };
+
+    async signUp(
+        email: string,
+        password: string,
+        role: string = 'owner'
+    ): Promise<{ data: { user: User | null }; error: AuthError | null }> {
+        return this.browser.auth.signUp({
+            email, password,
+            options: {
+                data: { role: role }
+            }
+        });
+    };
+
+    async setSession(session: {
+        access_token: string;
+        refresh_token: string;
+    }) {
+        this.browser.auth.setSession(session);
+    }
 }
  
 ----- Archivo: supabase.tsx ----- 
@@ -8242,51 +8401,49 @@ async function validateBody<T>(
 } 
 ----- Archivo: authService.ts ----- 
 // src/services/authService.ts
-import { supabase } from "@/lib/client/supabase";
-import type { Session, User, AuthError, AuthChangeEvent } from "@supabase/supabase-js";
 import { StorageContextType } from "@/hooks/useAppStorage";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { AuthClientChangeEvent, AuthClientError, AuthSession, SignInResponse, SignUpResponse, authClient } from '@/lib/auth';
 
 export const signIn = async (
   email: string,
   password: string
-): Promise<{ data: { session: Session | null; user: User | null }; error: AuthError | null }> => {
-  return supabase.auth.signInWithPassword({ email, password });
+): Promise<SignInResponse> => {
+  const { data, error } = await authClient.signIn(email, password);
+  if (data) {
+    setSession(data.session);
+  }
+  return { data, error };
 };
 
 export const ownerSignUp = async (
   email: string,
   password: string,
   role: string = 'owner'
-): Promise<{ data: { user: User | null }; error: AuthError | null }> => {
-  return supabase.auth.signUp({
-    email, password,
-    options: {
-      data: { role: role }
-    }
-  });
+): Promise<SignUpResponse> => {
+  return authClient.signUp(email, password, role);
 };
 
 export const resetPassword = async (
   email: string
-): Promise<{ data: object | null; error: AuthError | null }> => {
-  return supabase.auth.resetPasswordForEmail(email);
+): Promise<{ data: object | null; error: AuthClientError | null }> => {
+  return authClient.resetPassword(email);
 };
-export const signOut = () => supabase.auth.signOut();
+export const signOut = () => authClient.signOut();
 
-export const getSession = () => supabase.auth.getSession();
+export const getSession = () => authClient.getSession();
 
 export const onAuthStateChange = (
-  cb: (event: AuthChangeEvent, session: Session | null) => void
-) => supabase.auth.onAuthStateChange(cb).data.subscription;
+  cb: (event: AuthClientChangeEvent, session: AuthSession | null) => void
+) => authClient.onAuthStateChange(cb);
 
 export const setSession = (session: {
   access_token: string;
   refresh_token: string;
-}) => supabase.auth.setSession(session);
+}) => authClient.setSession(session);
 
 export const handleLogout = async (storage: StorageContextType, router: AppRouterInstance) => {
-  try {
+  /*try {
     const response = await fetch("/api/auth/sign-out", { method: "POST" });
     const result = await response.json();
 
@@ -8295,8 +8452,8 @@ export const handleLogout = async (storage: StorageContextType, router: AppRoute
     }
   } catch (err) {
     console.error("Error en logout:", err);
-  }
-  await signOut();
+  }*/
+  await authClient.signOut();
   storage.resetSession();
   router.replace("/login");
 }; 
@@ -8645,7 +8802,7 @@ export interface AppContextType {
 }
 
 export interface AppSession {
-  db: Session | undefined;
+  db: Session | null;
 }
 
 export interface FormType {
@@ -8690,7 +8847,7 @@ export enum StepStateEnum {
 export type StepConfig<T> = {
   entityName: string;
   storedList: T[];
-  setStoredList: (list: T[]) => void;
+  setStoredList: (list: T[] | null) => void;
   emptyFactory: (petId: string) => T;
   fieldsConfig: FieldConfig<T>[];
 };

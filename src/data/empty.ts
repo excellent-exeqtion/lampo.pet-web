@@ -89,19 +89,6 @@ export function LabTestData(): LabTestDataType {
         result: undefined
     }
 };
-export function VeterinaryAccess(): VeterinaryAccessType {
-    return {
-        id: '',
-        pet_id: '',
-        pet_code_id: '',
-        vet_first_name: '',
-        vet_last_name: '',
-        professional_registration: '',
-        clinic_name: '',
-        city: '',
-        created_at: ''
-    }
-};
 export function Feature(): FeatureType {
     return {
         text: '',
@@ -160,8 +147,7 @@ export function VetAccess(): VeterinaryAccessType {
         vet_last_name: '',
         professional_registration: '',
         clinic_name: '',
-        city: '',
-        created_at: ''
+        city: ''
     }
 }
 

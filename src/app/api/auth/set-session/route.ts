@@ -12,9 +12,15 @@ const SessionSchema = z.object({
 
 export async function POST(req: NextRequest) {
     return withValidationAndErrorHandling("POST", req, SessionSchema, async (data: SetSesionType) => {
-        const { error } = await setSession(data);
-        if (error) {
-            return NextResponse.json({ success: false, message: error.message }, { status: 401 });
+
+        try {
+            await setSession(data);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        catch (error: any) {
+            if (error) {
+                return NextResponse.json({ success: false, message: error.message }, { status: 401 });
+            }
         }
         return NextResponse.json({ success: true, message: "Sesión establecida" });
     });

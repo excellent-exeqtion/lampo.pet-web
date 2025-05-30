@@ -7,12 +7,12 @@ import { RepositoryError } from '@/types/lib';
 // GET /api/consultations/{consultationId} : Obtener una consulta específica
 export async function GET(
     req: NextRequest,
-    { params }: { params: { consultationId: string } }
+    { params }: { params: Promise<{ consultationId: string }> }
 ) {
     return getWithErrorHandling(
         req,
         async () => {
-            const { consultationId } = params;
+            const { consultationId } = await params;
             if (!consultationId) {
                 return NextResponse.json({ success: false, message: 'consultationId es requerido' }, { status: 400 });
             }

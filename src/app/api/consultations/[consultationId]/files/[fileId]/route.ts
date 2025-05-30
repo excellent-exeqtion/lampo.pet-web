@@ -8,10 +8,10 @@ import { supabase } from '@/lib/client/supabase';
 // GET /api/consultations/files/{fileId}/download : Obtener URL firmada para descargar
 export async function GET(
     req: NextRequest,
-    { params }: { params: { fileId: string } }
+    { params }: { params: Promise<{ fileId: string }> }
 ) {
     return getWithErrorHandling(req, async () => {
-        const { fileId } = params;
+        const { fileId } = await params;
         if (!fileId) {
             return NextResponse.json({ success: false, message: 'fileId es requerido' }, { status: 400 });
         }
@@ -44,12 +44,12 @@ export async function GET(
 // DELETE /api/consultations/files/{fileId} : Eliminar un archivo
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { fileId: string } }
+    { params }: { params: Promise<{ fileId: string }> }
 ) {
     return getWithErrorHandling(
         req,
         async () => {
-            const { fileId } = params;
+            const { fileId } = await params;
             if (!fileId) {
                 return NextResponse.json({ success: false, message: 'fileId es requerido' }, { status: 400 });
             }

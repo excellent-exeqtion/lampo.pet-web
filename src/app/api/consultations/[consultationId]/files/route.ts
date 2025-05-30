@@ -12,10 +12,10 @@ const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf', 'image
 // POST /api/consultations/{consultationId}/files : Subir un archivo a una consulta
 export async function POST(
     req: NextRequest,
-    { params }: { params: { consultationId: string } }
+    { params }: { params: Promise<{ consultationId: string }> }
 ) {
     return getWithErrorHandling(req, async () => {
-        const { consultationId } = params;
+        const { consultationId } = await params;
         if (!consultationId) {
             return NextResponse.json({ success: false, message: 'consultationId es requerido' }, { status: 400 });
         }
@@ -59,12 +59,12 @@ export async function POST(
 // GET /api/consultations/{consultationId}/files : Listar archivos de una consulta
 export async function GET(
     req: NextRequest,
-    { params }: { params: { consultationId: string } }
+    { params }: { params: Promise<{ consultationId: string }> }
 ) {
     return getWithErrorHandling(
         req,
         async () => {
-            const { consultationId } = params;
+            const { consultationId } = await params;
             if (!consultationId) {
                 return NextResponse.json({ success: false, message: 'consultationId es requerido' }, { status: 400 });
             }

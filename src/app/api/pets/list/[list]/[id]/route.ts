@@ -59,7 +59,6 @@ export async function DELETE(req: NextRequest,
         req,
         async () => {
             const { id } = await params;
-            console.log(step.repository)
             if (step.repository) {
                 const response = await step.repository.delete(id);
                 if (!response) {

@@ -9,6 +9,7 @@ import type { OwnerDataType } from "@/types/index";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { postFetch } from "@/app/api";
 import { setSession } from "@/services/authService";
+import ModalComponent from "@/components/lib/modal";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -75,7 +76,7 @@ export default function LoginPage() {
       if (!loginResponse.ok || !loginJson.success) {
         setError(loginJson?.message || "Error iniciando sesión");
       } else {
-        setSession({access_token: loginJson.user.access_token, refresh_token: loginJson.user.refresh_token });
+        setSession({ access_token: loginJson.user.access_token, refresh_token: loginJson.user.refresh_token });
         router.refresh();
         router.push("/");
       }
@@ -112,43 +113,19 @@ export default function LoginPage() {
   // 4) Mostrar modal de “verifica tu correo”
   if (showConfirmModal) {
     return (
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.5)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-        }}
+      <ModalComponent
+        title="Confirma tu correo"
+        description={`Te hemos enviado un correo de verificación a ${email}. Por favor revisa tu bandeja (y carpeta de spam) y haz clic en el enlace.`}
+        setShowModal={setShowConfirmModal}
       >
-        <div
-          style={{
-            background: "#fff",
-            padding: "2rem",
-            borderRadius: "0.5rem",
-            maxWidth: "500px",
-            textAlign: "center",
-          }}
+        <button
+          className="contrast"
+          onClick={goToRegister}
+          style={{ width: "100%", marginTop: "1rem" }}
         >
-          <h2>Confirma tu correo</h2>
-          <p>
-            Te hemos enviado un correo de verificación a <strong>{email}</strong>.{" "}
-            <br />
-            Por favor revisa tu bandeja (y carpeta de spam) y haz clic en el enlace.
-          </p>
-          <button
-            onClick={() => {
-              setShowConfirmModal(false);
-              goToRegister();
-            }}
-            style={{ marginTop: "1rem", width: "100%" }}
-          >
-            Ya confirmé, continuar
-          </button>
-        </div>
-      </div>
+          Ya confirmé, continuar
+        </button>
+      </ModalComponent>
     );
   }
 

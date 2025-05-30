@@ -4,9 +4,9 @@ import { useAppStorage } from "@/hooks/useAppStorage";
 import { createContext, useContext } from "react";
 
 export const Petstorage = createContext({} as ReturnType<typeof useAppStorage>);
-export const usePetStorage = () => useContext(Petstorage);
+export const useStorageContext = () => useContext(Petstorage);
 
-export function PetStorageProvider({ children }: { children: React.ReactNode }) {
+export function StorageProvider({ children }: { children: React.ReactNode }) {
     const storage = useAppStorage();
     return <Petstorage.Provider value={storage}>{children}</Petstorage.Provider>;
 }

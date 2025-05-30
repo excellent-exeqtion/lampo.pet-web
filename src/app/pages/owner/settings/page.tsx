@@ -7,7 +7,7 @@ import { getFetch, putFetch } from "@/app/api";
 import type { OwnerDataType, PetType } from "@/types/index";
 import React, { FormEvent, useEffect, useState } from "react";
 import { FaCog, FaExclamationTriangle } from "react-icons/fa";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
 import { Empty } from "@/data/index";
 import { useRouter } from "next/navigation";
@@ -16,7 +16,7 @@ export default function SettingsPage() {
   const { isMobile } = useDeviceDetect();
   const router = useRouter();
   const session = useSessionContext();
-  const storage = usePetStorage();
+  const storage = useStorageContext();
   const userId = session?.db?.user.id;
   const userEmail = session?.db?.user.email;
 
@@ -48,7 +48,6 @@ export default function SettingsPage() {
           const res = await getFetch(`/api/owners/${encodeURIComponent(userId)}`);
           const json = await res.json();
           if (res.ok) {
-            console.log(json);
             storage.setStoredOwnerData(json);
             setOwnerInfo(json);
           } else {
@@ -102,7 +101,6 @@ export default function SettingsPage() {
 
         if (res.ok) {
           setError("Datos actualizados correctamente.");
-          console.log(payload);
           storage.setStoredOwnerData(payload);
           setFormFailed(false);
         } else {

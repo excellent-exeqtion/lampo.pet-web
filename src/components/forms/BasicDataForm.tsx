@@ -8,7 +8,7 @@ import { Empty } from '@/data/index';
 import { useDeviceDetect } from '@/hooks/useDeviceDetect';
 import { postFetch } from '@/app/api';
 import StepsComponent from '../lib/steps';
-import { usePetStorage } from '@/context/PetStorageProvider';
+import { useStorageContext } from '@/context/StorageProvider';
 
 interface BasicDataFormProps {
   pet: PetType;
@@ -58,7 +58,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   const [loadedWithPreviusData, setLoadedWithPreviusData] = useState<boolean>(false);
   const [savedData, setSavedData] = useState<BasicDataType>(Empty.BasicData());
   const { isMobile, isDesktop, isTablet } = useDeviceDetect();
-  const storage = usePetStorage();
+  const storage = useStorageContext();
 
   // Estilo común de grid: en móvil siempre 2 columnas, en desktop auto-ajusta
   const sectionGridStyle: React.CSSProperties = {

@@ -7,12 +7,13 @@ import { LogInType } from '@/types/lib';
 
 const SignUpSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(6)
+    password: z.string().min(6),
+    role: z.enum(['owner', 'veterinarian']).optional().nullable()
 });
 
 export async function POST(req: NextRequest) {
-    return withValidationAndErrorHandling('POST', req, SignUpSchema, async ({ email, password }: LogInType) => {
-        const { data, error } = await ownerSignUp(email, password!);
+    return withValidationAndErrorHandling('POST', req, SignUpSchema, async ({ email, password, role }: LogInType) => {
+        const { data, error } = await ownerSignUp(email, password!, role ?? 'owner');
         if (error) {
             return NextResponse.json({ success: false, message: error.message }, { status: 400 });
         }

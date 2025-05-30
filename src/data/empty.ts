@@ -1,5 +1,5 @@
 import { StepsStateType, StepStateEnum } from "@/types/lib";
-import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType, PetStep } from "@/types/index";
+import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, SurgeryDataType, MedicineDataType, ConditionDataType, LabTestDataType, VeterinaryAccessType, FeatureType, PlanType, PlanVersionType, SubscriptionType, PetStep, VeterinarianType } from "@/types/index";
 import { ConditionRepository, LabTestRepository, MedicineRepository, SurgeryRepository, VaccineRepository } from "../repositories";
 import { BasicDataTypeSchema, ConditionDataTypeSchema, LabTestDataTypeSchema, MedicineDataTypeSchema, PetTypeSchema, SurgeryDataTypeSchema, VaccineDataTypeSchema } from "@/schemas/validationSchemas";
 
@@ -165,6 +165,18 @@ export function VetAccess(): VeterinaryAccessType {
     }
 }
 
+export function VetData(): VeterinarianType {
+    return {
+        vet_id: '',
+        first_name: '',
+        last_name: '',
+        email: '',
+        registration: '',
+        clinic_name: '',
+        city: ''
+    }
+}
+
 export function Steps(): StepsStateType[] {
     return [
         { step: PetStep.Name, state: StepStateEnum.NotInitialize, schema: PetTypeSchema },
@@ -189,6 +201,8 @@ export function emptyStorage() {
         setStoredBasicData: () => { },
         storedOwnerData: Empty.OwnerData(),
         setStoredOwnerData: () => { },
+        storedVetData: Empty.VetData(),
+        setStoredVetData: () => { },
         storedVetAccess: Empty.VetAccess(),
         setStoredVetAccess: () => { },
         storedPetCode: Empty.PetCode(),

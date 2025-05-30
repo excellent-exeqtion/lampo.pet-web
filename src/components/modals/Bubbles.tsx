@@ -7,10 +7,10 @@ import PetCodeModal from "./PetCodeModal";
 import VeterinaryModal from "./VeterinaryModal";
 import ChangePetModal from "./ChangePetModal";
 import AddPetModal from "./AddPetModal";
-import { isOwner, isVet } from "@/utils/roles";
 import { useUI } from "@/context/UIProvider";
-import { usePetStorage } from "@/context/PetStorageProvider";
-import { useSessionContext } from "@/context/SessionProvider";
+import { useStorageContext } from "@/context/StorageProvider";
+import { useRoleContext } from "@/context/RoleProvider";
+import VeterinarianPetCodeModal from "./VeterinarianPetCodeModal";
 
 const bubbleStyleBase: React.CSSProperties = {
   backgroundColor: "#ffffff",
@@ -28,10 +28,10 @@ const bubbleStyleBase: React.CSSProperties = {
 
 export default function Bubbles() {
 
-  const session = useSessionContext();
   const [showChangePetBubble, setShowChangePetBubble] = useState(false);
+  const { isOwner, isVet } = useRoleContext();
 
-  const storage = usePetStorage();
+  const storage = useStorageContext();
 
   const { setShowFeedbackModal,
     showFeedbackModal,
@@ -41,10 +41,11 @@ export default function Bubbles() {
     showCodeModal,
     setShowChangePetModal,
     showChangePetModal,
-    setShowAddPetModal,
     showAddPetModal,
-    setShowEditPetModal,
-    showEditPetModal, } = useUI();
+    showEditPetModal,
+    setShowVetPetCodeModal,
+    showVetPetCodeModal
+  } = useUI();
 
   useEffect(() => {
     const show = (storage.storedOwnerPets.length ?? 0) > 0;
@@ -76,7 +77,7 @@ export default function Bubbles() {
       </div>
 
       {/* Vet Bubble */}
-      {isOwner(session) && !isVet(session, storage.storedVetAccess) &&
+      {isOwner && !isVet &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowVetModal(true)}
@@ -89,8 +90,22 @@ export default function Bubbles() {
         </div>
       }
 
+      {/* Vet Bubble */}
+      {isVet &&
+        <div className="tooltip-container" draggable>
+          <button
+            onClick={() => setShowVetPetCodeModal(true)}
+            style={bubbleStyleBase}
+            aria-label="Veterinario"
+          >
+            <FaUserMd />
+          </button>
+          <span className="tooltip-text tooltip-left">Ingresar código de una mascota</span>
+        </div>
+      }
+
       {/* Code Bubble */}
-      {isOwner(session) && !isVet(session, storage.storedVetAccess) &&
+      {isOwner && !isVet &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowCodeModal(true)}
@@ -118,12 +133,13 @@ export default function Bubbles() {
       }
 
       {/* Modals */}
-      {showChangePetModal && <ChangePetModal setShowChangePetModal={setShowChangePetModal} setShowAddPetModal={setShowAddPetModal} />}
-      {showVetModal && <VeterinaryModal setShowVetModal={setShowVetModal} />}
-      {showCodeModal && <PetCodeModal setShowCodeModal={setShowCodeModal} />}
-      {showFeedbackModal && <FeedbackModal setShowFeedbackModal={setShowFeedbackModal} />}
-      {showAddPetModal && <AddPetModal showAddPetModal={showAddPetModal} setShowAddPetModal={setShowAddPetModal} />}
-      {showEditPetModal && <AddPetModal editPet={storage.storedPet} showAddPetModal={showAddPetModal} setShowAddPetModal={setShowEditPetModal} />}
+      {showChangePetModal && <ChangePetModal />}
+      {showVetModal && <VeterinaryModal />}
+      {showCodeModal && <PetCodeModal />}
+      {showFeedbackModal && <FeedbackModal />}
+      {showAddPetModal && <AddPetModal />}
+      {showEditPetModal && <AddPetModal editPet={storage.storedPet} />}
+      {showVetPetCodeModal && <VeterinarianPetCodeModal />}
     </div>
   );
 }

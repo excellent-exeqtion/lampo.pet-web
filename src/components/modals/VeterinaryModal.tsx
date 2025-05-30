@@ -1,17 +1,15 @@
 // app/components/modals/VeterinaryModal.tsx
 "use client";
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { veterinaryStyles } from "../../styles/veterinary";
 import ModalComponent from "../lib/modal";
 import { postFetch, getFetch } from "@/app/api";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
+import { useUI } from "@/context/UIProvider";
 
-interface VeterinaryModalProps {
-  setShowVetModal: Dispatch<SetStateAction<boolean>>;
-}
 
-export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProps) {
+export default function VeterinaryModal() {
   const [code, setCode] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -21,7 +19,8 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const storage = usePetStorage();
+  const storage = useStorageContext();
+  const { setShowVetModal } = useUI();
 
   const handleSubmit = async () => {
     setError("");
@@ -56,9 +55,19 @@ export default function VeterinaryModal({ setShowVetModal }: VeterinaryModalProp
           setError("No se encontró la mascota.");
         }
         const petData = await petResponse.json();
-
-        storage.setStoredPet(petData)
+        storage.setStoredPet(petData);
         storage.setStoredOwnerPets([]);
+
+        storage.setStoredVetAccess({
+          id: codeData.vet_access,
+          pet_id: petData.id,
+          pet_code_id: codeData.pet_code,
+          vet_first_name: codeData.firstName,
+          vet_last_name: codeData.lastName,
+          professional_registration: codeData.registration,
+          clinic_name: codeData.clinicName,
+          city: codeData.city
+        });
         setShowVetModal(false);
         router.push(`/pages/vet/${sanitizedCode}`);
       }

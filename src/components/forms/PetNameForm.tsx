@@ -10,7 +10,7 @@ import { Steps } from '@/utils/index';
 import { Empty } from '@/data/index';
 import { CircularImage } from "@/components/index";
 import { getFetch, postFetch } from '@/app/api';
-import { usePetStorage } from '@/context/PetStorageProvider';
+import { useStorageContext } from '@/context/StorageProvider';
 
 interface PetFormProps {
   ownerId: string;
@@ -43,7 +43,7 @@ export default function PetNameForm({
   const [submitLoading, setSubmitLoading] = useState(false);
   const [savedData, setSavedData] = useState<PetType>(Empty.Pet());
   const [preview, setPreview] = useState<string>(pet.image || '/pets/pet.jpg');
-  const storage = usePetStorage();
+  const storage = useStorageContext();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];

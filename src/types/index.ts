@@ -96,8 +96,18 @@ export interface VeterinaryAccessType {
     professional_registration: string;
     clinic_name: string;
     city: string;
-    created_at: string;
 }
+
+export interface VeterinarianType {
+  vet_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  registration: string;
+  clinic_name: string;
+  city: string;
+}
+
 export interface FeatureType {
     text: string;
     badge?: string;

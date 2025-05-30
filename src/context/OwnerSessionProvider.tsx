@@ -5,23 +5,23 @@ import { Empty } from "@/data/index";
 import { ApiError } from "@/types/lib";
 import type { PetType } from "@/types/index";
 import { getFetch } from "@/app/api";
-import { isOwner } from "@/utils/roles";
-import { usePetStorage } from "./PetStorageProvider";
+import { useStorageContext } from "./StorageProvider";
 import { useSessionContext } from "./SessionProvider";
 import { useUI } from "./UIProvider";
+import { useRoleContext } from "./RoleProvider";
 
-//TODO: Why is not loading after log in
 export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }) => {
     const session = useSessionContext();
-    const storage = usePetStorage();
+    const storage = useStorageContext();
     const { setShowAddPetModal } = useUI();
+    const { isOwner } = useRoleContext();
     const ownerId = session?.db?.user?.id;
 
     useEffect(() => {
         if (!session.db || !ownerId) return;
 
         (async () => {
-            if (isOwner(session)) {
+            if (isOwner) {
                 if (storage.storedOwnerPets.length === 0) {
                     const response = await getFetch(`/api/owners/pets/${ownerId}`);
                     if (!response.ok) throw new ApiError(`Fallo al obtener las mascotas del dueño: ${ownerId}`);
@@ -41,7 +41,7 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
         if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
             storage.setStoredPet(initialPet);
         }
-        if(!initialPet.id){
+        if (!initialPet.id) {
             setShowAddPetModal(true);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

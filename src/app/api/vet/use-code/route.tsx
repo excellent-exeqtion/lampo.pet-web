@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     await PetCodeRepository.markUsed(code);
 
     // 3) Registrar acceso veterinario
-    await VeterinaryAccessRepository.create({
+    const vetAccess = await VeterinaryAccessRepository.create({
       pet_id: data.pet_id,
       pet_code_id: data.id,
       vet_first_name: firstName,
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     });
 
     // 4) Devolver petId
-    return NextResponse.json({ success: true, pet_id: data.pet_id });
+    return NextResponse.json({ success: true, pet_id: data.pet_id, pet_code: data.id, vet_access: vetAccess.id });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return NextResponse.json(

@@ -1,19 +1,18 @@
 // app/components/modals/FeedbackModal.tsx
 "use client";
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import ModalComponent from "../lib/modal";
 import { postFetch } from "@/app/api";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useUI } from "@/context/UIProvider";
 
-interface FeedbackModalProps {
-  setShowFeedbackModal: Dispatch<SetStateAction<boolean>>;
-};
 
-export default function FeedbackModal({ setShowFeedbackModal }: FeedbackModalProps) {
+export default function FeedbackModal() {
   const [feedback, setFeedback] = useState("");
   const [sending, setSending] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const session = useSessionContext();
+  const { setShowFeedbackModal } = useUI();
 
   const sendFeedback = async (anonymous: boolean) => {
     if (!feedback.trim()) return;

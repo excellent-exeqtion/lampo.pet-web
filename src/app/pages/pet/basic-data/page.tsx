@@ -9,22 +9,17 @@ import { BasicDataType, OwnerDataType } from "@/types/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch } from "@/app/api";
 import { useSession } from "@/hooks/useSession";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export default function BasicDataPage() {
   useSession();
 
   const { isMobile } = useDeviceDetect();
-  const storage = usePetStorage();
+  const storage = useStorageContext();
   const [petData, setPetData] = useState<BasicDataType | null>(null);
   const [ownerData, setOwnerData] = useState<OwnerDataType | null>(null);
   const [basicDataItems, setBasicDataItems] = useState<FieldType[]>([]);
   const [contactItems, setContactItems] = useState<FieldType[]>([]);
-
-  
-  useEffect(() => {
-    console.log('BasicDataPage');
-  }, []);
 
   useEffect(() => {
     const petId = storage.storedPet.id;
@@ -62,7 +57,6 @@ export default function BasicDataPage() {
         const resOwner = await getFetch(`/api/owners/${storage.storedPet.owner_id}`);
         if (!resOwner.ok) throw new Error("Falló fetch owners");
         const owner: OwnerDataType = await resOwner.json();
-            console.log(owner);
         storage.setStoredOwnerData(owner);
         setOwnerData(owner);
       } catch (err) {

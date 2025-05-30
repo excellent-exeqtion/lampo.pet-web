@@ -1,8 +1,6 @@
 // app/components/modals/ChangePetModal.tsx
 "use client";
 import React, {
-  Dispatch,
-  SetStateAction,
   useState,
   useRef,
   useEffect,
@@ -12,17 +10,14 @@ import { PetType } from "@/types/index";
 import ModalComponent from "../lib/modal";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index"
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
+import { useUI } from "@/context/UIProvider";
 
-interface ChangePetModalProps {
-  setShowChangePetModal: Dispatch<SetStateAction<boolean>>;
-  setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
-};
-
-export default function ChangePetModal({ setShowChangePetModal, setShowAddPetModal }: ChangePetModalProps) {
-  const storage = usePetStorage();
+export default function ChangePetModal() {
+  const storage = useStorageContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { setShowChangePetModal, setShowAddPetModal } = useUI();
 
   // close dropdown if you click outside
   useEffect(() => {

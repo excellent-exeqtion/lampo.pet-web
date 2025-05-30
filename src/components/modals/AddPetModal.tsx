@@ -28,20 +28,19 @@ import {
 
 import type { StepsStateType, StepConfig } from "@/types/lib";
 import { Empty } from "@/data/index";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useUI } from "@/context/UIProvider";
 
 interface AddPetModalProps {
-    editPet?: PetType,
-    showAddPetModal: boolean;
-    setShowAddPetModal: Dispatch<SetStateAction<boolean>>;
+    editPet?: PetType
 }
 
-
-export default function AddPetModal({ editPet, showAddPetModal, setShowAddPetModal }: AddPetModalProps) {
+export default function AddPetModal({ editPet }: AddPetModalProps) {
     const session = useSessionContext();
-    const storage = usePetStorage();
+    const storage = useStorageContext();
     const [step, setStep] = useState<PetStep>(PetStep.Name);
+    const { showAddPetModal, setShowAddPetModal } = useUI();
 
     // Estados por entidad
     const [pet, setPet] = useState<PetType>(editPet == undefined ? Empty.Pet() : editPet);

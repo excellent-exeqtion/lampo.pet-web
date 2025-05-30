@@ -7,7 +7,7 @@ import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { isVetWithoutUserSession } from "@/utils/roles";
 import LoadingComponent from "@/components/lib/loading";
 import { usePathname } from "next/navigation";
-import { usePetStorage } from "./PetStorageProvider";
+import { useStorageContext } from "./StorageProvider";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
 import { useSessionContext } from "./SessionProvider";
 
@@ -20,7 +20,7 @@ export default function ClientAppProvider({ children }: Props) {
 
     const { isMobile, isDesktop } = useDeviceDetect();
     const session = useSessionContext();                      // undefined | null | AppSession
-    const { storedVetAccess } = usePetStorage();
+    const { storedVetAccess } = useStorageContext();
     const pathname = usePathname();
 
     const isLoginRoute = pathname === "/login" || pathname.endsWith("/login");

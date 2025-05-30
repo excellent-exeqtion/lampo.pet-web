@@ -12,7 +12,8 @@ export default class VeterinaryAccessRepository {
         const { data, error } = await supabase
             .from("veterinary_accesses")
             .insert(access)
-            .single();
+            .select("*")
+            .single();  
 
         if (error) throw new Error(error.message);
         return data;

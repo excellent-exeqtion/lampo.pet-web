@@ -28,7 +28,7 @@ export default function VetAccessPage() {
         </button>
 
         {/* Enlace a registro de veterinario (implementa esta ruta si lo deseas) */}
-        <Link href="/vet-register" className="primary">
+        <Link href="/vet-access/register" className="primary">
           Registrarme como veterinario
         </Link>
       </div>
@@ -38,7 +38,7 @@ export default function VetAccessPage() {
        * y hacer el POST a VeterinaryAccessRepository.create  
        */}
       {showVetModal && (
-        <VeterinaryModal setShowVetModal={setShowVetModal} />
+        <VeterinaryModal />
       )}
     </main>
   );

@@ -123,6 +123,17 @@ export const VeterinaryAccessTypeSchema = z.object({
   created_at: z.string(),
 });
 
+//Veterinarian
+export const VeterinarianTypeSchema = z.object({
+  vet_id: z.string().uuid(),
+  first_name: z.string(),
+  last_name: z.string(),
+  email: z.string().email(),
+  registration: z.string(),
+  clinic_name: z.string(),
+  city: z.string(),
+});
+
 // FeatureType
 export const FeatureTypeSchema = z.object({
   text: z.string(),

@@ -16,16 +16,11 @@ export async function GET(
                 throw new QueryParamError(`Falta parámetro OwnerId`);
             }
 
-            try {
-                const ownerData = await OwnerRepository.findById(id);
-                if (!ownerData) {
-                    throw new RepositoryError(`Owner no encontrado: ${id}`);
-                }
-                return NextResponse.json(ownerData);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
-                throw new RepositoryError(`Error fetching owner: ${error.message}`);
+            const ownerData = await OwnerRepository.findById(id);
+            if (!ownerData) {
+                throw new RepositoryError(`Owner no encontrado: ${id}`);
             }
+            return NextResponse.json(ownerData);
         }
     );
 }

@@ -4,10 +4,10 @@ import React from "react";
 import { FaSyringe } from "react-icons/fa";
 import { PageComponent } from "@/components/index";
 import { FieldData } from "@/data/index";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export default function VaccinesPage() {
-  const storage = usePetStorage();
+  const storage = useStorageContext();
   return (
     <PageComponent
       parentId={storage.storedPet.id}

@@ -13,12 +13,13 @@ export const signIn = async (
 
 export const ownerSignUp = async (
   email: string,
-  password: string
+  password: string,
+  role: string = 'owner'
 ): Promise<{ data: { user: User | null }; error: AuthError | null }> => {
   return supabase.auth.signUp({
     email, password,
     options: {
-      data: { role: "owner" }
+      data: { role: role }
     }
   });
 };

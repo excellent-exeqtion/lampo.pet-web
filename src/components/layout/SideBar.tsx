@@ -16,47 +16,49 @@ import {
 } from "react-icons/fa";
 import Link from 'next/link';
 import Image from 'next/image';
-import { AppSession, MenuType } from "@/types/lib";
+import { MenuType } from "@/types/lib";
 import { v4 } from 'uuid';
 import { useRouter } from "next/navigation";
-import { VeterinaryAccessType } from "@/types/index";
-import { isOwner, isVet } from "@/utils/roles";
 import { FaPencil } from "react-icons/fa6";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { useUI } from "@/context/UIProvider";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 import { handleLogout } from "@/services/authService";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useRoleContext } from "@/context/RoleProvider";
 
 export default function SideBar() {
     const { isMobile, isTablet, isDesktop } = useDeviceDetect();
     const session = useSessionContext();
-    const storage = usePetStorage();
+    const storage = useStorageContext();
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
     const { setShowEditPetModal } = useUI();
+    const {isOwner, isVet}= useRoleContext();
 
-    const menuData = (show: boolean, session: AppSession | null | undefined, vetAccess: VeterinaryAccessType): MenuType[] => [
-        { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner(session) },
+    const menuData = (show: boolean): MenuType[] => [
+        { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner },
         { label: "Datos básicos", icon: <FaUser />, url: "/pages/pet/basic-data", show },
         { label: "Vacunas", icon: <FaSyringe />, url: "/pages/pet/vaccines", show },
         { label: "Cirugías", icon: <FaCut />, url: "/pages/pet/surgeries", show },
         { label: "Medicinas", icon: <FaPills />, url: "/pages/pet/medicines", show },
         { label: "Condiciones especiales", icon: <FaCloudSun />, url: "/pages/pet/conditions", show },
         { label: "Lab. de exámenes", icon: <FaFlask />, url: "/pages/pet/lab-tests", show },
-        { label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner(session) },
-        { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner(session) },
-        { label: "Agregar Consulta", icon: <FaCog />, url: "/pages/vet/diagnostic", show: isVet(session, vetAccess) }
+        { label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner },
+        { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },
+        { label: "Agregar Consulta", icon: <FaCog />, url: "/pages/vet/diagnostic", show: isVet }
     ];
     useEffect(() => {
-        const menu = menuData(storage.storedPet.id != "", session, storage.storedVetAccess);
+    console.log('isOwner', isOwner);
+        const menu = menuData(storage.storedPet.id != "");
 
         if (storage.storedPet) {
-            menu.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner(session) });
+            menu.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner });
         }
         setMenuItems(menu);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [storage.storedPet, storage.storedOwnerPets, session, storage.storedVetAccess, setShowEditPetModal]);
 
     const goToLogin = () => {

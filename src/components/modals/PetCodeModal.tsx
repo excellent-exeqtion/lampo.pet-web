@@ -1,23 +1,21 @@
 // app/components/modals/PetCodeModal.tsx
 "use client";
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import { FaShareAlt, FaCopy } from "react-icons/fa";
 import ModalComponent from "../lib/modal";
-import { usePetStorage } from "@/context/PetStorageProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
 import { postFetch } from "@/app/api";
+import { useUI } from "@/context/UIProvider";
 
-interface PetCodeModalProps {
-  setShowCodeModal: Dispatch<SetStateAction<boolean>>;
-};
-
-export default function PetCodeModal({ setShowCodeModal }: PetCodeModalProps) {
+export default function PetCodeModal() {
   const [code, setCode] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const session = useSessionContext();
-  const storage = usePetStorage();
+  const storage = useStorageContext();
+  const { setShowCodeModal } = useUI();
 
   async function generar() {
     setError("");

@@ -15,6 +15,8 @@ export interface UIState {
     setShowAddPetModal: React.Dispatch<React.SetStateAction<boolean>>;
     showEditPetModal: boolean;
     setShowEditPetModal: React.Dispatch<React.SetStateAction<boolean>>;
+    showVetPetCodeModal: boolean;
+    setShowVetPetCodeModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const UIContext = createContext({} as UIState);
@@ -27,6 +29,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     const [showChangePetModal, setShowChangePetModal] = useState(false);
     const [showAddPetModal, setShowAddPetModal] = useState(false);
     const [showEditPetModal, setShowEditPetModal] = useState(false);
+    const [showVetPetCodeModal, setShowVetPetCodeModal] = useState(false);
 
     return (
         <UIContext.Provider value={{
@@ -41,7 +44,9 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
             showAddPetModal,
             setShowAddPetModal,
             showEditPetModal,
-            setShowEditPetModal
+            setShowEditPetModal,
+            showVetPetCodeModal,
+            setShowVetPetCodeModal
         }}>
             {children}
         </UIContext.Provider>

@@ -83,6 +83,7 @@ export interface FormRepository<T> {
 export interface LogInType {
   email: string;
   password?: string;
+  role: 'owner' | 'veterinarian';
 }
 export interface SetSesionType {
   access_token: string;

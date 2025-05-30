@@ -1,6 +1,6 @@
 // hooks/useAppStorage.ts
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType } from "@/types/index";
+import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType, VeterinarianType } from "@/types/index";
 import { Empty } from "@/data/index";
 export interface StorageContextType {
     resetSession: () => void;
@@ -11,6 +11,8 @@ export interface StorageContextType {
     setStoredBasicData: (value: BasicDataType) => void;
     storedOwnerData: OwnerDataType;
     setStoredOwnerData: (value: OwnerDataType) => void;
+    storedVetData: VeterinarianType;
+    setStoredVetData: (value: VeterinarianType) => void;
     storedVetAccess: VeterinaryAccessType;
     setStoredVetAccess: (value: VeterinaryAccessType) => void;
     storedPetCode: PetCodeType;
@@ -85,6 +87,11 @@ export function useAppStorage() {
     Empty.PetCode()
   );
 
+  const [storedVetData, setStoredVetData] = useLocalStorage<VeterinarianType>(
+    "vetData",
+    Empty.VetData()
+  );
+
   const resetPet = () => {
     setStoredBasicData(Empty.BasicData());
     setStoredConditionData([]);
@@ -112,6 +119,8 @@ export function useAppStorage() {
     setStoredBasicData,
     storedOwnerData,
     setStoredOwnerData,
+    storedVetData,
+    setStoredVetData,
     storedOwnerPets,
     setStoredOwnerPets,
     storedVaccineData,

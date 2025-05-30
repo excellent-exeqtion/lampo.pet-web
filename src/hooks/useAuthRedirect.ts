@@ -3,15 +3,16 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { usePetStorage } from "@/context/PetStorageProvider";
-import { isVetWithoutUserSession } from "@/utils/roles";
+import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useRoleContext } from "@/context/RoleProvider";
 
 export default function useAuthRedirect() {
     const router = useRouter();
     const pathname = usePathname();
     const session = useSessionContext();                      // undefined | null | AppSession
-    const { storedVetAccess } = usePetStorage();
+    const { storedVetAccess } = useStorageContext();
+    const { isVetWithoutUserSession } = useRoleContext();
 
     useEffect(() => {
         // 1) Espera a que la sesión esté cargada
@@ -22,8 +23,6 @@ export default function useAuthRedirect() {
         const isVetRoute = pathname.startsWith("/vet-access");
         const isRoot = pathname === "/";
 
-        const isVetUser = isVetWithoutUserSession(session, storedVetAccess);
-
         // 3) Redirigir a /login sólo desde la raíz si no hay sesión
         if (session === null && isRoot) {
             router.replace("/login");
@@ -31,7 +30,7 @@ export default function useAuthRedirect() {
         }
 
         // 4) Redirigir a vet-access si es vet-user
-        if (isVetUser && !isVetRoute && !isLoginRoute) {
+        if (isVetWithoutUserSession && !isVetRoute && !isLoginRoute) {
             router.replace("/vet-access");
             return;
         }
@@ -40,5 +39,6 @@ export default function useAuthRedirect() {
         if (session === null && !isLoginRoute && !isVetRoute && !isRoot) {
             router.replace("/login");
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session, storedVetAccess, pathname, router]);
 }

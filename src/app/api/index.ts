@@ -30,7 +30,7 @@ async function methodFetch(method: string, url: string, params: ApiParams | unde
     if (payload) {
         body = JSON.stringify(payload);
     }
-    return await fetch(`${process.env.PROTOCOL}://${process.env.VERCEL_URL}${url}${parameters}`, {
+    return await fetch(`${process.env.PROTOCOL}://${process.env.PRODUCTION_URL}${url}${parameters}`, {
         method: method,
         headers: method == "GET" ? undefined : { 'Content-Type': 'application/json' },
         body: body

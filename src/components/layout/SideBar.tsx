@@ -36,7 +36,7 @@ export default function SideBar() {
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
     const { setShowEditPetModal } = useUI();
-    const {isOwner, isVet}= useRoleContext();
+    const { isOwner, isVet } = useRoleContext();
 
     const menuData = (show: boolean): MenuType[] => [
         { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner },
@@ -48,17 +48,13 @@ export default function SideBar() {
         { label: "Lab. de exámenes", icon: <FaFlask />, url: "/pages/pet/lab-tests", show },
         { label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner },
         { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },
-        { label: "Agregar Consulta", icon: <FaCog />, url: "/pages/vet/diagnostic", show: isVet }
+        { label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner && show },
+        { label: "Agregar Consulta", icon: <FaCog />, url: `/pages/vet/consultation/${storage.storedPet.id}`, show: isVet && show },
     ];
     useEffect(() => {
-    console.log('isOwner', isOwner);
         const menu = menuData(storage.storedPet.id != "");
-
-        if (storage.storedPet) {
-            menu.push({ label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner });
-        }
         setMenuItems(menu);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [storage.storedPet, storage.storedOwnerPets, session, storage.storedVetAccess, setShowEditPetModal]);
 
     const goToLogin = () => {
@@ -158,7 +154,7 @@ export default function SideBar() {
                         const content = (
                             <div className="tooltip-container" style={{ fontSize: "1.75rem", cursor: "pointer" }}>
                                 {icon}
-                                <span className="tooltip-text">{label}</span>
+                                <span className="tooltip-text tooltip-right">{label}</span>
                             </div>
                         );
 

@@ -3,7 +3,8 @@ export const tooltipStyles =
   `
         .tooltip-container {
           position: relative;
-          display: inline-block; }
+          display: inline-block;
+        }
         .tooltip-container .tooltip-text {
           visibility: hidden;
           width: max-content;
@@ -20,16 +21,17 @@ export const tooltipStyles =
           font-weight: bold;
           opacity: 0;
         }
-        .tooltip-container .tooltip-text .tooltip-left {
-          bottom: 29%;
-          right: 57px;
-          transition: opacity 0.2s;
+        .tooltip-left {
+          top: 18%;
+          right: 100%;
+          margin-right: 0.5rem;
+          transition: opacity 0.2s !important;
         }
-        .tooltip-container .tooltip-text .tooltip-right {
+        .tooltip-right {
           left: 100%;
           top: 50%;
           transform: translateY(-50%);
-          margin-left: 12px;
+          margin-left: 0.5rem;
         }
         .tooltip-container:hover .tooltip-text {
           visibility: visible;

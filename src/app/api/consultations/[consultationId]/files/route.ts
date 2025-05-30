@@ -5,6 +5,7 @@ import { getWithErrorHandling } from '@/services/apiService';
 import { RepositoryError } from '@/types/lib';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { id } from 'zod/v4/locales';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf', 'image/webp', 'image/gif'];
@@ -37,7 +38,7 @@ export async function POST(
         if (!ALLOWED_FILE_TYPES.includes(file.type)) {
             return NextResponse.json({ success: false, message: `Tipo de archivo no permitido. Permitidos: ${ALLOWED_FILE_TYPES.join(', ')}` }, { status: 415 });
         }
-        
+
         const supabase = createServerComponentClient({ cookies });
         const { data: { user } } = await supabase.auth.getUser();
         const uploadedByUserId = user?.id;
@@ -50,7 +51,11 @@ export async function POST(
         );
 
         if (error || !data) {
-            throw new RepositoryError(`Error subiendo archivo: ${error?.message || 'No data returned'}`);
+            console.log(`Error subiendo archivo: ${error?.message || 'No data returned'}`)
+            if (error?.message.includes("new row violates row-level security policy")) {
+                throw new Error("No tienes permisos para cargar el archivo");
+            }
+            throw new RepositoryError("Error subiendo archivo: ");
         }
         return NextResponse.json({ success: true, file: data }, { status: 201 });
     });

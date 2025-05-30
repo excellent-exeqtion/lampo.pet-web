@@ -5,6 +5,7 @@ import {
 } from "@supabase/auth-helpers-nextjs";
 import type { AuthClient, AuthSession } from "./index";
 import type { AuthChangeEvent, AuthError, User } from "@supabase/supabase-js";
+import { supabase } from "../client/supabase";
 
 export class SupabaseAuthClient implements AuthClient {
     private browser = createClientComponentClient();
@@ -13,7 +14,13 @@ export class SupabaseAuthClient implements AuthClient {
 
     async getSession(): Promise<AuthSession | null> {
         const { data } = await this.browser.auth.getSession();
-        return data.session as AuthSession | null;
+        if (data) {
+            return data.session as AuthSession | null;
+        }
+        else {
+            const { data: dataTwo } = await supabase.auth.getSession();
+            return dataTwo.session;
+        }
     }
 
     onAuthStateChange(
@@ -68,5 +75,6 @@ export class SupabaseAuthClient implements AuthClient {
         refresh_token: string;
     }) {
         this.browser.auth.setSession(session);
+        supabase.auth.setSession(session);
     }
 }

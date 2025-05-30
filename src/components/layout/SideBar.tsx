@@ -19,7 +19,7 @@ import Image from 'next/image';
 import { MenuType } from "@/types/lib";
 import { v4 } from 'uuid';
 import { useRouter } from "next/navigation";
-import { FaPencil } from "react-icons/fa6";
+import { FaPencil, FaUserDoctor } from "react-icons/fa6";
 import { Empty } from "@/data/index";
 import { CircularImage } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
@@ -46,12 +46,14 @@ export default function SideBar() {
         { label: "Medicinas", icon: <FaPills />, url: "/pages/pet/medicines", show },
         { label: "Condiciones especiales", icon: <FaCloudSun />, url: "/pages/pet/conditions", show },
         { label: "Lab. de exámenes", icon: <FaFlask />, url: "/pages/pet/lab-tests", show },
+        { label: "Consultas veterinarias", icon: <FaUserDoctor />, url: `/pages/pet/consultations/${storage.storedPet.id}`, show },
         { label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner },
         { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },
         { label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner && show },
         { label: "Agregar Consulta", icon: <FaCog />, url: `/pages/vet/consultation/${storage.storedPet.id}`, show: isVet && show },
     ];
     useEffect(() => {
+        console.log('session', session)
         const menu = menuData(storage.storedPet.id != "");
         setMenuItems(menu);
         // eslint-disable-next-line react-hooks/exhaustive-deps

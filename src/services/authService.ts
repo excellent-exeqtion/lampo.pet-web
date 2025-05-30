@@ -8,6 +8,7 @@ export const signIn = async (
   password: string
 ): Promise<SignInResponse> => {
   const { data, error } = await authClient.signIn(email, password);
+  console.log(data);
   if (data) {
     setSession(data.session);
   }

@@ -15,9 +15,9 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
     const storage = useStorageContext();
     const { setShowAddPetModal } = useUI();
     const { isOwner } = useRoleContext();
-    const ownerId = session?.db?.user?.id;
 
     useEffect(() => {
+        const ownerId = session?.db?.user?.id;
         if (!session.db || !ownerId) return;
 
         (async () => {
@@ -32,7 +32,7 @@ export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }
 
         })();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session, ownerId]);
+    }, [session, session?.db?.user?.id]);
 
     useEffect(() => {
         let initialPet = Empty.Pet();

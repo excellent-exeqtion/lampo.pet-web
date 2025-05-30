@@ -38,6 +38,13 @@ export async function getWithErrorHandling(
                 { status: 500 }
             )
         }
+        // 5) Error con el patron repository -> 500
+        if (err instanceof Error) {
+            return NextResponse.json(
+                { success: false, message: err.message },
+                { status: 500 }
+            )
+        }
         return NextResponse.json(
             { success: false, message: 'Error interno del servidor' },
             { status: 500 }

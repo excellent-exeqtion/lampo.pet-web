@@ -21,3 +21,5 @@ export { default as PageComponent } from "./lib/page";
 export { default as RemoveItem } from "./lib/removeItem";
 export { default as Steps } from "./lib/steps";
 export { default as Title } from "./lib/title";
+
+export { default as ConsultationDetailView } from './consultations/ConsultationDetailView';

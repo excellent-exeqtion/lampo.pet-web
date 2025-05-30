@@ -5,7 +5,6 @@ import { getWithErrorHandling } from '@/services/apiService';
 import { RepositoryError } from '@/types/lib';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { id } from 'zod/v4/locales';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf', 'image/webp', 'image/gif'];

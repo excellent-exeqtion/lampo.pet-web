@@ -134,7 +134,7 @@ export interface PlanVersionType {
 }
 export interface SubscriptionType {
     id: number;
-    owner_id: string;
+    user_id: string;
     plan_version_id: number;
     cycle: 'monthly' | 'annual';
     status: 'pending' | 'active' | 'canceled' | 'expired';

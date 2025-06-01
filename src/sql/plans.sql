@@ -34,7 +34,7 @@ create unique index if not exists idx_plans_versions_unique
 -- --------------------------------------------------
 create table if not exists public.subscriptions (
   id                  serial      primary key,
-  owner_id            uuid        not null
+  user_id            uuid        not null
     references public.owners(owner_id) on delete cascade,
   plan_version_id     integer     not null
     references public.plans_versions(id) on delete restrict,
@@ -58,16 +58,16 @@ alter table public.subscriptions
 
 create policy "Owners can view own subscriptions"
   on public.subscriptions for select
-  using ( owner_id = auth.uid() );
+  using ( user_id = auth.uid() );
 
 create policy "Owners can insert subscriptions"
   on public.subscriptions for insert
-  with check ( owner_id = auth.uid() );
+  with check ( user_id = auth.uid() );
 
 create policy "Owners can update own subscriptions"
   on public.subscriptions for update
-  using ( owner_id = auth.uid() )
-  with check ( owner_id = auth.uid() );
+  using ( user_id = auth.uid() )
+  with check ( user_id = auth.uid() );
   
   
   -- --------------------------------------------------

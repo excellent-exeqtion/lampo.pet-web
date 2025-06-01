@@ -1,17 +1,27 @@
 // src/repositories/subscription.repository.ts
 import { supabase } from '@/lib/auth/supabase/browserClient';
 import { CreateSubscriptionType, SubscriptionType } from '@/types/index';
+import { createClient } from '@supabase/supabase-js';
 
+function getSupabaseWithToken(access_token: string) {
+    return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // O usa la PUBLIC ANON KEY (pero nunca pongas la service key en frontend)
+        {
+            global: { headers: { Authorization: `Bearer ${access_token}` } }
+        }
+    );
+}
 
 export default class SubscriptionRepository {
     /**
      * Crea una suscripción en estado pending
      */
-    static async create(params: CreateSubscriptionType): Promise<SubscriptionType | null> {
-        const { data, error } = await supabase
+    static async create(params: CreateSubscriptionType, accessToken: string): Promise<SubscriptionType | null> {
+        const { data, error } = await getSupabaseWithToken(accessToken)
             .from('subscriptions')
             .insert([{
-                owner_id: params.ownerId,
+                user_id: params.ownerId,
                 plan_version_id: params.planVersionId,
                 cycle: params.cycle,
                 status: 'pending',
@@ -50,7 +60,7 @@ export default class SubscriptionRepository {
         const { data, error } = await supabase
             .from('subscriptions')
             .select('*')
-            .eq('owner_id', ownerId)
+            .eq('user_id', ownerId)
             .order('started_at', { ascending: false })
 
         if (error) throw error

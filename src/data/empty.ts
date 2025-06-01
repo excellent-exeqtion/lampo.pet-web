@@ -125,7 +125,7 @@ export function PlanVersion(): PlanVersionType {
 export function Subscription(): SubscriptionType {
     return {
         id: 0,
-        owner_id: '',
+        user_id: '',
         plan_version_id: 0,
         cycle: 'monthly',
         status: 'pending',

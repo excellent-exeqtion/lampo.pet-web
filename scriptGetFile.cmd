@@ -5,7 +5,7 @@ set OUTPUT_FILE=%~dp0src_combined.txt
 
 if exist "%OUTPUT_FILE%" del "%OUTPUT_FILE%"
 
-for /R "%SRC_DIR%" %%f in (*.ts *.tsx *.js *.json *.css *.md) do (
+for /R "%SRC_DIR%" %%f in (*.ts *.tsx *.js *.json *.css *.md *.sql) do (
     echo ----- Archivo: %%~nxf ----- >> "%OUTPUT_FILE%"
     type "%%f" >> "%OUTPUT_FILE%" 2>>nul
     echo. >> "%OUTPUT_FILE%"

@@ -1,10 +1,14 @@
 ----- Archivo: middleware.ts ----- 
+// middleware.ts
 import { type NextRequest } from 'next/server';
-import { updateSession } from './lib/auth';
+import { updateSession } from './lib/auth'; // O la ruta correcta a tu index.ts de lib/auth
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // updateSession se encargará de refrescar la cookie de sesión de Supabase
+  // y también puede manejar redirecciones si no hay usuario (como lo tienes configurado)
+  return await updateSession(request);
 }
+
 export const config = {
   matcher: [
     /*
@@ -16,7 +20,7 @@ export const config = {
      */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-} 
+}; 
 ----- Archivo: layout.tsx ----- 
 // app/layout.tsx
 "use client";
@@ -26,8 +30,13 @@ import "@picocss/pico";
 import { tooltipStyles } from "@/styles/tooltip";
 import { geistMono, geistSans } from "@/styles/geist";
 import { ClientAppProvider } from "../components";
+import { usePathname } from "next/navigation";
+import { SessionProvider } from "@/context/SessionProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const noClientAppProviderRoutes = ["/testing-supabase", "/test-supabase", "/minimal-test", "/login", "/auth/callback", "/pages/auth/verify"];
+  const shouldUseClientAppProvider = !noClientAppProviderRoutes.includes(pathname);
   return (
     <html lang="es" data-theme="light">
       <head>
@@ -35,9 +44,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <style>{tooltipStyles}</style>
-        <ClientAppProvider>
-          {children}
-        </ClientAppProvider>
+        <SessionProvider>
+          {shouldUseClientAppProvider ? (
+            <ClientAppProvider>
+              {children}
+            </ClientAppProvider>
+          ) : (
+            <>
+              {children}
+            </>
+          )}
+        </SessionProvider>
       </body>
     </html >
   );
@@ -352,57 +369,6 @@ async function methodFetch(method: string, url: string, params: ApiParams | unde
     })
 } 
 ----- Archivo: route.ts ----- 
-import { type EmailOtpType } from '@supabase/supabase-js';
-import { type NextRequest } from 'next/server';
-
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/auth';
-
-export async function GET(request: NextRequest) {
-    const { searchParams } = new URL(request.url)
-    const token_hash = searchParams.get('token_hash')
-    const type = searchParams.get('type') as EmailOtpType | null
-    const next = searchParams.get('next') ?? '/'
-
-    if (token_hash && type) {
-        const supabase = await createClient()
-
-        const { error } = await supabase.verifyOtp({
-            type,
-            token_hash,
-        })
-        if (!error) {
-            // redirect user to specified redirect URL or root of app
-            redirect(next)
-        }
-    }
-
-    // redirect the user to an error page with some instructions
-    redirect('/error')
-} 
------ Archivo: route.ts ----- 
-// src/app/api/auth/reset-password/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { resetPassword } from '@/services/authService';
-import { withValidationAndErrorHandling } from '@/services/apiService';
-import { z } from 'zod';
-import { LogInType } from '@/types/lib';
-
-const ResetSchema = z.object({
-    email: z.string().email()
-});
-
-export async function POST(req: NextRequest) {
-    return withValidationAndErrorHandling('POST', req, ResetSchema, async ({ email }: LogInType) => {
-        const { data, error } = await resetPassword(email);
-        if (error) {
-            return NextResponse.json({ success: false, message: error.message }, { status: 400 });
-        }
-        return NextResponse.json({ success: true, message: 'Correo de recuperación enviado', data });
-    });
-}
- 
------ Archivo: route.ts ----- 
 // src/app/api/auth/session/route.ts
 import { NextResponse } from "next/server";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -456,82 +422,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, message: "Sesión establecida" });
     });
 } 
------ Archivo: route.ts ----- 
-// src/app/api/auth/sign-in/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { withValidationAndErrorHandling } from '@/services/apiService';
-import { z } from 'zod';
-import { LogInType } from '@/types/lib';
-import { createClient } from '@/lib/auth';
-import { AuthError } from '@supabase/supabase-js';
-
-const SignInSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(6)
-});
-
-export async function POST(req: NextRequest) {
-    return withValidationAndErrorHandling('POST', req, SignInSchema, async ({ email, password }: LogInType) => {
-
-        const client = await createClient();
-        const signIndata = {
-            email,
-            password
-        }
-        const { data, error } = await client.signInWithPassword(signIndata);
-        if (error) {
-            throw new AuthError("Hubo un problema iniciando sessión.");
-        }
-
-        return NextResponse.json({ success: true, data: data.session });
-    });
-}
- 
------ Archivo: route.ts ----- 
-// src/app/api/auth/sign-out/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { signOut } from '@/services/authService';
-import { withErrorHandling } from '@/services/apiService';
-
-export async function POST(req: NextRequest) {
-    return withErrorHandling('POST', req, async () => {
-        await signOut();
-        return NextResponse.json({ success: true, message: 'Sesión cerrada correctamente' });
-    });
-}
- 
------ Archivo: route.ts ----- 
-// src/app/api/auth/sign-up/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { withValidationAndErrorHandling } from '@/services/apiService';
-import { z } from 'zod';
-import { AuthError, LogInType } from '@/types/lib';
-import { createClient } from '@/lib/auth';
-
-const SignUpSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-    role: z.enum(['owner', 'veterinarian']).optional().nullable()
-});
-
-export async function POST(req: NextRequest) {
-    return withValidationAndErrorHandling('POST', req, SignUpSchema, async ({ email, password, role }: LogInType) => {
-        const supabase = await createClient();
-        const signUpData = {
-            email,
-            password,
-            options: {
-                data: { role: role }
-            }
-        }
-        const { data, error } = await supabase.signUp(signUpData)
-        if (error) {
-            throw new AuthError("Hubo un problema registrando al usuario.");
-        }
-        return NextResponse.json({ success: true, data: data.user });
-    });
-}
- 
 ----- Archivo: route.ts ----- 
 // src/app/api/consultations/route.ts
 import { NextRequest, NextResponse } from 'next/server';
@@ -768,7 +658,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ConsultationFileRepository } from '@/repos/index';
 import { getWithErrorHandling } from '@/services/apiService';
 import { RepositoryError } from '@/types/lib';
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 
 // GET /api/consultations/files/{fileId}/download : Obtener URL firmada para descargar
 export async function GET(
@@ -787,9 +677,9 @@ export async function GET(
             .select('file_path')
             .eq('id', fileId)
             .single();
-        
+
         if (findError || !fileRecord) {
-             throw new RepositoryError(`Archivo con ID ${fileId} no encontrado o error al buscarlo: ${findError?.message}`);
+            throw new RepositoryError(`Archivo con ID ${fileId} no encontrado o error al buscarlo: ${findError?.message}`);
         }
 
         const { signedURL, error: urlError } = await ConsultationFileRepository.getSignedUrl(fileRecord.file_path);
@@ -1261,6 +1151,7 @@ export async function DELETE(
   });
 } 
 ----- Archivo: route.ts ----- 
+// src/app/api/plans/current/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { PlanRepository } from "@/repos/index";
 import { getWithErrorHandling } from "@/services/apiService";
@@ -1273,6 +1164,7 @@ export async function GET(req: NextRequest) {
 }
  
 ----- Archivo: route.ts ----- 
+// src/app/api/plans/subscriptions/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { SubscriptionRepository } from "@/repos/index";
 import { withValidationAndErrorHandling } from "@/services/apiService";
@@ -1292,6 +1184,20 @@ export async function POST(req: NextRequest) {
     const result = await SubscriptionRepository.create(data);
     return NextResponse.json({ success: true, subscription: result });
   });
+}
+ 
+----- Archivo: route.ts ----- 
+// src/app/api/plans/subscription/[ownerId]/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { SubscriptionRepository } from "@/repos/index";
+import { getWithErrorHandling } from "@/services/apiService";
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ ownerId: string }> }) {
+    return getWithErrorHandling(req, async () => {
+        const { ownerId } = await params;
+        const subscription = await SubscriptionRepository.getActiveByOwner(ownerId);
+        return NextResponse.json({ success: true, data: subscription });
+    });
 }
  
 ----- Archivo: route.ts ----- 
@@ -1509,81 +1415,140 @@ export default function AuthVerifyLayout({ children }: { children: React.ReactNo
 ----- Archivo: page.tsx ----- 
 // app/pages/auth/verify/page.tsx
 "use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-//import { getFetch, postFetch } from "@/app/api";
-import { getSession, setSession } from "@/services/authService";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { authClient } from "@/lib/auth"; // Importar authClient directamente
+import LoadingComponent from "@/components/lib/loading"; // Un componente de carga
 
-export default function VerifyEmail() {
+export default function VerifyEmailPage() { // Renombrado para claridad
   const router = useRouter();
+  const searchParams = useSearchParams(); // Hook para leer query params en App Router
+
+  const [message, setMessage] = useState("Verificando tu correo… Por favor espera.");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const access_token = url.searchParams.get("access_token");
-    const refresh_token = url.searchParams.get("refresh_token");
-    const type = url.searchParams.get("type");
-    console.log('url', url);
-    console.log('access_token', access_token);
-    console.log('refresh_token', refresh_token);
-    console.log('type', type);
+    const access_token = searchParams.get("access_token");
+    const refresh_token = searchParams.get("refresh_token");
+    //const type = searchParams.get("type"); // ej. 'signup', 'recovery', 'magiclink'
+    const error_description = searchParams.get("error_description");
 
-    const trySetSession = async () => {
-      try {
-        await setSession({ access_token: access_token!, refresh_token: refresh_token! });
-        /*
-        const response = await postFetch("/api/auth/set-session", undefined, { access_token, refresh_token });
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          console.error("Error al establecer sesión:", result.message);
-          router.replace("/login");
-          return;
-        }*/
-        router.replace("/pages/owner/register");
-      } catch (err) {
-        console.error("Error de red al establecer sesión:", err);
-        router.replace("/login");
-      }
-    };
-
-    const checkSession = async () => {
-      try {
-        /*
-        const response = await getFetch("/api/auth/session");
-        const result = await response.json();
-
-        if (response.ok && result.success && result.session) {
-          router.replace("/owners/register");
-        } else {
-          router.replace("/login");
-        }
-        */
-        const session = await getSession();
-        if (session) {
-          setSession(session);
-          router.replace("/pages/owner/register");
-        }
-      } catch (err) {
-        console.error("Error al verificar sesión:", err);
-        router.replace("/login");
-      }
-    };
-
-    if (access_token && refresh_token && type === "signup") {
-      trySetSession();
-    } else {
-      checkSession();
+    if (error_description) {
+      setMessage(`Error: ${error_description}`);
+      setIsLoading(false);
+      setTimeout(() => router.replace("/login"), 5000); // Redirigir al login después de un error
+      return;
     }
-  }, [router]);
+
+    const handleSessionFromURL = async () => {
+      if (access_token && refresh_token) {
+        try {
+          // Llama directamente a authClient.setSession o a tu wrapper en authService
+          await authClient.setSession({ access_token, refresh_token });
+          // Después de setSession, Supabase JS SDK debería actualizar su estado interno.
+          // onAuthStateChange debería dispararse.
+          // Redirigir a la página post-verificación/login
+          router.replace("/pages/owner/register"); // O al dashboard principal
+        } catch (err) {
+          console.error("Error al establecer sesión desde URL:", err);
+          setMessage("Hubo un problema al verificar tu sesión. Serás redirigido al login.");
+          setTimeout(() => router.replace("/login"), 3000);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        // Si no hay tokens en la URL, podría ser una visita directa o un error.
+        // Intentar obtener la sesión actual para ver si ya está autenticado.
+        checkExistingSession();
+      }
+    };
+
+    const checkExistingSession = async () => {
+      try {
+        const session = await authClient.getSession();
+        if (session) {
+          // Ya hay una sesión, quizás el usuario ya verificó y volvió.
+          // No es necesario llamar a setAuthSession si getAuthSession ya la devuelve.
+          router.replace("/pages/owner/register"); // O al dashboard
+        } else {
+          // No hay tokens en URL y no hay sesión activa
+          setMessage("No se pudo verificar la sesión. Es posible que el enlace haya expirado o ya haya sido utilizado. Serás redirigido al login.");
+          setTimeout(() => router.replace("/login"), 5000);
+        }
+      } catch (err) {
+        console.error("Error al verificar sesión existente:", err);
+        setMessage("Error al verificar tu estado. Serás redirigido al login.");
+        setTimeout(() => router.replace("/login"), 3000);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Flujo principal:
+    // Supabase Auth Helpers y onAuthStateChange deberían manejar la sesión
+    // automáticamente cuando el usuario es redirigido de vuelta a la app
+    // después de hacer clic en el enlace de verificación, si los tokens están en el hash (#)
+    // y no en los query params (?).
+    // Si los tokens SÍ vienen como query params (access_token, refresh_token),
+    // entonces la lógica de handleSessionFromURL es necesaria.
+
+    // Supabase por defecto ahora usa fragmentos (#) para los tokens de recuperación de sesión.
+    // El SDK de Supabase JS (browserClient) debería detectar estos fragmentos automáticamente
+    // al cargar la página y disparar onAuthStateChange.
+
+    // Verificamos si hay un evento de 'SIGNED_IN' pendiente debido a un hash.
+    // Si no, procedemos con la lógica de query params.
+    const { data: authListener } = authClient.onAuthStateChange(
+      async (event, session) => {
+        if (event === "SIGNED_IN" && session) {
+          setIsLoading(false);
+          // La sesión se estableció por el SDK a través del hash.
+          router.replace("/pages/owner/register"); // O al dashboard
+          authListener?.unsubscribe(); // Limpiar el listener una vez usado
+        } else if (event === "INITIAL_SESSION") {
+          // Si hay una sesión inicial pero no fue por SIGNED_IN (hash),
+          // puede que los tokens vengan por query params.
+          authListener?.unsubscribe(); // Ya no necesitamos este listener específico.
+          handleSessionFromURL();
+        } else if (event === 'USER_UPDATED' && session) {
+          // Podría ser el caso después de un reset de contraseña exitoso
+          setIsLoading(false);
+          router.replace("/"); // O al dashboard
+          authListener?.unsubscribe();
+        }
+      }
+    );
+
+    // Si después de un breve tiempo no hubo evento SIGNED_IN (por hash),
+    // y no estamos ya manejando query_params, procedemos con query_params.
+    // Esto es un fallback por si el listener no captura el hash a tiempo.
+    const fallbackTimer = setTimeout(() => {
+      if (isLoading) { // Solo si todavía estamos cargando (el listener no resolvió)
+        authListener?.unsubscribe();
+        console.log("Fallback: onAuthStateChange no capturó SIGNED_IN por hash, intentando con query params.");
+        handleSessionFromURL();
+      }
+    }, 1500); // Esperar 1.5 segundos
+
+    return () => {
+      authListener?.unsubscribe();
+      clearTimeout(fallbackTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, searchParams]); // searchParams como dependencia
+
+  if (isLoading) {
+    return <LoadingComponent />;
+  }
 
   return (
-    <div style={{ padding: "2rem", textAlign: "center", maxWidth: '500px' }}>
-      <h1>Verificando tu correo…</h1>
-      <p>Por favor espera un momento.</p>
+    <div style={{ padding: "2rem", textAlign: "center", maxWidth: '500px', margin: 'auto' }}>
+      <h1>Verificación</h1>
+      <p>{message}</p>
+      {!isLoading && <button onClick={() => router.push('/login')}>Ir a Iniciar Sesión</button>}
     </div>
   );
-}
- 
+} 
 ----- Archivo: page.tsx ----- 
 'use client'
 export default function ErrorPage() {
@@ -1601,17 +1566,21 @@ export default function LoginLayout({ children }: { children: React.ReactNode })
 ----- Archivo: page.tsx ----- 
 // app/login/page.tsx
 "use client";
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useState, useEffect } from "react";
 import "@picocss/pico";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import type { OwnerDataType } from "@/types/index";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { postFetch } from "@/app/api";
 import ModalComponent from "@/components/lib/modal";
+import { authClient } from "@/lib/auth";
+import { useSessionContext } from "@/context/SessionProvider";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { db: session, setSession } = useSessionContext();
+
   // Estados comunes
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -1619,6 +1588,7 @@ export default function LoginPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [infoMessage, setInfoMessage] = useState(""); // Para mensajes como "Revisa tu correo"
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Estados adicionales para registro
@@ -1629,117 +1599,169 @@ export default function LoginPage() {
     address: "",
     city: "",
     country: "",
-    email: ""
+    email: "" // Se llenará desde el campo de email común
   });
+
+  // Redirigir si ya hay sesión
+  useEffect(() => {
+    if (session) {
+      router.replace("/"); // O a la página de dashboard
+    }
+  }, [session, router]);
+
 
   const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
+    setInfoMessage("");
     setLoading(true);
 
-    if (isRegistering) {
-      // 1) Registro vía API
-      const signUpResponse = await postFetch("/api/auth/sign-up", undefined, { email, password });
-      const signUpJson = await signUpResponse.json();
+    try {
+      if (isRegistering) {
+        // 1) Registro vía authClient
+        const { data: signUpData, error: signUpError } = await authClient.signUp(email, password, 'owner');
 
-      if (!signUpResponse.ok || !signUpJson.success) {
-        console.error("Signup error:", signUpJson);
-        redirect("/error?action=sign-up");
-      }
-      const ownerId = signUpJson.id;
-      //Sessiones directas en cliente
-      //const { data: { user } } = await ownerSignUp(email, password);
-      //const ownerId = user?.id;
-
-      // 2) Guardar datos del owner
-      if (ownerId) {
-        const response = await postFetch('/api/owners', undefined, {
-          ...(ownerInfo as OwnerDataType),
-          owner_id: ownerId,
-          email
-        });
-        if (!response.ok) {
-          setError("Error creando al dueño de la mascota");
+        if (signUpError || !signUpData?.user) {
+          console.error("Signup error:", signUpError);
+          setError(signUpError?.message || "Error al registrar el usuario. Inténtalo de nuevo.");
           setLoading(false);
           return;
         }
-      }
 
-      setShowConfirmModal(true);
-    } else {
-      // Inicio de sesión
-      const loginResponse = await postFetch("/api/auth/sign-in", undefined, { email, password });
-      const loginJson = await loginResponse.json();
-      if (!loginResponse.ok || !loginJson.success) {
-        redirect("/error?action=sign-in");
-      }
+        const ownerId = signUpData.user.id;
 
-      //await signIn(email, password);
-      redirect('/')
-      //}
+        // 2) Guardar datos del owner (esto SÍ requiere tu API `api/owners`)
+        if (ownerId) {
+          // Usar fetch directamente o tu wrapper `postFetch` si aún lo tienes para otras APIs
+          const response = await fetch('/api/owners', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...ownerInfo,
+              owner_id: ownerId,
+              email // Asegúrate que el email del owner sea el mismo del auth
+            }),
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            setError(errorData.message || "Error creando el perfil del dueño.");
+            // Considerar un rollback o manejo de error si el perfil no se crea después del auth.
+            setLoading(false);
+            return;
+          }
+        }
+        // Si el registro en Supabase requiere confirmación por email, mostrar el modal.
+        // Si no (auto-confirm está habilitado), Supabase podría devolver una sesión directamente.
+        if (signUpData.user && !signUpData.user.email_confirmed_at) { // O si Supabase devuelve una sesión nula aquí
+          setShowConfirmModal(true);
+        } else if (signUpData.user?.email_confirmed_at) { // Auto-confirmado o ya confirmado
+          // Supabase client JS debería manejar la sesión. Redirigir.
+          router.push('/pages/owner/register'); // O al dashboard/ruta post-login
+        }
+
+      } else {
+        // Inicio de sesión
+        const { data: signInData, error: signInError } = await authClient.signIn(email, password);
+
+        if (signInError || !signInData?.session) {
+          console.error("LOGIN FAILED:", signInError);
+          setError(signInError?.message || "Email o contraseña incorrectos.");
+          setLoading(false);
+          return;
+        }
+        setSession(signInData.session);
+
+        router.replace('/');
+      }
+    } catch (err) {
+      console.error("Auth CATCH block error:", err);
+      setError("Ocurrió un error inesperado. Por favor, inténtalo de nuevo.");
     }
-
     setLoading(false);
   };
 
-  const handleReset = async () => {
+  const handleResetPassword = async () => {
     setError("");
+    setInfoMessage("");
     if (!email) {
       setError("Ingresa tu correo para restablecer la contraseña.");
       return;
     }
-
-    const resetResponse = await postFetch("/api/auth/reset-password", undefined, { email });
-    const resetJson = await resetResponse.json();
-
-    if (!resetResponse.ok || !resetJson.success) {
-      redirect("/error?action=reset-password");
-    } else {
-      setError("Revisa tu correo para restablecer la contraseña.");
+    setLoading(true);
+    try {
+      const { error: resetError } = await authClient.resetPassword(email);
+      if (resetError) {
+        setError(resetError.message || "Error al enviar el correo de recuperación.");
+      } else {
+        setInfoMessage("Revisa tu correo para restablecer la contraseña.");
+      }
+    } catch {
+      setError("Ocurrió un error inesperado.");
     }
-
-    //await resetPassword(email);
+    setLoading(false);
   };
 
   const goToVetPage = () => {
-    redirect("/vet-access");
+    router.push("/vet-access"); // Usar router.push
   }
 
-  const goToRegister = async () => {
-    redirect("/pages/owner/register");
+  const handleModalContinue = async () => {
+    // Si el usuario hace clic en "Ya confirmé", intentamos obtener la sesión actual.
+    // Si Supabase ya procesó la confirmación (el usuario hizo clic en el enlace del email),
+    // debería haber una sesión.
+    setShowConfirmModal(false);
+    setLoading(true);
+    // Podríamos intentar forzar un re-fetch de la sesión o simplemente redirigir
+    // y dejar que useAuthRedirect maneje la lógica si la sesión existe.
+    // router.refresh(); // Podría ayudar a que onAuthStateChange se dispare si hubo cambios
+
+    // Si el usuario ya está logueado (quizás confirmó en otra pestaña y volvió)
+    // o si la sesión se estableció de alguna manera.
+    const currentSession = await authClient.getSession();
+    if (currentSession) {
+      router.push("/pages/owner/register"); // O al dashboard
+    } else {
+      // Si aún no hay sesión, puede que el usuario no haya confirmado realmente
+      // o haya un retraso. Podríamos mostrar un mensaje o simplemente volver al login.
+      // Por ahora, lo mantenemos simple, el usuario puede intentar loguearse.
+      setInfoMessage("Si ya confirmaste tu correo, intenta iniciar sesión.");
+    }
+    setLoading(false);
   }
 
-  // 4) Mostrar modal de “verifica tu correo”
   if (showConfirmModal) {
     return (
       <ModalComponent
         title="Confirma tu correo"
         description={`Te hemos enviado un correo de verificación a ${email}. Por favor revisa tu bandeja (y carpeta de spam) y haz clic en el enlace.`}
-        setShowModal={setShowConfirmModal}
+        setShowModal={setShowConfirmModal} // Permite cerrar el modal
       >
         <button
           className="contrast"
-          onClick={goToRegister}
+          onClick={handleModalContinue}
           style={{ width: "100%", marginTop: "1rem" }}
+          aria-busy={loading}
+          disabled={loading}
         >
-          Ya confirmé, continuar
+          {loading ? "Verificando..." : "Ya confirmé, continuar"}
         </button>
       </ModalComponent>
     );
   }
 
+  // Renderizar el formulario de login/registro
   return (
     <main
       style={{
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        height: "100vh",
+        minHeight: "100vh", // Asegurar que ocupe toda la altura
         background: "#F9FAFB",
+        padding: "1rem", // Espacio por si el form es muy grande en móviles
       }}
     >
-      <form
-        onSubmit={handleAuth}
+      <article // Cambiado de form a article para que PicoCSS no aplique estilos de form globales aquí si no queremos
         style={{
           background: "#fff",
           padding: "2rem",
@@ -1749,162 +1771,90 @@ export default function LoginPage() {
           maxWidth: "550px",
         }}
       >
-        <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <Image loading={"lazy"} src="/logo.png" alt="Lampo" width="150" height="48" style={{ width: "auto", height: "auto", marginBottom: '10px' }} />
-          <h1>{isRegistering ? "Regístrate" : "Inicia sesión"}</h1>
-        </div>
-
-        {/* Campos extra sólo en registro */}
-        {isRegistering && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <label htmlFor="name">
-              Nombre
-              <input
-                id="name"
-                type="text"
-                autoComplete="given-name"
-                value={ownerInfo.name || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, name: e.target.value })}
-                required
-              />
-            </label>
-
-            <label htmlFor="lastname">
-              Apellido
-              <input
-                id="lastname"
-                type="text"
-                autoComplete="family-name"
-                value={ownerInfo.last_name || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, last_name: e.target.value })}
-                required
-              />
-            </label>
-
-            <label htmlFor="phone">
-              Teléfono
-              <input
-                id="phone"
-                type="tel"
-                autoComplete="phone"
-                value={ownerInfo.phone || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, phone: e.target.value })}
-                required
-              />
-            </label>
-
-            <label htmlFor="address">
-              Dirección
-              <input
-                id="address"
-                type="text"
-                autoComplete="address-line1"
-                value={ownerInfo.address || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, address: e.target.value })}
-                required
-              />
-            </label>
-
-            <label htmlFor="city">
-              Ciudad
-              <input
-                id="city"
-                type="text"
-                autoComplete="address-level2"
-                value={ownerInfo.city || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, city: e.target.value })}
-                required
-              />
-            </label>
-
-            <label htmlFor="country">
-              País
-              <input
-                id="country"
-                type="text"
-                autoComplete="country-name"
-                value={ownerInfo.country || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, country: e.target.value })}
-                required
-              />
-            </label>
-
+        <form onSubmit={handleAuth}> {/* Formulario interno */}
+          <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+            <Image loading={"lazy"} src="/logo.png" alt="Lampo" width="150" height="48" style={{ width: "auto", height: "auto", marginBottom: '10px' }} />
+            <h1>{isRegistering ? "Regístrate" : "Inicia sesión"}</h1>
           </div>
-        )}
 
-        {/* Campos comunes */}
-        <label htmlFor="email">
-          Email
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
+          {isRegistering && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              {/* Campos de OwnerInfo */}
+              <label htmlFor="name">
+                Nombre
+                <input id="name" type="text" autoComplete="given-name" value={ownerInfo.name || ""} onChange={e => setOwnerInfo({ ...ownerInfo, name: e.target.value })} required />
+              </label>
+              <label htmlFor="lastname">
+                Apellido
+                <input id="lastname" type="text" autoComplete="family-name" value={ownerInfo.last_name || ""} onChange={e => setOwnerInfo({ ...ownerInfo, last_name: e.target.value })} required />
+              </label>
+              <label htmlFor="phone">
+                Teléfono
+                <input id="phone" type="tel" autoComplete="tel" value={ownerInfo.phone || ""} onChange={e => setOwnerInfo({ ...ownerInfo, phone: e.target.value })} required />
+              </label>
+              <label htmlFor="address">
+                Dirección
+                <input id="address" type="text" autoComplete="address-line1" value={ownerInfo.address || ""} onChange={e => setOwnerInfo({ ...ownerInfo, address: e.target.value })} required />
+              </label>
+              <label htmlFor="city">
+                Ciudad
+                <input id="city" type="text" autoComplete="address-level2" value={ownerInfo.city || ""} onChange={e => setOwnerInfo({ ...ownerInfo, city: e.target.value })} required />
+              </label>
+              <label htmlFor="country">
+                País
+                <input id="country" type="text" autoComplete="country-name" value={ownerInfo.country || ""} onChange={e => setOwnerInfo({ ...ownerInfo, country: e.target.value })} required />
+              </label>
+            </div>
+          )}
 
-        <label htmlFor="password" style={{ position: 'relative' }}>
-          Contraseña
-          <input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            autoComplete={isRegistering ? 'new-password' : 'current-password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ paddingRight: '2.5rem' }} // espacio para el botón
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-            style={{
-              position: 'absolute',
-              right: '0.75rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-            }}
-          >
-            {showPassword ? <FaEyeSlash size={23} color={'#000'} style={{ marginTop: '16px' }} /> : <FaEye size={23} color={'#000'} style={{ marginTop: '16px' }} />}
+          <label htmlFor="email">
+            Email
+            <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </label>
+
+          <label htmlFor="password" style={{ position: 'relative', display: 'block', marginBottom: '1rem' }}>
+            Contraseña
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete={isRegistering ? 'new-password' : 'current-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{ paddingRight: '3rem' }} // Espacio para el ícono
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              style={{
+                position: 'absolute',
+                right: '0.5rem', // Ajuste para que no esté tan pegado al borde del input
+                top: 'calc(50% + 8px)', // Ajustar para centrarlo verticalmente respecto al input
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                padding: '0.25rem',
+                cursor: 'pointer',
+                color: '#555' // Color del ícono
+              }}
+            >
+              {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+            </button>
+          </label>
+
+          {error && <p role="alert" style={{ color: "var(--pico-form-element-invalid-active-border-color, red)", marginTop: "0.5rem" }}>{error}</p>}
+          {infoMessage && <p role="status" style={{ color: "var(--pico-primary)", marginTop: "0.5rem" }}>{infoMessage}</p>}
+
+
+          <button type="submit" disabled={loading} aria-busy={loading} style={{ width: "100%", marginTop: "1rem" }}>
+            {loading ? (isRegistering ? "Registrando..." : "Accediendo...") : (isRegistering ? "Registrarse" : "Entrar")}
           </button>
-        </label>
-
-        {error && <p style={{ color: "red", marginTop: "0.5rem" }}>{error}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ width: "100%", marginTop: "1rem" }}
-        >
-          {loading
-            ? isRegistering
-              ? "Guardando..."
-              : "Accediendo..."
-            : isRegistering
-              ? "Registrarse"
-              : "Entrar"}
-        </button>
+        </form>
 
         {!isRegistering && (
           <p style={{ textAlign: "right", marginTop: "0.5rem" }}>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="contrast"
-              style={{
-                background: "none",
-                border: "none",
-                padding: 0,
-                cursor: "pointer",
-                color: "rgb(55, 60, 68)",
-              }}
-            >
+            <button type="button" onClick={handleResetPassword} className="contrast" disabled={loading} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--pico-primary-focus)" }}>
               ¿Olvidaste tu contraseña?
             </button>
           </p>
@@ -1912,39 +1862,19 @@ export default function LoginPage() {
 
         <p style={{ textAlign: "center", marginTop: "1rem" }}>
           {isRegistering ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}
-          <button
-            type="button"
-            onClick={() => setIsRegistering(!isRegistering)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#3B82F6",
-              cursor: "pointer",
-              marginLeft: "0.25rem",
-            }}
-          >
+          <button type="button" onClick={() => { setIsRegistering(!isRegistering); setError(""); setInfoMessage(""); }} disabled={loading} style={{ background: "none", border: "none", color: "var(--pico-primary)", cursor: "pointer", marginLeft: "0.25rem", textDecoration: "underline" }}>
             {isRegistering ? "Inicia sesión" : "Regístrate"}
           </button>
         </p>
-        {!isRegistering &&
-          <p style={{ textAlign: "center", marginTop: "1rem" }}>
 
-            <button
-              type="button"
-              onClick={() => goToVetPage()}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#3B82F6",
-                cursor: "pointer",
-                marginLeft: "0.25rem",
-              }}
-            >
+        {!isRegistering && (
+          <p style={{ textAlign: "center", marginTop: "1rem" }}>
+            <button type="button" onClick={goToVetPage} disabled={loading} style={{ background: "none", border: "none", color: "var(--pico-primary)", cursor: "pointer", textDecoration: "underline" }}>
               Soy médico veterinario sin registro
             </button>
           </p>
-        }
-      </form>
+        )}
+      </article>
     </main>
   );
 } 
@@ -2034,7 +1964,7 @@ export default function RegisterPage() {
 
             const response = await postFetch("/api/plans/subscriptions", undefined, {
                 ownerId,
-                planVersionId: plan.id,
+                planVersionId: plan.id.toString(),
                 cycle,
                 priceAtPurchase,
                 discountApplied
@@ -2494,7 +2424,7 @@ export default function SettingsPage() {
 
 
       {/* ——— Sección Danger Zone para eliminar mascota ——— */}
-      {pet && (
+      {pet && storage.storedPet.id && (
         <section
           style={{
             marginTop: "3rem",
@@ -2639,12 +2569,9 @@ import { FieldType } from "@/types/lib";
 import { BasicDataType, OwnerDataType } from "@/types/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch } from "@/app/api";
-import { useSession } from "@/hooks/useSession";
 import { useStorageContext } from "@/context/StorageProvider";
 
 export default function BasicDataPage() {
-  useSession();
-
   const { isMobile } = useDeviceDetect();
   const storage = useStorageContext();
   const [petData, setPetData] = useState<BasicDataType | null>(null);
@@ -2770,17 +2697,16 @@ export default function BasicDataPage() {
 // app/pages/pet/calendar/page.tsx (server component)
 "use client";
 import { Title } from "@/components/index";
-import LoadingComponent from "@/components/lib/loading";
-import { useSessionContext } from "@/context/SessionProvider";
+import { useRoleContext } from "@/context/RoleProvider";
 import React from "react";
 import { FaCalendar } from "react-icons/fa";
 
 export default function CalendarPage() {
-    const { db: session } = useSessionContext();
-    if (session == null) {
-        return <LoadingComponent />;
-    }
+    const { isVet } = useRoleContext();
 
+    if (isVet) {
+        return <div>Página para Veterinarios en desarrollo.</div>
+    }
     return (
         <div style={{ width: "100%" }}>
             {<Title icon={<FaCalendar />} title="Próximos eventos programados" />}
@@ -5534,31 +5460,35 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   useEffect(() => {
     const fetchData = async () => {
       setLoadLoading(true);
-      if(stateEq(StepStateEnum.NotInitialize) && !basicData.pet_id)
-      if (stateEq(StepStateEnum.NotInitialize)) {
-        setState(StepStateEnum.Initialize);
-        let basicDataSaved: BasicDataType = Empty.BasicData();
-        if (!storage.storedBasicData.pet_id) {
-          const petResponse = await fetch(`/api/pets/basic-data/${pet.id}`);
-          if (!petResponse.ok) throw new Error("Falló fetch basic-data");
-          basicDataSaved = await petResponse.json() as BasicDataType;
+      if (stateEq(StepStateEnum.NotInitialize) && !basicData.pet_id)
+        if (stateEq(StepStateEnum.NotInitialize)) {
+          setState(StepStateEnum.Initialize);
+          let basicDataSaved: BasicDataType = Empty.BasicData();
+          if (!storage.storedBasicData.pet_id) {
+            const petResponse = await fetch(`/api/pets/basic-data/${pet.id}`);
+            if (!petResponse.ok) throw new Error("Falló fetch basic-data");
+            const data = await petResponse.json() as BasicDataType;
+            if (data) {
+              basicDataSaved = data;
+            }
+
+          }
+          else if (storage.storedBasicData.pet_id == pet.id) {
+            basicDataSaved = storage.storedBasicData;
+          }
+          if (basicDataSaved.pet_id) {
+            setSavedData(basicDataSaved);
+            setBasicData(basicDataSaved);
+            const initial = initials(basicDataSaved, loadedWithPreviusData);
+            setLoadedWithPreviusData(true);
+            setFormData({ ...basicDataSaved, pet_id: pet.id, pet_type: initial.petType, main_food: initial.food, race: initial.race });
+            setWeight(parseFloat(basicDataSaved.weight.split(' ')[0]));
+            setWeightUnit(basicDataSaved.weight.split(' ')[1]);
+            setOtherPetType(initial.otherPetType);
+            setOtherRace(initial.otherRace);
+            setOtherFood(initial.otherFood);
+          }
         }
-        else if (storage.storedBasicData.pet_id == pet.id) {
-          basicDataSaved = storage.storedBasicData;
-        }
-        if (basicDataSaved.pet_id) {
-          setSavedData(basicDataSaved);
-          setBasicData(basicDataSaved);
-          const initial = initials(basicDataSaved, loadedWithPreviusData);
-          setLoadedWithPreviusData(true);
-          setFormData({ ...basicDataSaved, pet_id: pet.id, pet_type: initial.petType, main_food: initial.food, race: initial.race });
-          setWeight(parseFloat(basicDataSaved.weight.split(' ')[0]));
-          setWeightUnit(basicDataSaved.weight.split(' ')[1]);
-          setOtherPetType(initial.otherPetType);
-          setOtherRace(initial.otherRace);
-          setOtherFood(initial.otherFood);
-        }
-      }
       setLoadLoading(false);
     };
     fetchData();
@@ -6177,6 +6107,7 @@ export default function PetNameForm({
 import React, { useEffect, useState } from "react";
 import {
     FaBars,
+    FaCalendar,
     FaCloudSun,
     FaCog,
     FaCut,
@@ -6214,6 +6145,7 @@ export default function SideBar() {
 
     const menuData = (show: boolean): MenuType[] => [
         { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner },
+        { label: "Calendario", icon: <FaCalendar />, url: "/", show: show },
         { label: "Datos básicos", icon: <FaUser />, url: "/pages/pet/basic-data", show },
         { label: "Vacunas", icon: <FaSyringe />, url: "/pages/pet/vaccines", show },
         { label: "Cirugías", icon: <FaCut />, url: "/pages/pet/surgeries", show },
@@ -6227,7 +6159,6 @@ export default function SideBar() {
         { label: "Agregar Consulta", icon: <FaCog />, url: `/pages/vet/consultation/${storage.storedPet.id}`, show: isVet && show },
     ];
     useEffect(() => {
-        console.log('session', session)
         const menu = menuData(storage.storedPet.id != "");
         setMenuItems(menu);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -6238,11 +6169,7 @@ export default function SideBar() {
         router.push("/login");
     }
 
-    useEffect(() => {
-        console.log('session from components/layout/SideBar:', session);
-    }, [session]);
-
-    if (menuItems.length == 0) {
+    if (menuItems.filter(m => m.show).length == 0) {
         return <></>;
     }
 
@@ -7510,7 +7437,7 @@ export default function Bubbles() {
       </div>
 
       {/* Vet Bubble */}
-      {isOwner && !isVet &&
+      {isOwner && !isVet && storage.storedPet.id &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowVetModal(true)}
@@ -7538,7 +7465,7 @@ export default function Bubbles() {
       }
 
       {/* Code Bubble */}
-      {isOwner && !isVet &&
+      {isOwner && !isVet && storage.storedPet.id &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowCodeModal(true)}
@@ -8015,7 +7942,7 @@ export default function VeterinarianPetCodeModal() {
 
     return (
         <ModalComponent
-            title="Acceder a mascota"
+            title="Acceder a historial"
             description="Solo ingresa el código de la mascota para acceder a su historial"
             setShowModal={setShowVetPetCodeModal}
         >
@@ -8237,35 +8164,34 @@ import { UIProvider } from "./UIProvider";
 import { OwnerSessionProvider } from "./OwnerSessionProvider";
 import { VetProvider } from "./VetContext";
 import { RoleProvider } from "./RoleProvider";
-import { SessionProvider } from "./SessionProvider";
 import { StorageProvider } from "./StorageProvider";
+import { PlanProvider } from "./PlanProvider";
 
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
-      <StorageProvider>
-        <RoleProvider>
-          <UIProvider>
+    <StorageProvider>
+      <RoleProvider>
+        <UIProvider>
+          <PlanProvider>
             <OwnerSessionProvider>
               <VetProvider>
                 {children}
               </VetProvider>
             </OwnerSessionProvider>
-          </UIProvider>
-        </RoleProvider>
-      </StorageProvider>
-    </SessionProvider>
+          </PlanProvider>
+        </UIProvider>
+      </RoleProvider>
+    </StorageProvider>
   );
 }
  
 ----- Archivo: ClientAppProvider.tsx ----- 
-// components/context/ClientAppProvider.tsx
+// components/layout/ClientAppProvider.tsx
 "use client";
-import React, { useEffect } from "react";
+import React from "react";
 import { AppContextProvider } from "@/context/AppContextProvider";
-import { Bubbles, SideBar } from "@/components/index";
+import { Bubbles, Loading, SideBar } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
-import LoadingComponent from "@/components/lib/loading";
 import { usePathname } from "next/navigation";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
 import { useSessionContext } from "./SessionProvider";
@@ -8278,38 +8204,28 @@ interface Props {
 export default function ClientAppProvider({ children }: Props) {
     useAuthRedirect();
 
-    const { isMobile, isDesktop } = useDeviceDetect();
-    const { db: session } = useSessionContext();
-    //const pathname = usePathname();
+    const { isMobile, isDesktop } = useDeviceDetect(); 
+    const { isLoading: isSessionLoading } = useSessionContext();
+    const pathname = usePathname();
     const { isVetWithoutUserSession } = useRoleContext();
 
-    //const isLoginRoute = pathname === "/login" || pathname.endsWith("/login");
-    //const isVetRoute = pathname.startsWith("/vet-access");
-    //const isAuthRoute = pathname.startsWith("/auth-verify");
+    // 2. Determinar si la ruta actual es una ruta pública/especial que no usa el layout principal.
+    const isAuthRoute = pathname === "/login" ||
+        pathname.startsWith("/auth/callback") ||
+        pathname.startsWith("/pages/auth/verify");
 
-    useEffect(() => {
-        console.log('session from context/ClientAppProvider:', session);
-    }, [session]);
-
-    // No envolver con sidebar en login o vet-access
-    //if (isLoginRoute || isVetRoute || isAuthRoute) {
-    //    console.log('entro aqui 1')
-    //    return <>{children}</>;
-    //}
-
-    // Mostrar loader mientras carga la sesión
-    if (session === undefined) {
-        console.log('entro aqui 2')
-        return <LoadingComponent />;
+    if (isSessionLoading) {
+        return <Loading />; // Loader fullscreen o centrado
     }
 
-    // Si no hay sesión, bloquear render hasta redirect
-    if (session === null) {
-        console.log('entro aqui 3')
-        return <>{children}</>;
+    if (isAuthRoute) {
+        return (
+            <AppContextProvider>
+                {children}
+            </AppContextProvider>
+        );
     }
 
-    // Si es vet-user con sesión y no está en vet-access, bloquear hasta redirect
     const isVetUserNow = isVetWithoutUserSession;
     if (isVetUserNow) {
         return null;
@@ -8347,77 +8263,78 @@ export default function ClientAppProvider({ children }: Props) {
     );
 }
  
------ Archivo: MainAppProvider.tsx ----- 
-// src/context/MainAppProvider.tsx
-
-import ClientAppProvider from "./ClientAppProvider";
-import { RoleProvider } from "./RoleProvider";
-import { SessionProvider } from "./SessionProvider";
-import { StorageProvider } from "./StorageProvider";
-
-export function MainAppProvider({ children }: { children: React.ReactNode }) {
-    return (
-        <SessionProvider>
-            <StorageProvider>
-                <RoleProvider>
-                    <ClientAppProvider>{children}</ClientAppProvider>
-                </RoleProvider>
-            </StorageProvider>
-        </SessionProvider>
-    );
-}
- 
 ----- Archivo: OwnerSessionProvider.tsx ----- 
-// context/OwnerSessionProvider.tsx
+// src/context/OwnerSessionProvider.tsx
 "use client";
-import React, { useEffect } from "react";
-import { Empty } from "@/data/index";
-import { ApiError } from "@/types/lib";
-import type { PetType } from "@/types/index";
-import { getFetch } from "@/app/api";
-import { useStorageContext } from "./StorageProvider";
-import { useSessionContext } from "./SessionProvider";
-import { useUI } from "./UIProvider";
-import { useRoleContext } from "./RoleProvider";
+import React, { createContext, useContext } from "react";
+import { useOwnerSession } from "@/hooks/useOwnerSession";
 
-export const OwnerSessionProvider = ({ children }: { children: React.ReactNode }) => {
-    const session = useSessionContext();
-    const storage = useStorageContext();
-    const { setShowAddPetModal } = useUI();
-    const { isOwner } = useRoleContext();
+interface OwnerSessionContextType { isLoading: boolean }
 
-    useEffect(() => {
-        const ownerId = session?.db?.user?.id;
-        if (!session.db || !ownerId) return;
+const OwnerSessionContext = createContext<OwnerSessionContextType>({
+    isLoading: true
+});
 
-        (async () => {
-            if (isOwner) {
-                if (storage.storedOwnerPets.length === 0) {
-                    const response = await getFetch(`/api/owners/pets/${ownerId}`);
-                    if (!response.ok) throw new ApiError(`Fallo al obtener las mascotas del dueño: ${ownerId}`);
-                    const data = await response.json();
-                    storage.setStoredOwnerPets(data as PetType[]);
-                }
-            }
+export const useOwnerSessionContext = () => useContext(OwnerSessionContext);
 
-        })();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session, session?.db?.user?.id]);
+export function OwnerSessionProvider({ children }: { children: React.ReactNode }) {
+    const { isLoading } = useOwnerSession();
+    return (
+        <OwnerSessionContext.Provider value={{  isLoading }}>
+            {children}
+        </OwnerSessionContext.Provider>
+    );
+} 
+----- Archivo: PlanProvider.tsx ----- 
+// src/context/PlanProvider.tsx
+"use client";
+import React, { createContext, useContext } from "react";
+import { useSelectedPlan } from "@/hooks/useSelectedPlan";
 
-    useEffect(() => {
-        let initialPet = Empty.Pet();
-        if (storage.storedOwnerPets.length > 0) initialPet = storage.storedOwnerPets[0];
-        if (storage.storedPet.id) initialPet = storage.storedPet;
-        if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
-            storage.setStoredPet(initialPet);
-        }
-        if (!initialPet.id && isOwner) {
-            setShowAddPetModal(true);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storage.storedOwnerPets])
+interface PlanContextType {
+    isLoading: boolean;
+    hasSelectedPlan: boolean;
+    hasFreePlan: boolean;
+    hasStandardPlan: boolean;
+    hasAdvancedPlan: boolean;
+    hasLifetimePlan: boolean;
+    doesNotRequiresPlan: boolean;
+}
 
-    return <>{children}</>;
+const PlanContext = createContext<PlanContextType>({
+    isLoading: true,
+    hasSelectedPlan: true,
+    hasFreePlan: true,
+    hasStandardPlan: false,
+    hasAdvancedPlan: false,
+    hasLifetimePlan: false,
+    doesNotRequiresPlan: false,
+});
+
+export const usePlanContext = () => useContext(PlanContext);
+
+export function PlanProvider({ children }: { children: React.ReactNode }) {
+    const {
+        isLoading,
+        hasSelectedPlan,
+        hasFreePlan,
+        hasStandardPlan,
+        hasAdvancedPlan,
+        hasLifetimePlan,
+        doesNotRequiresPlan } = useSelectedPlan();
+    return (
+        <PlanContext.Provider value={{
+            isLoading,
+            hasSelectedPlan,
+            hasFreePlan,
+            hasStandardPlan,
+            hasAdvancedPlan,
+            hasLifetimePlan,
+            doesNotRequiresPlan
+        }}>
+            {children}
+        </PlanContext.Provider>
+    );
 } 
 ----- Archivo: RoleProvider.tsx ----- 
 // src/context/RoleProvider.tsx
@@ -8435,22 +8352,28 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
 ----- Archivo: SessionProvider.tsx ----- 
 // src/context/SessionProvider.tsx
 "use client";
+import React, { createContext, useContext } from "react";
+import { useSession as useAppSessionHook } from "@/hooks/useSession";
+import { Session as SupabaseSession } from "@supabase/supabase-js";
 
-import { createContext, useContext, useEffect } from "react";
-import { useSession } from "@/hooks/useSession";
-import { AppSession } from "@/types/lib";
+interface AppSessionContextType {
+    db: SupabaseSession | null;
+    isLoading: boolean;
+    setSession: (session: SupabaseSession) => Promise<void>;
+}
 
-const SessionContext = createContext<AppSession>({ db: null });
+const SessionContext = createContext<AppSessionContextType>({
+    db: null,
+    isLoading: true,
+    setSession: async () => {}
+});
 
 export const useSessionContext = () => useContext(SessionContext);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-    const { session } = useSession();
-    useEffect(() => {
-        console.log('session from context/SessionProvider:', session);
-    }, [session])
+    const { session, isLoading, setSession } = useAppSessionHook();
     return (
-        <SessionContext.Provider value={{ db: session }}>
+        <SessionContext.Provider value={{ db: session, isLoading: isLoading, setSession }}>
             {children}
         </SessionContext.Provider>
     );
@@ -9052,35 +8975,37 @@ export const sizeOptions = ['Pequeño', 'Mediano', 'Grande', 'Extra Grande'];
 ----- Archivo: useAppStorage.ts ----- 
 // hooks/useAppStorage.ts
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType, VeterinarianType } from "@/types/index";
+import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType, VeterinarianType, PlanType } from "@/types/index";
 import { Empty } from "@/data/index";
 export interface StorageContextType {
-    resetSession: () => void;
-    resetPet: () => void;
-    storedPet: PetType;
-    setStoredPet: (value: PetType) => void;
-    storedBasicData: BasicDataType;
-    setStoredBasicData: (value: BasicDataType) => void;
-    storedOwnerData: OwnerDataType;
-    setStoredOwnerData: (value: OwnerDataType) => void;
-    storedVetData: VeterinarianType;
-    setStoredVetData: (value: VeterinarianType) => void;
-    storedVetAccess: VeterinaryAccessType;
-    setStoredVetAccess: (value: VeterinaryAccessType) => void;
-    storedPetCode: PetCodeType;
-    setStoredPetCode: (value: PetCodeType) => void;
-    storedOwnerPets: PetType[];
-    setStoredOwnerPets: (value: PetType[]) => void;
-    storedVaccineData: VaccineDataType[],
-    setStoredVaccineData: (value: VaccineDataType[] | null) => void,
-    storedConditionData: ConditionDataType[],
-    setStoredConditionData: (value: ConditionDataType[] | null) => void,
-    storedLabTestData: LabTestDataType[],
-    setStoredLabTestData: (value: LabTestDataType[] | null) => void,
-    storedMedicineData: MedicineDataType[],
-    setStoredMedicineData: (value: MedicineDataType[] | null) => void,
-    storedSurgeryData: SurgeryDataType[],
-    setStoredSurgeryData: (value: SurgeryDataType[] | null) => void,
+  resetSession: () => void;
+  resetPet: () => void;
+  storedPet: PetType;
+  setStoredPet: (value: PetType) => void;
+  storedBasicData: BasicDataType;
+  setStoredBasicData: (value: BasicDataType) => void;
+  storedOwnerData: OwnerDataType;
+  setStoredOwnerData: (value: OwnerDataType) => void;
+  storedVetData: VeterinarianType;
+  setStoredVetData: (value: VeterinarianType) => void;
+  storedVetAccess: VeterinaryAccessType;
+  setStoredVetAccess: (value: VeterinaryAccessType) => void;
+  storedPetCode: PetCodeType;
+  setStoredPetCode: (value: PetCodeType) => void;
+  storedOwnerPets: PetType[];
+  setStoredOwnerPets: (value: PetType[]) => void;
+  storedVaccineData: VaccineDataType[],
+  setStoredVaccineData: (value: VaccineDataType[] | null) => void,
+  storedConditionData: ConditionDataType[],
+  setStoredConditionData: (value: ConditionDataType[] | null) => void,
+  storedLabTestData: LabTestDataType[],
+  setStoredLabTestData: (value: LabTestDataType[] | null) => void,
+  storedMedicineData: MedicineDataType[],
+  setStoredMedicineData: (value: MedicineDataType[] | null) => void,
+  storedSurgeryData: SurgeryDataType[],
+  setStoredSurgeryData: (value: SurgeryDataType[] | null) => void,
+  storedPlanData: PlanType,
+  setStoredPlanData: (value: PlanType | null) => void,
 }
 
 export function useAppStorage() {
@@ -9144,6 +9069,11 @@ export function useAppStorage() {
     Empty.VetData()
   );
 
+  const [storedPlanData, setStoredPlanData] = useLocalStorage<PlanType | null>(
+    "planType",
+    null
+  );
+
   const resetPet = () => {
     setStoredBasicData(Empty.BasicData());
     setStoredConditionData(null);
@@ -9153,7 +9083,7 @@ export function useAppStorage() {
     setStoredVaccineData(null);
   }
 
-  const resetSession = () =>{
+  const resetSession = () => {
     resetPet();
     setStoredPetCode(Empty.PetCode());
     setStoredVetAccess(Empty.VetAccess());
@@ -9189,6 +9119,8 @@ export function useAppStorage() {
     setStoredVetAccess,
     storedPetCode,
     setStoredPetCode,
+    storedPlanData, 
+    setStoredPlanData
   } as StorageContextType;
 } 
 ----- Archivo: useAuthRedirect.ts ----- 
@@ -9197,56 +9129,52 @@ export function useAppStorage() {
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
-import { useRoleContext } from "@/context/RoleProvider";
+import { useStorageContext } from "@/context/StorageProvider"; // Para storedVetAccess si es relevante aquí
+import { useRoleContext } from "@/context/RoleProvider"; // Para la lógica de roles
 
 export default function useAuthRedirect() {
     const router = useRouter();
     const pathname = usePathname();
-    const { db: session } = useSessionContext();                      // undefined | null | AppSession
-    const { storedVetAccess } = useStorageContext();
+    const { db: session, isLoading: isSessionLoading } = useSessionContext(); // Obtener isLoading
+    const { storedVetAccess } = useStorageContext(); // Aunque su uso directo aquí podría disminuir
     const { isVetWithoutUserSession } = useRoleContext();
 
-    useEffect(()=>{
-        console.log('session from hooks/useAuthRedirect:', session);
-    }, [session]);
-
     useEffect(() => {
-        // 1) Espera a que la sesión esté cargada
-        if (session === undefined) return;
-
-        // 2) Detectores de ruta
-        const isLoginRoute = pathname === "/login" || pathname.endsWith("/login");
-        const isVetRoute = pathname.startsWith("/vet-access");
-        const isRoot = pathname === "/";
-
-        // 3) Redirigir a /login sólo desde la raíz si no hay sesión
-        if (session === null && isRoot) {
-            console.log('going to login from 3');
-            router.replace("/login");
+        // 1. No hacer nada si la sesión aún está cargando
+        if (isSessionLoading) {
             return;
         }
 
-        // 4) Redirigir a vet-access si es vet-user
-        if (isVetWithoutUserSession && !isVetRoute && !isLoginRoute) {
-            console.log('going to vet-access from 4');
-            router.replace("/vet-access");
-            return;
+        // 2. Definición de rutas especiales
+        const isLoginRoute = pathname === "/login";
+        const isVerifyAuthRoute = pathname.startsWith("/pages/auth/verify"); // Ruta de verificación de email
+        const isCallbackAuthRoute = pathname.startsWith("/auth/callback"); // Ruta de callback de Supabase (OTP)
+        const isPublicRoute = isLoginRoute || isVerifyAuthRoute || isCallbackAuthRoute; // Rutas que no requieren sesión
+        const isVetAccessUIRoute = pathname.startsWith("/vet-access"); // Rutas UI para acceso veterinario sin cuenta
+
+        // 3. Lógica de Redirección
+        if (session) {
+            // ----- HAY SESIÓN -----
+            if (isLoginRoute) {
+                router.replace("/");
+                return;
+            }
+
+        } else {
+            // ----- NO HAY SESIÓN -----
+            if (isVetWithoutUserSession && !isVetAccessUIRoute && !isPublicRoute) {
+                router.replace("/vet-access");
+                return;
+            }
+
+            if (!isPublicRoute && !isVetAccessUIRoute) {
+                router.replace("/login");
+                return;
+            }
         }
 
-        // 5) Redirigir a /login desde otras rutas si no hay sesión
-        if (session === null && !isLoginRoute && !isVetRoute && !isRoot) {
-            console.log('going to login from 5');
-            router.replace("/login");
-        }
-
-        if(session == null && isRoot){
-            console.log('going to login from 6');
-            router.replace("/login");
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session, storedVetAccess, pathname, router]);
+    }, [session, isSessionLoading, pathname, router, storedVetAccess, isVetWithoutUserSession]); // Añadir storedVetAccess e isVetWithoutUserSession si son cruciales para la lógica de redirección inmediata.
 } 
 ----- Archivo: useDeviceDetect.ts ----- 
 // hooks/useDeviceDetect.ts
@@ -9490,6 +9418,62 @@ export function useLoadEntities<T>(
     return { list, setList, error, setError, loading, setState, stateEq };
 }
  
+----- Archivo: useOwnerSession.ts ----- 
+import { getFetch } from "@/app/api";
+import { useRoleContext } from "@/context/RoleProvider";
+import { useStorageContext } from "@/context/StorageProvider";
+import { useUI } from "@/context/UIProvider";
+import { ApiError } from "@/types/lib";
+import { useEffect, useState } from "react";
+import { Empty } from "../data";
+import { PetType } from "../types";
+import { useSessionContext } from "@/context/SessionProvider";
+import { usePlanContext } from "@/context/PlanProvider";
+
+export function useOwnerSession(): { isLoading: boolean } {
+    const { db: session } = useSessionContext();
+    const storage = useStorageContext();
+    const { setShowAddPetModal } = useUI();
+    const { isOwner } = useRoleContext();
+    const { hasSelectedPlan } = usePlanContext();
+
+    const [loadingOwnerPets, setLoadingOwnerPets] = useState(true);
+    const [loadingSelectedPet, setLoadingSelectedPet] = useState(true);
+
+    useEffect(() => {
+        const ownerId = session?.user?.id;
+        if (!session || !ownerId) return;
+
+        (async () => {
+            if (isOwner) {
+                if (storage.storedOwnerPets.length === 0) {
+                    const response = await getFetch(`/api/owners/pets/${ownerId}`);
+                    if (!response.ok) throw new ApiError(`Fallo al obtener las mascotas del dueño: ${ownerId}`);
+                    const data = await response.json();
+                    storage.setStoredOwnerPets(data as PetType[]);
+                }
+            }
+            setLoadingOwnerPets(false);
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [session, session?.user?.id]);
+
+    useEffect(() => {
+        let initialPet = Empty.Pet();
+        if (storage.storedOwnerPets.length > 0) initialPet = storage.storedOwnerPets[0];
+        if (storage.storedPet.id) initialPet = storage.storedPet;
+        if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
+            storage.setStoredPet(initialPet);
+        }
+        if (!initialPet.id && isOwner && hasSelectedPlan) {
+            setShowAddPetModal(true);
+        }
+        setLoadingSelectedPet(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [storage.storedOwnerPets]);
+
+    return { isLoading: loadingOwnerPets || loadingSelectedPet }
+} 
 ----- Archivo: useRole.ts ----- 
 import { useSessionContext } from "@/context/SessionProvider";
 import { useStorageContext } from "@/context/StorageProvider";
@@ -9508,7 +9492,6 @@ export function useRole() {
     isVetWithSession || 
     isVetWithoutUserSession || 
     isVetWithUserSession;
-
   return {
     isOwner,
     isVet,
@@ -9517,6 +9500,101 @@ export function useRole() {
     isVetWithUserSession,
     isVetWithoutUserSession,
   } as const;
+}
+ 
+----- Archivo: useSelectedPlan.ts ----- 
+import { getFetch } from "@/app/api";
+import { useRoleContext } from "@/context/RoleProvider";
+import { useSessionContext } from "@/context/SessionProvider";
+import { useStorageContext } from "@/context/StorageProvider";
+import { ApiError } from "@/types/lib";
+import { useState, useEffect } from "react";
+import { PlanType } from "../types";
+
+export function useSelectedPlan(): {
+    isLoading: boolean;
+    hasSelectedPlan: boolean;
+    hasFreePlan: boolean;
+    hasStandardPlan: boolean;
+    hasAdvancedPlan: boolean;
+    hasLifetimePlan: boolean;
+    doesNotRequiresPlan: boolean;
+} {
+    const { db: session } = useSessionContext();
+    const storage = useStorageContext();
+    const { isOwner } = useRoleContext();
+
+    const [loadingPlan, setLoadingPlan] = useState(true);
+    const [hasSelectedPlan, setHasSelectedPlan] = useState(false);
+    const [hasFreePlan, setHasFreePlan] = useState(false);
+    const [hasStandardPlan, setHasStandardPlan] = useState(false);
+    const [hasAdvancedPlan, setHasAdvancedPlan] = useState(false);
+    const [hasLifetimePlan, setHasLifetimePlan] = useState(false);
+    const [doesNotRequiresPlan, setDoesNotRequiresPlan] = useState(false);
+
+    useEffect(() => {
+        const ownerId = session?.user?.id;
+        if (!session || !ownerId) return;
+
+        (async () => {
+            if (isOwner) {
+                if (!storage.storedPlanData) {
+                    const response = await getFetch(`/api/plans/subscriptions/${ownerId}`);
+                    if (!response.ok) throw new ApiError(`Fallo al obtener la suscripción actual del dueño: ${ownerId}`);
+                    const data = await response.json();
+                    if (data == null) {
+                        setHasSelectedPlan(false);
+                    }
+                    storage.setStoredPlanData(data as PlanType);
+                }
+            }
+            setLoadingPlan(false);
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [session, session?.user?.id]);
+
+    useEffect(() => {
+        if (hasSelectedPlan) {
+            if (storage.storedPlanData) {
+                switch (storage.storedPlanData.slug) {
+                    case 'lifetime': {
+                        setHasLifetimePlan(true);
+                    }
+                    case 'advanced': {
+                        setHasAdvancedPlan(true);
+                    }
+                    case 'standard': {
+                        setHasStandardPlan(true);
+                    }
+                    default:
+                    case 'free': {
+                        setHasFreePlan(true);
+                    }
+                }
+            }
+            else {
+                setDoesNotRequiresPlan(true);
+            }
+        }
+        else {
+            setHasLifetimePlan(false);
+            setHasAdvancedPlan(false);
+            setHasStandardPlan(false);
+            setHasFreePlan(false);
+            setDoesNotRequiresPlan(false);
+        }
+    }, [storage.storedPlanData, hasSelectedPlan])
+
+    return {
+        isLoading: loadingPlan,
+        hasSelectedPlan,
+        hasFreePlan,
+        hasStandardPlan,
+        hasAdvancedPlan,
+        hasLifetimePlan,
+        doesNotRequiresPlan
+    };
+
 }
  
 ----- Archivo: useLocalStorage.tsx ----- 
@@ -9595,59 +9673,87 @@ export function useLocalStorage<T>(
 ----- Archivo: useSession.tsx ----- 
 // src/hooks/useSession.tsx
 "use client";
-import { useState, useEffect, SetStateAction, Dispatch } from "react";
-import type { Session as SupabaseSession } from "@supabase/supabase-js";
-import { getSession, onAuthStateChange } from "@/services/authService";
+import { useState, useEffect } from "react";
+import type { Session as SupabaseSession, AuthChangeEvent } from "@supabase/supabase-js";
+import { authClient } from "@/lib/auth";
 
-export function useSession(): { session: SupabaseSession | null, setSession: Dispatch<SetStateAction<SupabaseSession | null>> } {
+export function useSession(): {
+  session: SupabaseSession | null;
+  setSession: (session: SupabaseSession) => Promise<void>;
+  isLoading: boolean;
+} {
   const [session, setSession] = useState<SupabaseSession | null>(null);
-  const [subscription, setSubscription] = useState<{ unsubscribe: () => void; }>({ unsubscribe: () => { } });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log('session from hooks/useSession:', session)
-  }, [session]);
+    let mounted = true;
 
-  useEffect(() => {
-    const fetchSession = async () => {
+    const { data: authSubscription } = authClient.onAuthStateChange(
+      (event: AuthChangeEvent, sessionState: SupabaseSession | null) => {
+        if (mounted) {
+          setSession(sessionState);
 
-      // Inicializa con la sesión actual
-      const currentSession = await getSession();
-      console.log('currentSession', currentSession)
-      setSession(currentSession);
+          if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+            if (isLoading) {
+              setIsLoading(false);
+            }
+          }
+        } else {
+          console.log('hooks/useSession: onAuthStateChange FIRED but component unmounted (Full App Context).');
+        }
+      });
 
-      // Envuelve `setSession` para ignorar el primer parámetro (event)
-      setSubscription(onAuthStateChange((_event, newSession) => {
-        setSession(newSession);
-      }));
-    }
-    fetchSession();
-    return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+    authClient.getSession().then(currentSession => {
+      if (mounted) {
+        setSession(prev => JSON.stringify(prev) === JSON.stringify(currentSession) ? prev : currentSession);
 
-  return { session, setSession };
-}
- 
+        if (isLoading) {
+          setIsLoading(false);
+        }
+      }
+    }).catch(error => {
+      if (mounted) {
+        console.error("hooks/useSession: authClient.getSession() PROMISE REJECTED (Full App Context):", error);
+        if (isLoading) {
+          setIsLoading(false);
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+      authSubscription.unsubscribe();
+    };
+  }, [isLoading]);
+
+  const setAppSession = async (session: SupabaseSession) =>{
+    await authClient.setSession(session);
+    setIsLoading(false);
+    setSession(session);
+  }
+
+  return { session, setSession: setAppSession, isLoading };
+} 
 ----- Archivo: index.ts ----- 
-// src/lib/auth/index.ts
+// lib/auth/index.ts
 import type { AuthChangeEvent, AuthError, Session as SupabaseSession, User } from "@supabase/supabase-js";
 import { SupabaseAuthClient } from "./supabase/authClient";
-import { createClient as SupabaseServerCreateClient } from "./supabase/serverClient";
-import { updateSession as SupabaseUpdateSession } from "./supabase/middleware";
-import { NextRequest } from "next/server";
+//import { createServerClient as SupabaseServerClient } from "./supabase/serverClient"; // Usar el cliente de servidor real
+import { updateSession as SupabaseUpdateSession } from "./supabase/middleware"; // Usar el middleware real
+import { NextRequest, NextResponse } from "next/server"; // NextResponse añadido
 
 export type SignInResponse = { data?: { session: AuthSession; user: User } | null; error?: AuthError | null };
-export type SignUpResponse = { data: { user: User | null }; error: AuthError | null };
+export type SignUpResponse = { data: { user: User | null, /* session?: AuthSession | null */ }; error: AuthError | null }; // session es opcional en signup
 export type ResetPasswordResponse = { data: object | null; error: AuthError | null };
 export type AuthSession = SupabaseSession;
 export type AuthClientError = AuthError;
-export type AuthClientChangeEvent = AuthChangeEvent;
+export type AuthClientChangeEvent = AuthChangeEvent; // Asumiendo que es el tipo de Supabase
 
 export interface AuthClient {
     getSession(): Promise<AuthSession | null>;
     onAuthStateChange(
-        cb: (event: AuthClientChangeEvent | undefined, session: AuthSession | null) => void
-    ): { unsubscribe(): void };
+        cb: (event: AuthChangeEvent, session: AuthSession | null) => void // event puede ser AuthChangeEvent de supabase
+    ): { data: { unsubscribe: () => void } };
     signIn(email: string, password: string): Promise<SignInResponse>;
     signOut(): Promise<void>;
     resetPassword(email: string): Promise<ResetPasswordResponse>;
@@ -9657,112 +9763,101 @@ export interface AuthClient {
 
 const authClientImpl = new SupabaseAuthClient();
 export { authClientImpl as authClient };
-
-const createClientImpl = async () => {
-    const serverClient = await SupabaseServerCreateClient()
-    return serverClient.auth;
+/*
+// Este 'createClient' es para obtener el cliente de autenticación del SERVIDOR (para API Routes o Server Components)
+// Lo renombré a createAuthServerClient para evitar confusión si en otro lado se crea un cliente de datos.
+const createAuthServerClient = async () => {
+    // createServerClient ya devuelve el cliente Supabase completo, accedemos a .auth
+    const serverSupabaseClient = await SupabaseServerClient(); // Esta función ya está en serverClient.ts
+    return serverSupabaseClient.auth;
 };
-export { createClientImpl as createClient };
-
-const updateSessionImpl = async (req: NextRequest) => {
-    return SupabaseUpdateSession(req);
+export { createAuthServerClient as createClient }; // Exportar con el nombre que usabas si es necesario
+*/
+// Este 'updateSession' es el que se usa en el middleware
+const updateSessionImpl = async (req: NextRequest): Promise<NextResponse> => { // Debe devolver NextResponse
+    return SupabaseUpdateSession(req); // Esta función ya está en middleware.ts
 }
-
-export { updateSessionImpl as updateSession };
- 
+export { updateSessionImpl as updateSession }; 
 ----- Archivo: authClient.ts ----- 
-// src/lib/auth/supabase.ts
-import {
-    createServerComponentClient,
-    createClientComponentClient,
-} from "@supabase/auth-helpers-nextjs";
-import type { AuthClient, AuthSession } from "../index";
-import type { AuthChangeEvent, AuthError, User } from "@supabase/supabase-js";
-import { supabase } from "./browserClient";
-import { createClient } from "./serverClient";
+// lib/auth/supabase/authClient.ts
+import type { AuthClient, AuthSession, SignInResponse, SignUpResponse, ResetPasswordResponse } from ".."; // Asegúrate que la ruta a index.ts sea correcta
+import type { AuthChangeEvent, User } from "@supabase/supabase-js";
+import { supabase } from "./browserClient"; // Importa la instancia ÚNICA del browserClient
 
 export class SupabaseAuthClient implements AuthClient {
-    private browser = createClientComponentClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private server = (ctx: { cookies: any }) => createServerComponentClient({ cookies: ctx.cookies });
+    // No necesitamos las propiedades this.browser o this.server aquí,
+    // ya que usaremos directamente la instancia 'supabase' importada para operaciones de cliente.
 
     async getSession(): Promise<AuthSession | null> {
-
-        const client = await createClient();
-
-        const { data, error } = await client.auth.getSession()
-        if (error || !data?.session) {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+            console.error("Error getting session:", error);
             return null;
         }
         return data.session;
-        /*
-        const { data } = await this.browser.auth.getSession();
-        if (data) {
-            return data.session as AuthSession | null;
-        }
-        else {
-            const { data: dataTwo } = await supabase.auth.getSession();
-            return dataTwo.session;
-        }
-            */
     }
 
     onAuthStateChange(
         cb: (event: AuthChangeEvent, session: AuthSession | null) => void
-    ) {
-        const {
-            data: { subscription },
-        } = this.browser.auth.onAuthStateChange((event, session) => {
-            cb(event, session as AuthSession | null);
+    ): { data: { unsubscribe(): void } } {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            // El 'event' de Supabase puede ser diferente al 'AuthClientChangeEvent' si lo definiste distinto.
+            // Asumimos que son compatibles o que AuthChangeEvent es un alias de Supabase['AuthChangeEvent']
+            cb(event as AuthChangeEvent, session as AuthSession | null);
         });
-        return { unsubscribe: () => subscription.unsubscribe() };
+        return { data: { unsubscribe: () => subscription.unsubscribe() } };
     }
 
-    async signIn(email: string, password: string): Promise<{ data?: { session: AuthSession; user: User } | null; error?: AuthError | null }> {
-        const { data, error } = await this.browser.auth.signInWithPassword({ email, password });
+    async signIn(email: string, password: string): Promise<SignInResponse> {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
-            return {
-                error: error
-            }
-        };
+            return { error };
+        }
+        // Aseguramos que la estructura de retorno coincida con SignInResponse
         return {
-            data: {
-                session: data.session as AuthSession,
-                user: data.user as User
-            }
+            data: data ? { session: data.session as AuthSession, user: data.user as User } : null,
         };
     }
 
     async signOut(): Promise<void> {
-        await this.browser.auth.signOut();
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error("Error signing out:", error);
+            // Podrías decidir lanzar el error o manejarlo aquí
+        }
     }
 
-    async resetPassword(email: string): Promise<{ data: object | null; error: AuthError | null }> {
-        return await this.browser.auth.resetPasswordForEmail(email);
-    };
-
-    async signUp(
-        email: string,
-        password: string,
-        role: string = 'owner'
-    ): Promise<{ data: { user: User | null }; error: AuthError | null }> {
-        return await this.browser.auth.signUp({
-            email, password,
-            options: {
-                data: { role: role }
-            }
+    async resetPassword(email: string): Promise<ResetPasswordResponse> {
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+            // redirectTo: 'tu-url-de-reset-password-si-es-diferente-a-la-configurada-en-supabase'
         });
-    };
-
-    async setSession(session: {
-        access_token: string;
-        refresh_token: string;
-    }) {
-        await this.browser.auth.setSession(session);
-        await supabase.auth.setSession(session);
+        return { data, error };
     }
-}
- 
+
+    async signUp(email: string, password: string, role = 'owner'): Promise<SignUpResponse> {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { role },
+                // emailRedirectTo: 'tu-url-de-verificacion-de-email-si-es-diferente'
+            },
+        });
+        // Aseguramos que la estructura de retorno coincida con SignUpResponse
+        return {
+            data: data ? { user: data.user as User | null, /* session: data.session as AuthSession | null */ } : { user: null },
+            error,
+        };
+    }
+
+    async setSession(session: { access_token: string; refresh_token: string }): Promise<void> {
+        const { error } = await supabase.auth.setSession(session);
+        if (error) {
+            console.error("Error setting session:", error);
+            // Podrías decidir lanzar el error o manejarlo aquí
+        }
+    }
+} 
 ----- Archivo: middleware.ts ----- 
 // src/lib/auth/supabase/middleware.ts
 import { createServerClient } from '@supabase/ssr'
@@ -9832,47 +9927,68 @@ export async function updateSession(request: NextRequest) {
   return supabaseResponse
 } 
 ----- Archivo: serverClient.ts ----- 
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+// lib/auth/supabase/serverClient.ts
+import { createServerClient as supabaseCreateServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
-export async function createClient() {
-  const cookieStore = await cookies()
+// Cliente Supabase para Server Components, API Routes y Middleware
+export async function createServerClient() {
+  const cookieStore = await cookies(); // Obtiene la instancia de cookies de Next.js
 
-  return createServerClient(
+  return supabaseCreateServerClient( // Usa la función importada directamente
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return cookieStore.getAll()
+        // El método `get` toma el nombre de la cookie y devuelve su valor o undefined.
+        get(name: string) {
+          return cookieStore.get(name)?.value;
         },
-        setAll(cookiesToSet) {
+        // El método `set` toma el nombre, valor y opciones de la cookie.
+        set(name: string, value: string, options: CookieOptions) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
+            // `cookieStore.set` puede tomar un objeto o argumentos separados.
+            // La versión más reciente de Next.js prefiere un objeto.
+            cookieStore.set({ name, value, ...options });
+          } catch (error) {
+            // Esto puede ocurrir si `set` se llama desde un Server Component.
+            // Se puede ignorar si tienes un middleware refrescando las sesiones.
+            // (Como es tu caso, esta captura está bien).
+            console.warn(`ServerClient: Failed to set cookie ${name} from a Server Component context. Error: ${error}`);
+          }
+        },
+        // El método `remove` toma el nombre y opciones de la cookie.
+        // Para eliminar una cookie, se suele establecer un valor vacío y una fecha de expiración pasada.
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options });
+          } catch (error) {
+            // Similar a `set`, esto puede ocurrir en Server Components.
+            console.warn(`ServerClient: Failed to remove cookie ${name} from a Server Component context. Error: ${error}`);
           }
         },
       },
     }
-  )
+  );
 } 
 ----- Archivo: browserClient.tsx ----- 
-// app/lib/client/supabase.tsx
-import { createBrowserClient } from '@supabase/ssr'
+// lib/auth/supabase/browserClient.ts
+import { createBrowserClient } from '@supabase/ssr';
 
 export const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
- 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  { // Añadir opciones explícitas
+    auth: {
+      persistSession: true, // Forzar la persistencia, aunque es el default
+      autoRefreshToken: true, // Default, bueno tenerlo explícito
+      // detectSessionInUrl: true, // Default, para manejar tokens en hash de URL
+    }
+  }
+); 
 ----- Archivo: basicData.repository.ts ----- 
 // src/repositories/basicData.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { BasicDataType } from '@/types/index';
 
 export default class BasicDataRepository {
@@ -9900,7 +10016,7 @@ export default class BasicDataRepository {
  
 ----- Archivo: condition.repository.ts ----- 
 // src/repositories/condition.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { ConditionDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 
@@ -9938,7 +10054,7 @@ export default class ConditionRepository implements FormRepository<ConditionData
  
 ----- Archivo: consultation.repository.ts ----- 
 // src/repos/consultation.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { ConsultationType, CreateConsultationPayload } from '@/types/index';
 
 export default class ConsultationRepository {
@@ -10084,7 +10200,7 @@ export default class ConsultationRepository {
 } 
 ----- Archivo: consultationFile.repository.ts ----- 
 // src/repos/consultationFile.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { ConsultationFileType } from '@/types/index';
 
 const CONSULTATION_FILES_BUCKET = 'consultation-files'; // Define tu bucket
@@ -10215,7 +10331,7 @@ export default class ConsultationFileRepository {
 } 
 ----- Archivo: consultationMedication.repository.ts ----- 
 // src/repos/consultationMedication.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { ConsultationMedicationType } from '@/types/index';
 
 export default class ConsultationMedicationRepository {
@@ -10277,7 +10393,7 @@ export default class ConsultationMedicationRepository {
 } 
 ----- Archivo: consultationProcedure.repository.ts ----- 
 // src/repos/consultationProcedure.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { ConsultationProcedureType } from '@/types/index';
 
 export default class ConsultationProcedureRepository {
@@ -10358,7 +10474,7 @@ export { default as ConsultationMedicationRepository } from './consultationMedic
 export { default as ConsultationFileRepository } from './consultationFile.repository'; 
 ----- Archivo: labTest.repository.ts ----- 
 // src/repositories/labTest.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { LabTestDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 
@@ -10395,7 +10511,7 @@ export default class LabTestRepository implements FormRepository<LabTestDataType
  
 ----- Archivo: medicine.repository.ts ----- 
 // src/repositories/medicine.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { MedicineDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 
@@ -10432,7 +10548,7 @@ export default class MedicineRepository implements FormRepository<MedicineDataTy
  
 ----- Archivo: owner.repository.ts ----- 
 // src/repositories/owner.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { OwnerDataType } from '@/types/index';
 
 export default class OwnerRepository {
@@ -10461,7 +10577,7 @@ export default class OwnerRepository {
  
 ----- Archivo: pet.repository.ts ----- 
 // src/repositories/pet.repository.ts
-import { supabase } from "@/lib/auth/supabase/client";
+import { supabase } from "@/lib/auth/supabase/browserClient";
 import { PetType } from "@/types/index";
 
 export default class PetRepository {
@@ -10569,7 +10685,7 @@ export default class PetRepository {
 ----- Archivo: petCode.repository.ts ----- 
 // src/repositories/petCode.repository.ts
 
-import { supabase } from "@/lib/auth/supabase/client";
+import { supabase } from "@/lib/auth/supabase/browserClient";
 import { PetCodeType } from "@/types/index";
 import { Random } from "@/utils/index";
 
@@ -10621,7 +10737,7 @@ export default class PetCodeRepository {
  
 ----- Archivo: plan.repository.ts ----- 
 // src/repositories/plan.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import { PlanVersionType } from '../types/index';
 
 export default class PlanRepository {
@@ -10714,7 +10830,7 @@ export default class PlanRepository {
  
 ----- Archivo: subscription.repository.ts ----- 
 // src/repositories/subscription.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import { CreateSubscriptionType, SubscriptionType } from '@/types/index';
 
 
@@ -10802,7 +10918,7 @@ export default class SubscriptionRepository {
  
 ----- Archivo: surgery.repository.ts ----- 
 // src/repositories/surgery.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { SurgeryDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 
@@ -10839,7 +10955,7 @@ export default class SurgeryRepository implements FormRepository<SurgeryDataType
  
 ----- Archivo: vaccine.repository.ts ----- 
 // src/repositories/vaccine.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { VaccineDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 
@@ -10876,7 +10992,7 @@ export default class VaccineRepository implements FormRepository<VaccineDataType
  
 ----- Archivo: veterinarian.repository.ts ----- 
 // src/repositories/veterinarian.repository.ts
-import { supabase } from '@/lib/auth/supabase/client';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { VeterinarianType } from '@/types/index';
 
 export default class VeterinarianRepository {
@@ -10915,7 +11031,7 @@ export default class VeterinarianRepository {
  
 ----- Archivo: veterinaryAccess.repository.ts ----- 
 // src/repositories/veterinaryAccess.repository.ts
-import { supabase } from "@/lib/auth/supabase/client";
+import { supabase } from "@/lib/auth/supabase/browserClient";
 import { VeterinaryAccessType } from "../types";
 import PetCodeRepository from "./petCode.repository";
 
@@ -10929,7 +11045,7 @@ export default class VeterinaryAccessRepository {
             .from("veterinary_accesses")
             .insert(access)
             .select("*")
-            .single();  
+            .single();
 
         if (error) throw new Error(error.message);
         return data;
@@ -10969,7 +11085,7 @@ import { z } from 'zod';
 
 // PetType
 export const PetTypeSchema = z.object({
-  id: z.string().regex(new RegExp('^[A-Za-z]\d{3}$')),
+  id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   name: z.string(),
   image: z.string().nullable().optional(),
   owner_id: z.string(),
@@ -10978,7 +11094,7 @@ export const PetTypeSchema = z.object({
 // PetCodeType
 export const PetCodeTypeSchema = z.object({
   id: z.string(),
-  pet_id: z.string().regex(new RegExp('^[A-Za-z]\d{3}$')),
+  pet_id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   code: z.string(),
   used: z.boolean(),
   expires_at: z.string(),
@@ -10998,7 +11114,7 @@ export const OwnerDataTypeSchema = z.object({
 
 // BasicDataType
 export const BasicDataTypeSchema = z.object({
-  pet_id: z.string().regex(new RegExp('^[A-Za-z]\d{3}$')),
+  pet_id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   pet_type: z.string(),
   gender: z.string(),
   weight: z.string(),
@@ -11032,7 +11148,7 @@ export const InitialBasicDataTypeSchema = z.object({
 // VaccineDataType
 export const VaccineDataTypeSchema = z.object({
   id: z.string(),
-  pet_id: z.string().regex(new RegExp('^[A-Za-z]\d{3}$')),
+  pet_id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   name: z.string(),
   description: z.string().optional().nullable(),
   date: z.string().optional().nullable(),
@@ -11043,7 +11159,7 @@ export const VaccineDataTypeSchema = z.object({
 // SurgeryDataType
 export const SurgeryDataTypeSchema = z.object({
   id: z.string(),
-  pet_id: z.string().regex(new RegExp('^[A-Za-z]\d{3}$')),
+  pet_id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   name: z.string(),
   date: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
@@ -11052,7 +11168,7 @@ export const SurgeryDataTypeSchema = z.object({
 // MedicineDataType
 export const MedicineDataTypeSchema = z.object({
   id: z.string(),
-  pet_id: z.string().regex(new RegExp('^[A-Za-z]\d{3}$')),
+  pet_id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   name: z.string(),
   dosage: z.string(),
   frequency: z.string(),
@@ -11069,7 +11185,7 @@ export const ConditionDataTypeSchema = z.object({
 // LabTestDataType
 export const LabTestDataTypeSchema = z.object({
   id: z.string(),
-  pet_id: z.string().regex(new RegExp('^[A-Za-z]\d{3}$')),
+  pet_id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   name: z.string(),
   type: z.string(),
   date: z.string().optional().nullable(),
@@ -11079,7 +11195,7 @@ export const LabTestDataTypeSchema = z.object({
 // VeterinaryAccessType
 export const VeterinaryAccessTypeSchema = z.object({
   id: z.string(),
-  pet_id: z.string().regex(new RegExp('^[A-Za-z]\d{3}$')),
+  pet_id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   pet_code_id: z.string(),
   vet_first_name: z.string(),
   vet_last_name: z.string(),
@@ -11161,7 +11277,7 @@ export const ConsultationMedicationPayloadSchema = z.object({
 });
 
 export const CreateConsultationPayloadSchema = z.object({
-  pet_id: z.string().regex(new RegExp('^[A-Za-z]\d{3}$')),
+  pet_id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   consultation_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Fecha de consulta inválida.",
   }), // o z.date() si envías objetos Date
@@ -11448,6 +11564,7 @@ async function validateBody<T>(
                 const parsed = schema.safeParse(e);
                 if (!parsed.success) {
                     // Opcionalmente, podemos enviar detalles de ZodError.flatten()
+                        console.log(parsed.error);
                     return {
                         error: NextResponse.json(
                             {
@@ -11464,6 +11581,7 @@ async function validateBody<T>(
         else {
             const parsed = schema.safeParse(body);
             if (!parsed.success) {
+                        console.log(parsed.error);
                 // Opcionalmente, podemos enviar detalles de ZodError.flatten()
                 return {
                     error: NextResponse.json(
@@ -11492,62 +11610,19 @@ async function validateBody<T>(
 ----- Archivo: authService.ts ----- 
 // src/services/authService.ts
 import { StorageContextType } from "@/hooks/useAppStorage";
+import { authClient } from '@/lib/auth';
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { AuthClientChangeEvent, AuthClientError, AuthSession, SignInResponse, SignUpResponse, authClient } from '@/lib/auth';
 
-
-export const signIn = async (
-  email: string,
-  password: string
-): Promise<SignInResponse> => {
-  const { data, error } = await authClient.signIn(email, password);
-  console.log(data);
-  if (data) {
-    setSession(data.session);
+export const handleLogout = async (storage: StorageContextType, router: AppRouterInstance): Promise<void> => {
+  try {
+    await authClient.signOut();
+  } catch (error) {
+    console.error("Error during sign out in authService:", error);
+  } finally {
+    storage.resetSession();
+    router.replace("/login");
+    router.refresh();
   }
-  return { data, error };
-};
-
-export const ownerSignUp = async (
-  email: string,
-  password: string,
-  role: string = 'owner'
-): Promise<SignUpResponse> => {
-  return await authClient.signUp(email, password, role);
-};
-
-export const resetPassword = async (
-  email: string
-): Promise<{ data: object | null; error: AuthClientError | null }> => {
-  return await authClient.resetPassword(email);
-};
-export const signOut = async () => await authClient.signOut();
-
-export const getSession = async () => await authClient.getSession();
-
-export const onAuthStateChange = (
-  cb: (event: AuthClientChangeEvent, session: AuthSession | null) => void
-) => authClient.onAuthStateChange(cb);
-
-export const setSession = async (session: {
-  access_token: string;
-  refresh_token: string;
-}) => await authClient.setSession(session);
-
-export const handleLogout = async (storage: StorageContextType, router: AppRouterInstance) => {
-  /*try {
-    const response = await fetch("/api/auth/sign-out", { method: "POST" });
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      console.error("Error cerrando sesión:", result.message || "Unknown error");
-    }
-  } catch (err) {
-    console.error("Error en logout:", err);
-  }*/
-  await authClient.signOut();
-  storage.resetSession();
-  router.replace("/login");
 }; 
 ----- Archivo: emailService.ts ----- 
 // src/services/emailService.ts
@@ -11590,6 +11665,985 @@ export async function sendEmail({ subject, text, from, to }: SendEmailOptions) {
     throw new Error(`Error al enviar correo: ${response.status} - ${errorText}`);
   }
 } 
+----- Archivo: consultations.sql ----- 
+-- 1. Tabla Principal de Consultas
+CREATE TABLE consultations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    pet_id varchar(4) NOT NULL REFERENCES pets(id) ON DELETE CASCADE, -- Si se borra la mascota, se borran sus consultas
+    veterinarian_id UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- Quién hizo la consulta (si es usuario vet)
+    veterinary_access_id UUID REFERENCES veterinary_accesses(id) ON DELETE SET NULL, -- Si se usó código de acceso
+    
+    consultation_date DATE NOT NULL,
+    consultation_time TIME WITHOUT TIME ZONE,
+    hc_number TEXT,
+    institution_name TEXT,
+
+    -- Anamnesis
+    reason_for_consultation TEXT NOT NULL,
+    current_diet TEXT,
+    previous_illnesses TEXT,
+    previous_surgeries TEXT,
+    vaccination_history TEXT,
+    last_deworming_product TEXT,
+    recent_treatments TEXT,
+    recent_travels TEXT,
+    animal_behavior_owner_description TEXT,
+    lives_with_other_animals_details TEXT,
+    sterilized_status TEXT CHECK (sterilized_status IN ('yes', 'no', 'unknown')),
+    birth_count INTEGER,
+
+    -- Examen Físico General
+    body_condition_score NUMERIC(2,1), -- ej: 3.5
+    temperature_celsius NUMERIC(4,1), -- ej: 38.5
+    heart_rate_bpm INTEGER,
+    respiratory_rate_rpm INTEGER,
+    capillary_refill_time_sec NUMERIC(3,1),
+    pulse_description TEXT,
+    mucous_membranes_description TEXT,
+    hydration_percentage_description TEXT,
+    sense_organs_description TEXT,
+
+    -- Examen Físico por Sistemas
+    skin_and_coat_description TEXT,
+    lymph_nodes_description TEXT,
+    digestive_system_findings TEXT,
+    respiratory_system_findings TEXT,
+    endocrine_system_findings TEXT,
+    musculoskeletal_system_findings TEXT,
+    nervous_system_findings TEXT,
+    urinary_system_findings TEXT,
+    reproductive_system_findings TEXT,
+    rectal_palpation_findings TEXT,
+    other_physical_findings TEXT,
+
+    -- Abordaje Diagnóstico
+    problem_list TEXT,
+    master_problem_list TEXT,
+    differential_diagnoses TEXT,
+
+    -- Exámenes Complementarios (Resumen textual)
+    complementary_exams_summary TEXT,
+
+    -- Diagnóstico y Plan
+    presumptive_diagnosis TEXT NOT NULL,
+    definitive_diagnosis TEXT,
+    therapeutic_plan TEXT NOT NULL,
+    prognosis TEXT,
+    evolution_notes TEXT,
+    general_observations TEXT,
+    signature_confirmation TEXT,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT check_vet_responsible CHECK (veterinarian_id IS NOT NULL OR veterinary_access_id IS NOT NULL)
+);
+
+-- Trigger para actualizar 'updated_at'
+CREATE OR REPLACE FUNCTION update_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_consultations_modtime
+    BEFORE UPDATE ON consultations
+    FOR EACH ROW
+    EXECUTE FUNCTION update_modified_column();
+
+-- Índices
+CREATE INDEX idx_consultations_pet_id ON consultations(pet_id);
+CREATE INDEX idx_consultations_veterinarian_id ON consultations(veterinarian_id);
+CREATE INDEX idx_consultations_veterinary_access_id ON consultations(veterinary_access_id);
+
+
+-- 2. Tabla de Procedimientos de Consulta
+CREATE TABLE consultation_procedures (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    consultation_id UUID NOT NULL REFERENCES consultations(id) ON DELETE CASCADE,
+    procedure_name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_consultation_procedures_consultation_id ON consultation_procedures(consultation_id);
+
+
+-- 3. Tabla de Medicamentos de Consulta
+CREATE TABLE consultation_medications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    consultation_id UUID NOT NULL REFERENCES consultations(id) ON DELETE CASCADE,
+    medication_name TEXT NOT NULL,
+    dosage TEXT NOT NULL,
+    frequency TEXT NOT NULL,
+    duration_days INTEGER,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_consultation_medications_consultation_id ON consultation_medications(consultation_id);
+
+
+-- 4. Tabla de Archivos Adjuntos de Consulta
+CREATE TABLE consultation_files (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    consultation_id UUID NOT NULL REFERENCES consultations(id) ON DELETE CASCADE,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL UNIQUE, -- Ruta en Supabase Storage, ej: 'pet_uuid/consultation_uuid/filename.pdf'
+    file_type TEXT, -- MIME type
+    file_size_bytes BIGINT,
+    uploaded_by_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_consultation_files_consultation_id ON consultation_files(consultation_id);
+
+-- Asegúrate de crear un BUCKET en Supabase Storage para los archivos, por ejemplo, 'consultation-files'
+-- y configura sus políticas. Generalmente, el bucket es privado y se accede mediante URLs firmadas.
+
+--- POLÍTICAS RLS (Row Level Security) ---
+
+-- Habilitar RLS para cada tabla
+ALTER TABLE consultations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE consultation_procedures ENABLE ROW LEVEL SECURITY;
+ALTER TABLE consultation_medications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE consultation_files ENABLE ROW LEVEL SECURITY;
+
+-- Función auxiliar para verificar si el usuario actual es el dueño de la mascota asociada a una consulta
+CREATE OR REPLACE FUNCTION is_pet_owner(p_consultation_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+    is_owner BOOLEAN;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1
+        FROM consultations c
+        JOIN pets p ON c.pet_id = p.id
+        WHERE c.id = p_consultation_id AND p.owner_id = auth.uid()
+    ) INTO is_owner;
+    RETURN is_owner;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER; -- SECURITY DEFINER es importante para que pueda acceder a tablas necesarias
+
+-- Función auxiliar para verificar si el veterinario actual creó la consulta o tiene acceso a través de veterinary_access
+CREATE OR REPLACE FUNCTION veterinarian_has_access_to_consultation(p_consultation_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+    has_access BOOLEAN;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1
+        FROM consultations c
+        WHERE c.id = p_consultation_id
+          AND (
+            c.veterinarian_id = auth.uid() -- Vet creó la consulta
+            OR EXISTS ( -- Vet tiene un acceso activo para esta mascota (más complejo, simplificado aquí)
+                SELECT 1
+                FROM veterinary_accesses va
+                WHERE va.id = c.veterinary_access_id
+                  AND va.pet_id = c.pet_id
+                  -- AND va.expires_at > NOW() -- (Si los códigos de acceso tienen expiración y el vet_access se liga al usuario)
+                  -- Esta parte es más compleja si el acceso es por código y no por sesión de veterinario.
+                  -- Si veterinary_access_id es solo una referencia al código usado, la validación del código
+                  -- debe ocurrir en la capa de API antes de la inserción/actualización.
+                  -- Para RLS de SELECT, podría ser suficiente si la API ya validó.
+            )
+          )
+    ) INTO has_access;
+    RETURN has_access;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Políticas para 'consultations'
+CREATE POLICY "Owners can view their pets consultations"
+    ON consultations FOR SELECT
+    USING (is_pet_owner(id));
+
+CREATE POLICY "Veterinarians can view consultations they are linked to"
+    ON consultations FOR SELECT
+    USING (veterinarian_has_access_to_consultation(id));
+
+CREATE POLICY "Authenticated veterinarians can insert consultations"
+    ON consultations FOR INSERT
+    WITH CHECK (
+        (auth.role() = 'authenticated') AND
+        (
+            -- El ID del veterinario en el payload coincide con el usuario autenticado Y el rol del usuario es 'veterinarian'
+            (veterinarian_id = auth.uid() AND (SELECT raw_user_meta_data->>'role' FROM auth.users WHERE id = auth.uid()) = 'veterinarian')
+            OR
+            -- O se proporciona un veterinary_access_id válido (la validez del código en sí se manejaría en la API)
+            (veterinary_access_id IS NOT NULL) -- La API debe validar que este access_id es legítimo para la mascota y el vet.
+        )
+    );
+    
+CREATE POLICY "Veterinarians can update consultations they created"
+    ON consultations FOR UPDATE
+    USING (veterinarian_id = auth.uid() AND (SELECT raw_user_meta_data->>'role' FROM auth.users WHERE id = auth.uid()) = 'veterinarian')
+    WITH CHECK (veterinarian_id = auth.uid()); -- No pueden cambiar el vet_id a otro
+
+-- DELETE: Nadie puede eliminar directamente (según requerimiento)
+CREATE POLICY "Consultations are protected from direct deletion"
+    ON consultations FOR DELETE
+    USING (false); -- O más restrictivo: TO none;
+
+-- Políticas para 'consultation_procedures', 'consultation_medications'
+-- Asumimos que si puedes ver/editar la consulta, puedes ver/editar sus detalles.
+CREATE POLICY "Users can manage procedures of consultations they have access to"
+    ON consultation_procedures FOR ALL
+    USING (EXISTS (SELECT 1 FROM consultations WHERE id = consultation_id)); -- Re-evalúa RLS de la tabla 'consultations'
+
+CREATE POLICY "Users can manage medications of consultations they have access to"
+    ON consultation_medications FOR ALL
+    USING (EXISTS (SELECT 1 FROM consultations WHERE id = consultation_id));
+
+-- DELETE para procedures/medications: Solo si el veterinario que creó la consulta lo hace.
+-- Esto podría ser más granular. Por ahora, si pueden actualizar la consulta, pueden borrar sub-items.
+-- Podrías hacerla más restrictiva:
+CREATE POLICY "Procedures can only be deleted by the creating veterinarian"
+    ON consultation_procedures FOR DELETE
+    USING (EXISTS (SELECT 1 FROM consultations c WHERE c.id = consultation_id AND c.veterinarian_id = auth.uid()));
+
+CREATE POLICY "Medications can only be deleted by the creating veterinarian"
+    ON consultation_medications FOR DELETE
+    USING (EXISTS (SELECT 1 FROM consultations c WHERE c.id = consultation_id AND c.veterinarian_id = auth.uid()));
+
+
+-- Políticas para 'consultation_files'
+CREATE POLICY "Users can view files of consultations they have access to"
+    ON consultation_files FOR SELECT
+    USING (EXISTS (SELECT 1 FROM consultations WHERE id = consultation_id)); -- Re-evalúa RLS
+
+CREATE POLICY "Authenticated users (vets) can upload files to consultations they have access to"
+    ON consultation_files FOR INSERT
+    WITH CHECK (
+        (auth.role() = 'authenticated') AND
+        (EXISTS (SELECT 1 FROM consultations WHERE id = consultation_id)) AND -- Implícitamente verifica acceso a consulta
+        (uploaded_by_user_id = auth.uid()) -- Quien sube es el usuario actual
+    );
+
+CREATE POLICY "Users can delete files they uploaded"
+    ON consultation_files FOR DELETE
+    USING (uploaded_by_user_id = auth.uid());
+
+-- Políticas de Supabase Storage para el bucket 'consultation-files' (Ejemplos conceptuales):
+-- Estas se configuran en la UI de Supabase Storage, no directamente con SQL aquí.
+-- 1. SELECT: Permitir a usuarios autenticados que tengan una RLS de SELECT en `consultation_files` para el `file_path` correspondiente.
+   -- ( (bucket_id = 'consultation-files') AND (ROLE() = 'authenticated') AND (EXISTS (SELECT 1 FROM public.consultation_files WHERE consultation_files.file_path = storage.objectid((storage.objects.name)::text) AND auth.uid() = consultation_files.uploaded_by_user_id /* O reglas de acceso a la consulta */ )) )
+-- 2. INSERT: Permitir a usuarios autenticados que puedan hacer INSERT en `consultation_files` y que `uploaded_by_user_id` sea su `auth.uid()`.
+-- 3. UPDATE: Generalmente no se permite para evitar corrupción, se sube una nueva versión.
+-- 4. DELETE: Permitir a usuarios autenticados que puedan hacer DELETE en `consultation_files` y que `uploaded_by_user_id` sea su `auth.uid()`.
+
+
+GRANT REFERENCES (id) ON TABLE auth.users TO authenticated;
+
+CREATE OR REPLACE FUNCTION create_consultation_secure(
+    p_pet_id UUID,
+    p_veterinarian_id UUID,
+    p_reason TEXT
+    -- ... otros parámetros ...
+)
+RETURNS UUID -- o el ID de la consulta creada
+LANGUAGE plpgsql
+SECURITY DEFINER -- ¡Importante!
+-- SET search_path = public, auth; -- Asegura que los esquemas correctos estén en el path
+AS $$
+DECLARE
+    new_consultation_id UUID;
+BEGIN
+    -- Aquí puedes añadir validaciones adicionales si es necesario,
+    -- como verificar que p_veterinarian_id (si es auth.uid()) realmente es un veterinario.
+    -- Esta validación es importante ya que la función se ejecuta con altos privilegios.
+
+    INSERT INTO public.consultations (pet_id, veterinarian_id, reason_for_consultation /*, ...otros campos... */)
+    VALUES (p_pet_id, p_veterinarian_id, p_reason /*, ...otros valores... */)
+    RETURNING id INTO new_consultation_id;
+
+    RETURN new_consultation_id;
+END;
+$$;
+
+-- Luego, otorgas permiso de EXECUTE en esta función a los roles necesarios:
+GRANT EXECUTE ON FUNCTION create_consultation_secure(UUID, UUID, TEXT) TO authenticated;
+
+CREATE POLICY "Allow individual user access"
+ON auth.users
+FOR SELECT
+USING (auth.uid() = id);
+
+-- Tipo para los procedimientos que se pasarán como array
+CREATE TYPE consultation_procedure_input AS (
+    procedure_name TEXT,
+    description TEXT
+);
+
+-- Tipo para los medicamentos que se pasarán como array
+CREATE TYPE consultation_medication_input AS (
+    medication_name TEXT,
+    dosage TEXT,
+    frequency TEXT,
+    duration_days INTEGER,
+    notes TEXT
+);
+
+CREATE TYPE consultation_input_type AS (
+    p_consultation_date DATE,
+    p_consultation_time TIME WITHOUT TIME ZONE,
+    p_hc_number TEXT,
+    p_institution_name TEXT,
+    p_reason_for_consultation TEXT,
+    p_current_diet TEXT,
+    p_previous_illnesses TEXT,
+    p_previous_surgeries TEXT,
+    p_vaccination_history TEXT,
+    p_last_deworming_product TEXT,
+    p_recent_treatments TEXT,
+    p_recent_travels TEXT,
+    p_animal_behavior_owner_description TEXT,
+    p_lives_with_other_animals_details TEXT,
+    p_sterilized_status TEXT,
+    p_birth_count INTEGER,
+    p_body_condition_score NUMERIC,
+    p_temperature_celsius NUMERIC,
+    p_heart_rate_bpm INTEGER,
+    p_respiratory_rate_rpm INTEGER,
+    p_capillary_refill_time_sec NUMERIC,
+    p_pulse_description TEXT,
+    p_mucous_membranes_description TEXT,
+    p_hydration_percentage_description TEXT,
+    p_sense_organs_description TEXT,
+    p_skin_and_coat_description TEXT,
+    p_lymph_nodes_description TEXT,
+    p_digestive_system_findings TEXT,
+    p_respiratory_system_findings TEXT,
+    p_endocrine_system_findings TEXT,
+    p_musculoskeletal_system_findings TEXT,
+    p_nervous_system_findings TEXT,
+    p_urinary_system_findings TEXT,
+    p_reproductive_system_findings TEXT,
+    p_rectal_palpation_findings TEXT,
+    p_other_physical_findings TEXT,
+    p_problem_list TEXT,
+    p_master_problem_list TEXT,
+    p_differential_diagnoses TEXT,
+    p_complementary_exams_summary TEXT,
+    p_presumptive_diagnosis TEXT,
+    p_definitive_diagnosis TEXT,
+    p_therapeutic_plan TEXT,
+    p_prognosis TEXT,
+    p_evolution_notes TEXT,
+    p_general_observations TEXT,
+    p_signature_confirmation TEXT
+);
+
+
+-- Tipos para los inputs de arrays (si ya los tienes, no necesitas volver a crearlos)
+-- CREATE TYPE consultation_procedure_input AS (...);
+-- CREATE TYPE consultation_medication_input AS (...);
+
+CREATE OR REPLACE FUNCTION insert_consultation_with_type(
+    p_pet_id TEXT,
+    p_veterinarian_id UUID, -- Puede ser NULL
+    p_veterinary_access_id UUID, -- Puede ser NULL
+    p_consultation_main_data consultation_input_type,
+    p_procedures consultation_procedure_input[],
+    p_medications consultation_medication_input[]
+)
+RETURNS JSON -- Devolvemos la consulta creada como JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    new_consultation_id UUID;
+    full_consultation_json JSON;
+    proc_input consultation_procedure_input;
+    med_input consultation_medication_input;
+BEGIN
+    IF p_veterinarian_id IS NULL AND p_veterinary_access_id IS NULL THEN
+        RAISE EXCEPTION 'Se requiere veterinarian_id o veterinary_access_id para crear una consulta.';
+    END IF;
+
+    INSERT INTO public.consultations (
+        pet_id, veterinarian_id, veterinary_access_id,
+        consultation_date, consultation_time, hc_number, institution_name,
+        reason_for_consultation, current_diet, previous_illnesses, previous_surgeries,
+        vaccination_history, last_deworming_product, recent_treatments, recent_travels,
+        animal_behavior_owner_description, lives_with_other_animals_details,
+        sterilized_status, birth_count, body_condition_score, temperature_celsius,
+        heart_rate_bpm, respiratory_rate_rpm, capillary_refill_time_sec, pulse_description,
+        mucous_membranes_description, hydration_percentage_description, sense_organs_description,
+        skin_and_coat_description, lymph_nodes_description, digestive_system_findings,
+        respiratory_system_findings, endocrine_system_findings, musculoskeletal_system_findings,
+        nervous_system_findings, urinary_system_findings, reproductive_system_findings,
+        rectal_palpation_findings, other_physical_findings, problem_list, master_problem_list,
+        differential_diagnoses, complementary_exams_summary, presumptive_diagnosis,
+        definitive_diagnosis, therapeutic_plan, prognosis, evolution_notes,
+        general_observations, signature_confirmation
+    ) VALUES (
+        p_pet_id, p_veterinarian_id, p_veterinary_access_id,
+        (p_consultation_main_data).p_consultation_date,
+        (p_consultation_main_data).p_consultation_time,
+        (p_consultation_main_data).p_hc_number,
+        (p_consultation_main_data).p_institution_name,
+        (p_consultation_main_data).p_reason_for_consultation,
+        (p_consultation_main_data).p_current_diet,
+        (p_consultation_main_data).p_previous_illnesses,
+        (p_consultation_main_data).p_previous_surgeries,
+        (p_consultation_main_data).p_vaccination_history,
+        (p_consultation_main_data).p_last_deworming_product,
+        (p_consultation_main_data).p_recent_treatments,
+        (p_consultation_main_data).p_recent_travels,
+        (p_consultation_main_data).p_animal_behavior_owner_description,
+        (p_consultation_main_data).p_lives_with_other_animals_details,
+        (p_consultation_main_data).p_sterilized_status,
+        (p_consultation_main_data).p_birth_count,
+        (p_consultation_main_data).p_body_condition_score,
+        (p_consultation_main_data).p_temperature_celsius,
+        (p_consultation_main_data).p_heart_rate_bpm,
+        (p_consultation_main_data).p_respiratory_rate_rpm,
+        (p_consultation_main_data).p_capillary_refill_time_sec,
+        (p_consultation_main_data).p_pulse_description,
+        (p_consultation_main_data).p_mucous_membranes_description,
+        (p_consultation_main_data).p_hydration_percentage_description,
+        (p_consultation_main_data).p_sense_organs_description,
+        (p_consultation_main_data).p_skin_and_coat_description,
+        (p_consultation_main_data).p_lymph_nodes_description,
+        (p_consultation_main_data).p_digestive_system_findings,
+        (p_consultation_main_data).p_respiratory_system_findings,
+        (p_consultation_main_data).p_endocrine_system_findings,
+        (p_consultation_main_data).p_musculoskeletal_system_findings,
+        (p_consultation_main_data).p_nervous_system_findings,
+        (p_consultation_main_data).p_urinary_system_findings,
+        (p_consultation_main_data).p_reproductive_system_findings,
+        (p_consultation_main_data).p_rectal_palpation_findings,
+        (p_consultation_main_data).p_other_physical_findings,
+        (p_consultation_main_data).p_problem_list,
+        (p_consultation_main_data).p_master_problem_list,
+        (p_consultation_main_data).p_differential_diagnoses,
+        (p_consultation_main_data).p_complementary_exams_summary,
+        (p_consultation_main_data).p_presumptive_diagnosis,
+        (p_consultation_main_data).p_definitive_diagnosis,
+        (p_consultation_main_data).p_therapeutic_plan,
+        (p_consultation_main_data).p_prognosis,
+        (p_consultation_main_data).p_evolution_notes,
+        (p_consultation_main_data).p_general_observations,
+        (p_consultation_main_data).p_signature_confirmation
+    ) RETURNING id INTO new_consultation_id;
+
+    IF p_procedures IS NOT NULL AND array_length(p_procedures, 1) > 0 THEN
+        FOREACH proc_input IN ARRAY p_procedures LOOP
+            INSERT INTO public.consultation_procedures (consultation_id, procedure_name, description)
+            VALUES (new_consultation_id, proc_input.procedure_name, proc_input.description);
+        END LOOP;
+    END IF;
+
+    IF p_medications IS NOT NULL AND array_length(p_medications, 1) > 0 THEN
+        FOREACH med_input IN ARRAY p_medications LOOP
+            INSERT INTO public.consultation_medications (consultation_id, medication_name, dosage, frequency, duration_days, notes)
+            VALUES (new_consultation_id, med_input.medication_name, med_input.dosage, med_input.frequency, med_input.duration_days, med_input.notes);
+        END LOOP;
+    END IF;
+
+    -- Devolver la consulta completa como JSON
+    SELECT json_build_object(
+        'id', c.id, 'pet_id', c.pet_id, 'veterinarian_id', c.veterinarian_id, 'veterinary_access_id', c.veterinary_access_id,
+        'consultation_date', c.consultation_date, 'consultation_time', c.consultation_time, 'hc_number', c.hc_number, 'institution_name', c.institution_name,
+        'reason_for_consultation', c.reason_for_consultation, 'current_diet', c.current_diet, 'previous_illnesses', c.previous_illnesses, 'previous_surgeries', c.previous_surgeries,
+        'vaccination_history', c.vaccination_history, 'last_deworming_product', c.last_deworming_product, 'recent_treatments', c.recent_treatments, 'recent_travels', c.recent_travels,
+        'animal_behavior_owner_description', c.animal_behavior_owner_description, 'lives_with_other_animals_details', c.lives_with_other_animals_details,
+        'sterilized_status', c.sterilized_status, 'birth_count', c.birth_count, 'body_condition_score', c.body_condition_score, 'temperature_celsius', c.temperature_celsius,
+        'heart_rate_bpm', c.heart_rate_bpm, 'respiratory_rate_rpm', c.respiratory_rate_rpm, 'capillary_refill_time_sec', c.capillary_refill_time_sec, 'pulse_description', c.pulse_description,
+        'mucous_membranes_description', c.mucous_membranes_description, 'hydration_percentage_description', c.hydration_percentage_description, 'sense_organs_description', c.sense_organs_description,
+        'skin_and_coat_description', c.skin_and_coat_description, 'lymph_nodes_description', c.lymph_nodes_description, 'digestive_system_findings', c.digestive_system_findings,
+        'respiratory_system_findings', c.respiratory_system_findings, 'endocrine_system_findings', c.endocrine_system_findings, 'musculoskeletal_system_findings', c.musculoskeletal_system_findings,
+        'nervous_system_findings', c.nervous_system_findings, 'urinary_system_findings', c.urinary_system_findings, 'reproductive_system_findings', c.reproductive_system_findings,
+        'rectal_palpation_findings', c.rectal_palpation_findings, 'other_physical_findings', c.other_physical_findings, 'problem_list', c.problem_list, 'master_problem_list', c.master_problem_list,
+        'differential_diagnoses', c.differential_diagnoses, 'complementary_exams_summary', c.complementary_exams_summary, 'presumptive_diagnosis', c.presumptive_diagnosis,
+        'definitive_diagnosis', c.definitive_diagnosis, 'therapeutic_plan', c.therapeutic_plan, 'prognosis', c.prognosis, 'evolution_notes', c.evolution_notes,
+        'general_observations', c.general_observations, 'signature_confirmation', c.signature_confirmation,
+        'created_at', c.created_at, 'updated_at', c.updated_at,
+        'procedures', (SELECT COALESCE(json_agg(cp), '[]'::json) FROM consultation_procedures cp WHERE cp.consultation_id = new_consultation_id),
+        'medications', (SELECT COALESCE(json_agg(cm), '[]'::json) FROM consultation_medications cm WHERE cm.consultation_id = new_consultation_id),
+        'files', '[]'::json
+    )
+    INTO full_consultation_json
+    FROM consultations c
+    WHERE c.id = new_consultation_id;
+
+    RETURN full_consultation_json;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Error en create_consultation_secure: %', SQLERRM;
+        RAISE;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION insert_consultation_with_type(
+	TEXT, -- p_pet_id
+    UUID, -- p_veterinarian_id
+    UUID, -- p_veterinary_access_id
+    consultation_input_type, -- p_consultation_data
+    consultation_procedure_input[], -- p_procedures
+    consultation_medication_input[]  -- p_medications
+) TO authenticated; 
+----- Archivo: pets.sql ----- 
+create table public.pets (
+  id            varchar(4)                           not null
+                   constraint pets_pk
+                     primary key,
+  -- enforce format like A001, B123, etc.
+  constraint pets_id_format
+    check (id ~ '^[A-Za-z]\d{3}$'),
+
+  owner_id      uuid                                 not null
+                   references auth.users (id)
+                     on delete cascade,
+
+  name          text                                 not null,
+  species       text,
+  breed         text,
+  birth_date    date,
+
+  created_at    timestamp with time zone default now()  not null,
+  updated_at    timestamp with time zone default now()  not null
+);
+
+-- trigger to auto-update updated_at on row modification
+create function update_updated_at_column()
+  returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger trigger_update_pets_updated_at
+  before update
+  on public.pets
+  for each row
+  execute procedure update_updated_at_column(); 
+----- Archivo: pet_codes.sql ----- 
+-- Puedes ejecutarlo en el SQL editor de Supabase
+create table public.pet_codes (
+  id          uuid        default uuid_generate_v4() primary key,
+  pet_id      varchar     not null references public.pets(id),
+  code        varchar     not null unique,
+  expires_at  timestamp   not null,
+  used        boolean     not null default false,
+  created_at  timestamp   not null default now()
+);
+ 
+----- Archivo: plans.sql ----- 
+-- --------------------------------------------------
+-- 2. Master de Planes
+-- --------------------------------------------------
+create table if not exists public.plans (
+  id    serial      primary key,
+  slug  text        not null unique    -- por ej: 'free','standard','advanced','lifetime'
+);
+
+-- --------------------------------------------------
+-- 3. Versiones de Planes
+-- --------------------------------------------------
+create table if not exists public.plans_versions (
+  id             serial      primary key,
+  plan_id        integer     not null
+    references public.plans(id) on delete cascade,
+  version        integer     not null,
+  title          text        not null,
+  description    text,
+  price_month    integer     not null,   -- en dolares
+  price_year     integer     not null,
+  discount_month integer     not null default 0,   -- % de descuento mensual aplicado
+  discount_year  integer     not null default 0,   -- % de descuento anual aplicado
+  features       jsonb       not null,   -- lista de strings o { text, badge }
+  effective_from timestamptz default now(),
+  effective_to   timestamptz
+);
+
+-- índice para evitar versiones duplicadas
+create unique index if not exists idx_plans_versions_unique
+  on public.plans_versions(plan_id, version);
+
+-- --------------------------------------------------
+-- 4. Suscripciones de Owners a PlanVersions
+-- --------------------------------------------------
+create table if not exists public.subscriptions (
+  id                  serial      primary key,
+  owner_id            uuid        not null
+    references public.owners(owner_id) on delete cascade,
+  plan_version_id     integer     not null
+    references public.plans_versions(id) on delete restrict,
+  cycle               text        not null
+    check (cycle in ('monthly','annual')),
+  status              text        not null
+    check (status in ('pending','active','canceled','expired')),
+  external_id         text,       -- id de transacción en Bold
+  price_at_purchase   integer     not null,   -- snapshot del precio al momento
+  discount_applied    integer     not null default 0,
+  started_at          timestamptz default now(),
+  expires_at          timestamptz,
+  updated_at          timestamptz default now()
+);
+
+-- --------------------------------------------------
+-- 5. Opcional: RLS para que cada owner solo vea sus suscripciones
+-- --------------------------------------------------
+alter table public.subscriptions
+  enable row level security;
+
+create policy "Owners can view own subscriptions"
+  on public.subscriptions for select
+  using ( owner_id = auth.uid() );
+
+create policy "Owners can insert subscriptions"
+  on public.subscriptions for insert
+  with check ( owner_id = auth.uid() );
+
+create policy "Owners can update own subscriptions"
+  on public.subscriptions for update
+  using ( owner_id = auth.uid() )
+  with check ( owner_id = auth.uid() );
+  
+  
+  -- --------------------------------------------------
+-- 6. Inserción de datos iniciales en public.plans y public.plans_versions
+-- --------------------------------------------------
+
+-- 1. Insertar los slugs maestros en public.plans
+INSERT INTO public.plans (slug)
+VALUES
+  ('free'),
+  ('standard'),
+  ('advanced'),
+  ('lifetime');
+
+-- 2. Insertar la versión 1 de cada plan en public.plans_versions
+
+-- 2.1 Plan gratuito
+INSERT INTO public.plans_versions (
+  plan_id,
+  version,
+  title,
+  description,
+  price_month,
+  price_year,
+  discount_month,
+  discount_year,
+  features
+)
+VALUES (
+  (SELECT id FROM public.plans WHERE slug = 'free'),
+  1,
+  'Modelo Gratuito',
+  'Para personas nuevas y con necesidades básicas de gestión de Historias clínicas para tu mascota',
+  0,
+  0,
+  0,
+  0,
+  '[
+    {"text":"1 perfil de mascota"},
+    {"text":"Carga de examenes hasta 500MB"},
+    {"text":"Información de contacto"},
+    {"text":"Acceso a la APP"},
+    {"text":"Plataforma de gestión para tu VET"},
+    {"text":"Seguridad de doble factor"}
+  ]'::jsonb
+);
+
+-- 2.2 Plan estándar
+INSERT INTO public.plans_versions (
+  plan_id,
+  version,
+  title,
+  description,
+  price_month,
+  price_year,
+  discount_month,
+  discount_year,
+  features
+)
+VALUES (
+  (SELECT id FROM public.plans WHERE slug = 'standard'),
+  1,
+  'Modelo estándar',
+  'Especial para quienes tienen más de una mascota y quieren utilizar todos nuestros servicios.',
+  500,    -- $5.00 USD en centavos
+  5400,   -- $54.00 USD en centavos
+  0,
+  10,     -- 10% de descuento
+  '[
+    {"text":"Todas las funciones del plan gratuito"},
+    {"text":"Perfiles de 3 mascotas"},
+    {"text":"Carga de examenes sin límites"},
+    {"text":"Función de pérdida de mascota"},
+    {"text":"Múltiples sesiones activas en la app"},
+    {"text":"Soporte personalizado"},
+    {"text":"Plan de recomendados"},
+    {"text":"Descargas de copias de historial"},
+    {"text":"Lectura en múltiples idiomas","badge":"Pronto"}
+  ]'::jsonb
+);
+
+-- 2.3 Plan avanzado
+INSERT INTO public.plans_versions (
+  plan_id,
+  version,
+  title,
+  description,
+  price_month,
+  price_year,
+  discount_month,
+  discount_year,
+  features
+)
+VALUES (
+  (SELECT id FROM public.plans WHERE slug = 'advanced'),
+  1,
+  'Modelo avanzado',
+  'Diseñado para quien tiene más de una mascota y quiere agregar collares a la suscripción.',
+  900,    -- $9.00 USD en centavos
+  8640,   -- $86.40 USD en centavos
+  0,
+  20,     -- 20% de descuento
+  '[
+    {"text":"Todas las funciones del plan gratuito"},
+    {"text":"Todas las funciones del plan estándar"},
+    {"text":"Perfiles de mascotas ilimitados"},
+    {"text":"Plan de recomendados plus"},
+    {"text":"Hasta 5 Tags información"},
+    {"text":"IA de pre-diagnóstico","badge":"Coming Soon"},
+    {"text":"Sistema de alertas","badge":"Coming Soon"}
+  ]'::jsonb
+);
+
+-- 2.4 Plan vitalicio
+INSERT INTO public.plans_versions (
+  plan_id,
+  version,
+  title,
+  description,
+  price_month,
+  price_year,
+  discount_month,
+  discount_year,
+  features
+)
+VALUES (
+  (SELECT id FROM public.plans WHERE slug = 'lifetime'),
+  1,
+  'Vitalicio',
+  'OFERTA ÚNICA POR TIEMPO LIMITADO SOLO VÁLIDO PARA LOS PRIMEROS 1000 USUARIOS',
+  15000,  -- $150.00 USD en centavos
+  15000,  -- $150.00 USD en centavos
+  0,
+  0,
+  '[
+    {"text":"Todas las funciones del plan gratuito"},
+    {"text":"Todas las funciones del plan estándar"},
+    {"text":"Todas las funciones del plan avanzado"},
+    {"text":"Hasta 10 Tags información"},
+    {"text":"Acceso a nuestra versión Beta"},
+    {"text":"Recibes nuevas funcionalidades antes"},
+    {"text":"Descuentos únicos en LAMPO"},
+    {"text":"Ingreso a nuestro plan fundadores"}
+  ]'::jsonb
+);
+ 
+----- Archivo: tables.sql ----- 
+-- 1) Habilitar extensión para UUID si no está
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- 2) Tabla de dueños
+CREATE TABLE owners (
+  owner_id UUID PRIMARY KEY,
+  name        TEXT    NOT NULL,
+  phone       TEXT    NOT NULL,
+  address     TEXT    NOT NULL,
+  city        TEXT    NOT NULL,
+  country     TEXT    NOT NULL,
+  email       TEXT    NOT NULL UNIQUE
+);
+
+-- 3) Tabla de datos básicos de la mascota
+CREATE TABLE basic_data (
+  pet_id            TEXT      PRIMARY KEY REFERENCES pets(id) ON DELETE CASCADE,
+  pet_type          TEXT      NOT NULL,
+  gender            TEXT      NOT NULL,
+  weight            TEXT      NOT NULL,
+  race              TEXT      NOT NULL,
+  has_allergies     BOOLEAN   NOT NULL,
+  weight_condition  TEXT      NOT NULL,
+  size              TEXT      NOT NULL,
+  lives_with_others BOOLEAN   NOT NULL,
+  main_food         TEXT      NOT NULL,
+  has_vaccine       BOOLEAN   NOT NULL,
+  last_vaccine_name TEXT,
+  last_vaccine_date TIMESTAMP,
+  is_castrated      BOOLEAN   NOT NULL,
+  castration_date   TIMESTAMP,
+  has_anti_flea     BOOLEAN   NOT NULL,
+  anti_flea_date    TIMESTAMP,
+  uses_medicine     BOOLEAN   NOT NULL,
+  special_condition BOOLEAN   NOT NULL
+);
+
+-- 4) Vacunas
+CREATE TABLE vaccines (
+  id          UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
+  pet_id      TEXT      REFERENCES pets(id) ON DELETE CASCADE,
+  name        TEXT      NOT NULL,
+  description TEXT,
+  date        TIMESTAMP,
+  batch       TEXT      NOT NULL,
+  brand       TEXT      NOT NULL
+);
+
+-- 5) Cirugías
+CREATE TABLE surgeries (
+  id          UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
+  pet_id      TEXT      REFERENCES pets(id) ON DELETE CASCADE,
+  name        TEXT      NOT NULL,
+  date        TIMESTAMP,
+  description TEXT
+);
+
+-- 6) Medicinas
+CREATE TABLE medicines (
+  id        UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+  pet_id    TEXT    REFERENCES pets(id) ON DELETE CASCADE,
+  name      TEXT    NOT NULL,
+  dosage    TEXT    NOT NULL,
+  frequency TEXT    NOT NULL
+);
+
+-- 7) Condiciones especiales
+CREATE TABLE conditions (
+  id        UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+  pet_id    TEXT    REFERENCES pets(id) ON DELETE CASCADE,
+  condition TEXT    NOT NULL,
+  severity  TEXT    NOT NULL
+);
+
+-- 8) Exámenes de laboratorio
+CREATE TABLE lab_tests (
+  id     UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
+  pet_id TEXT      REFERENCES pets(id) ON DELETE CASCADE,
+  name   TEXT      NOT NULL,
+  type   TEXT      NOT NULL,
+  date   TIMESTAMP,
+  result TEXT
+);
+
+
+-- Owners
+INSERT INTO owners(owner_id, name, phone, address, city, country, email) VALUES
+  ('8933eed8-daea-4e6c-b4db-44906b9f44f9','Andrés Aulestia','+57 3146061490','Cra. 74 #152b-70 Torre 3 Apto. 1704','Bogotá','Colombia','a.aulestia@exe.com.co'),
+  ('41095adf-27a6-48f8-ada1-d8c7d3dd265a','Johnnatan Ruiz','+57 3112849616','Calle 82 #19A-29 Apt 401','Bogotá','Colombia','excellent.exeqtion@gmail.com');
+
+-- Basic data
+INSERT INTO basic_data(
+  pet_id, pet_type, gender, weight, race, has_allergies,
+  weight_condition, size, lives_with_others, main_food,
+  has_vaccine, last_vaccine_name, last_vaccine_date,
+  is_castrated, castration_date, has_anti_flea, anti_flea_date,
+  uses_medicine, special_condition
+) VALUES
+  (
+    'A001','Gato','Macho','5.5 Kg','Mestizo',false,
+    'Normal','Mediano',false,'Taste the Wild',
+    true,'Parvigen','2024-07-25',
+    true,'2023-12-02',true,'2023-12-15',
+    false,false
+  ),
+  (
+    'A002','Perro','Macho','7 Kg','Criollo',false,
+    'Normal','Mediano',true,'Pro Plan',
+    false,NULL,NULL,
+    true,'2023-06-30',false,NULL,
+    false,false
+  ),
+  (
+    'A003','Perro','Macho','9 Kg','Criollo',true,
+    'Normal','Mediano',true,'Vet Life',
+    false,NULL,NULL,
+    true,'2019-05-03',false,NULL,
+    false,true
+  );
+
+-- Vacunas
+INSERT INTO vaccines(pet_id, name, description, date, batch, brand) VALUES
+  ('A001','Rabia','Vacuna contra la rabia','2025-03-15','RAB12345','Nobivac'),
+  ('A001','Parvovirus','Prevención de parvovirus','2025-02-10','PARV67890','Canigen'),
+  ('A002','Parvovirus','Prevención de parvovirus','2025-02-10','PARV67890','Canigen');
+
+-- Cirugías
+INSERT INTO surgeries(pet_id, name, date, description) VALUES
+  ('A001','Castración','2024-11-20','Castración preventiva'),
+  ('A001','Extracción dental','2024-12-05','Tooth extraction'),
+  ('A002','Castración','2023-06-30','Castración preventiva'),
+  ('A003','Castración','2019-05-03','Castración preventiva');
+
+-- Medicinas
+INSERT INTO medicines(pet_id, name, dosage, frequency) VALUES
+  ('A001','Antibiótico X','250mg','Cada 12 horas'),
+  ('A001','Vitamina C','100mg','Diaria');
+
+-- Condiciones especiales
+INSERT INTO conditions(pet_id, condition, severity) VALUES
+  ('A001','Esterilidad aórtica','Moderada'),
+  ('A001','Alergia alimentaria','Leve'),
+  ('A003','Insuficiencia renal','Leve');
+
+-- Exámenes de laboratorio
+INSERT INTO lab_tests(pet_id, name, type, date, result) VALUES
+  ('A001','Hemograma completo','Blood','2025-01-10','Normal'),
+  ('A001','Ultrasonido abdominal','Ultrasound','2024-12-22','Sin hallazgos');
+ 
+----- Archivo: veterinarians.sql ----- 
+-- migrations/20250529_create_veterinarians.sql
+
+create table if not exists veterinarians (
+  vet_id uuid primary key,
+  first_name text not null,
+  last_name text not null,
+  email text not null,
+  registration text not null,
+  clinic_name text not null,
+  city text not null,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
+-- (Opcional) Trigger para actualizar updated_at en cada modificación
+create or replace function set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_veterinarians_updated_at on veterinarians;
+create trigger trg_veterinarians_updated_at
+  before update on veterinarians
+  for each row execute function set_updated_at();
+ 
+----- Archivo: veterinary_access.sql ----- 
+-- Crear entidad para registrar accesos de veterinarios
+create table if not exists veterinary_accesses (
+  id uuid primary key default gen_random_uuid(),
+  pet_id uuid not null references pets(id) on delete cascade,
+  pet_code_id uuid not null references pet_codes(id),
+  vet_first_name text not null,
+  vet_last_name text not null,
+  professional_registration text not null,
+  clinic_name text not null,
+  city text not null,
+  created_at timestamp with time zone default now()
+);
+
+-- Índice para optimizar búsquedas por código
+create index if not exists idx_vet_accesses_code on veterinary_accesses(code); 
 ----- Archivo: geist.ts ----- 
 import { Geist, Geist_Mono } from "next/font/google";
 
@@ -11715,7 +12769,7 @@ export const veterinaryStyles =
           background-color: #0056b3;
         }
       `; 
------ Archivo: index.d.ts ----- 
+----- Archivo: index.ts ----- 
 export interface PetType {
     id: string;
     name: string;
@@ -11995,7 +13049,7 @@ export type CreateConsultationPayload = Omit<ConsultationType, 'id' | 'created_a
     // Los archivos se manejarán con un endpoint separado después de crear la consulta,
     // o podrías tener un array de `File` objects aquí si tu API lo maneja en un solo paso.
 }; 
------ Archivo: index.d.ts ----- 
+----- Archivo: index.ts ----- 
 import { StorageContextType } from "@/hooks/useAppStorage";
 import { PostgrestError, Session } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
@@ -12190,7 +13244,6 @@ export const emptySurgery = (petId: string): Partial<SurgeryDataType> => ({
 export * as Dates from "@/utils/dates";
 export * as Factores from "@/utils/factories";
 export * as Random from "@/utils/random";
-export * as Roles from "@/utils/roles";
 export * as Steps from "@/utils/steps";
 export * as Strings from "@/utils/strings";
 export * as Validations from "@/utils/validations"; 
@@ -12234,37 +13287,6 @@ export async function generateUniquePetId(): Promise<string> {
 
   return candidate;
 } 
------ Archivo: roles.ts ----- 
-// src/utils/role.ts
-import { AppSession } from "@/types/lib";
-import { VeterinaryAccessType } from "../types";
-
-export function isVet(appSession: AppSession | null | undefined, vetAccess: VeterinaryAccessType): boolean {
-    return isVetWithSession(appSession) || isVetWithoutSession(appSession, vetAccess) || isVetWithUserSession(appSession, vetAccess);
-}
-
-export function isVetWithoutUserSession(appSession: AppSession | null | undefined, vetAccess: VeterinaryAccessType): boolean {
-    return (isVetWithSession(appSession) || isVetWithoutSession(appSession, vetAccess)) && !isVetWithUserSession(appSession, vetAccess) ;
-}
-
-export function isVetWithSession(appSession: AppSession | null | undefined): boolean {
-    return appSession?.db?.user?.user_metadata?.role === "veterinarian";
-}
-
-export function isVetWithoutSession(appSession: AppSession | null | undefined, vetAccess: VeterinaryAccessType): boolean {
-    return (appSession == null || appSession == undefined) && vetAccess?.id != "";
-}
-
-//TODO: This should be a hook depending on the appSession and the vetaccess
-export function isVetWithUserSession(appSession: AppSession | null | undefined, vetAccess: VeterinaryAccessType): boolean {
-    return vetAccess?.id != "" && isOwner(appSession);
-}
-
-//TODO: This should be a hook depending on the appSession
-export function isOwner(appSession: AppSession | null | undefined) {
-    return appSession?.db?.user?.user_metadata?.role === "owner";
-}
- 
 ----- Archivo: steps.ts ----- 
 // src/utils/steps.ts
 import { StepsStateType, StepStateEnum } from '@/types/lib';

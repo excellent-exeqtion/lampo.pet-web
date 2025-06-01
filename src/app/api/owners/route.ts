@@ -33,8 +33,6 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-
-
 export async function POST(req: NextRequest) {
     return withValidationAndErrorHandling(
         'POST',
@@ -42,6 +40,7 @@ export async function POST(req: NextRequest) {
         OwnerDataTypeSchema,
         async (ownerData: OwnerDataType) => {
             try {
+                    console.log('create owner', ownerData);
                 const { data, error } = await OwnerRepository.create(ownerData);
                 if (error) {
                     throw new RepositoryError(`Error creating record: ${JSON.stringify(ownerData)}`);

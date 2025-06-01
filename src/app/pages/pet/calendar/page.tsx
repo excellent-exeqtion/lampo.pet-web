@@ -1,10 +1,16 @@
 // app/pages/pet/calendar/page.tsx (server component)
 "use client";
 import { Title } from "@/components/index";
+import { useRoleContext } from "@/context/RoleProvider";
 import React from "react";
 import { FaCalendar } from "react-icons/fa";
 
 export default function CalendarPage() {
+    const { isVet } = useRoleContext();
+
+    if (isVet) {
+        return <div>Página para Veterinarios en desarrollo.</div>
+    }
     return (
         <div style={{ width: "100%" }}>
             {<Title icon={<FaCalendar />} title="Próximos eventos programados" />}

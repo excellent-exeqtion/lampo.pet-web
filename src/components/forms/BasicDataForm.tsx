@@ -87,31 +87,35 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   useEffect(() => {
     const fetchData = async () => {
       setLoadLoading(true);
-      if(stateEq(StepStateEnum.NotInitialize) && !basicData.pet_id)
-      if (stateEq(StepStateEnum.NotInitialize)) {
-        setState(StepStateEnum.Initialize);
-        let basicDataSaved: BasicDataType = Empty.BasicData();
-        if (!storage.storedBasicData.pet_id) {
-          const petResponse = await fetch(`/api/pets/basic-data/${pet.id}`);
-          if (!petResponse.ok) throw new Error("Falló fetch basic-data");
-          basicDataSaved = await petResponse.json() as BasicDataType;
+      if (stateEq(StepStateEnum.NotInitialize) && !basicData.pet_id)
+        if (stateEq(StepStateEnum.NotInitialize)) {
+          setState(StepStateEnum.Initialize);
+          let basicDataSaved: BasicDataType = Empty.BasicData();
+          if (!storage.storedBasicData.pet_id) {
+            const petResponse = await fetch(`/api/pets/basic-data/${pet.id}`);
+            if (!petResponse.ok) throw new Error("Falló fetch basic-data");
+            const data = await petResponse.json() as BasicDataType;
+            if (data) {
+              basicDataSaved = data;
+            }
+
+          }
+          else if (storage.storedBasicData.pet_id == pet.id) {
+            basicDataSaved = storage.storedBasicData;
+          }
+          if (basicDataSaved.pet_id) {
+            setSavedData(basicDataSaved);
+            setBasicData(basicDataSaved);
+            const initial = initials(basicDataSaved, loadedWithPreviusData);
+            setLoadedWithPreviusData(true);
+            setFormData({ ...basicDataSaved, pet_id: pet.id, pet_type: initial.petType, main_food: initial.food, race: initial.race });
+            setWeight(parseFloat(basicDataSaved.weight.split(' ')[0]));
+            setWeightUnit(basicDataSaved.weight.split(' ')[1]);
+            setOtherPetType(initial.otherPetType);
+            setOtherRace(initial.otherRace);
+            setOtherFood(initial.otherFood);
+          }
         }
-        else if (storage.storedBasicData.pet_id == pet.id) {
-          basicDataSaved = storage.storedBasicData;
-        }
-        if (basicDataSaved.pet_id) {
-          setSavedData(basicDataSaved);
-          setBasicData(basicDataSaved);
-          const initial = initials(basicDataSaved, loadedWithPreviusData);
-          setLoadedWithPreviusData(true);
-          setFormData({ ...basicDataSaved, pet_id: pet.id, pet_type: initial.petType, main_food: initial.food, race: initial.race });
-          setWeight(parseFloat(basicDataSaved.weight.split(' ')[0]));
-          setWeightUnit(basicDataSaved.weight.split(' ')[1]);
-          setOtherPetType(initial.otherPetType);
-          setOtherRace(initial.otherRace);
-          setOtherFood(initial.otherFood);
-        }
-      }
       setLoadLoading(false);
     };
     fetchData();

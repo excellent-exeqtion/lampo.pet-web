@@ -1,5 +1,5 @@
 // src/repositories/condition.repository.ts
-import { supabase } from '@/lib/client/supabase';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { ConditionDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 

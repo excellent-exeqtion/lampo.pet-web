@@ -1,4 +1,5 @@
 import { QueryParamError, StepStateError, RepositoryError, ValidationResult } from "@/types/lib";
+import { AuthError } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodSchema, ZodError } from "zod";
 
@@ -38,13 +39,22 @@ export async function getWithErrorHandling(
                 { status: 500 }
             )
         }
-        // 5) Error con el patron repository -> 500
+        // 6) Error con la autenticación -> 500
+        if (err instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: `Error en la autenticación | ${err.message}` },
+                { status: 500 }
+            )
+        }
+        // 7) Error cualquiera -> 500
         if (err instanceof Error) {
             return NextResponse.json(
                 { success: false, message: err.message },
                 { status: 500 }
             )
         }
+
+        // 8) Cualquier otro error cae aquí
         return NextResponse.json(
             { success: false, message: 'Error interno del servidor' },
             { status: 500 }
@@ -103,8 +113,22 @@ export async function withErrorHandling(
                 { status: 500 }
             )
         }
+        // 6) Error con la autenticación -> 500
+        if (err instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: `Error en la autenticación | ${err.message}` },
+                { status: 500 }
+            )
+        }
+        // 7) Error cualquiera -> 500
+        if (err instanceof Error) {
+            return NextResponse.json(
+                { success: false, message: err.message },
+                { status: 500 }
+            )
+        }
 
-        // 6) Cualquier otro error cae aquí
+        // 8) Cualquier otro error cae aquí
         return NextResponse.json(
             { success: false, message: "Error interno del servidor" },
             { status: 500 }
@@ -160,8 +184,22 @@ export async function withValidationAndErrorHandling<T>(
                 { status: 500 }
             )
         }
+        // 6) Error con la autenticación -> 500
+        if (err instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: `Error en la autenticación | ${err.message}` },
+                { status: 500 }
+            )
+        }
+        // 7) Error cualquiera -> 500
+        if (err instanceof Error) {
+            return NextResponse.json(
+                { success: false, message: err.message },
+                { status: 500 }
+            )
+        }
 
-        // 6) Cualquier otro error cae aquí
+        // 8) Cualquier otro error cae aquí
         return NextResponse.json(
             { success: false, message: "Error interno del servidor" },
             { status: 500 }
@@ -187,6 +225,7 @@ async function validateBody<T>(
                 const parsed = schema.safeParse(e);
                 if (!parsed.success) {
                     // Opcionalmente, podemos enviar detalles de ZodError.flatten()
+                        console.log(parsed.error);
                     return {
                         error: NextResponse.json(
                             {
@@ -203,6 +242,7 @@ async function validateBody<T>(
         else {
             const parsed = schema.safeParse(body);
             if (!parsed.success) {
+                        console.log(parsed.error);
                 // Opcionalmente, podemos enviar detalles de ZodError.flatten()
                 return {
                     error: NextResponse.json(

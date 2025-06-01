@@ -79,7 +79,7 @@ export default function VeterinarianPetCodeModal() {
 
     return (
         <ModalComponent
-            title="Acceder a mascota"
+            title="Acceder a historial"
             description="Solo ingresa el código de la mascota para acceder a su historial"
             setShowModal={setShowVetPetCodeModal}
         >

@@ -82,7 +82,7 @@ export interface FormRepository<T> {
 
 export interface LogInType {
   email: string;
-  password?: string;
+  password: string;
   role: 'owner' | 'veterinarian';
 }
 export interface SetSesionType {
@@ -120,3 +120,7 @@ export class RepositoryError extends Error { }
  * Excepción que lanzamos cuando hay un problema consumiendo un api.
  */
 export class ApiError extends Error { }
+/**
+ * Excepción que lanzamos cuando hay un problema con el cliente de autenticación.
+ */
+export class AuthError extends Error { }

@@ -1,5 +1,5 @@
 // src/repositories/labTest.repository.ts
-import { supabase } from '@/lib/client/supabase';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { LabTestDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 

@@ -1,5 +1,5 @@
 // src/repositories/subscription.repository.ts
-import { supabase } from '@/lib/client/supabase';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import { CreateSubscriptionType, SubscriptionType } from '@/types/index';
 
 

@@ -2,9 +2,8 @@
 "use client";
 import React from "react";
 import { AppContextProvider } from "@/context/AppContextProvider";
-import { Bubbles, SideBar } from "@/components/index";
+import { Bubbles, Loading, SideBar } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
-import LoadingComponent from "@/components/lib/loading";
 import { usePathname } from "next/navigation";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
 import { useSessionContext } from "./SessionProvider";
@@ -17,30 +16,28 @@ interface Props {
 export default function ClientAppProvider({ children }: Props) {
     useAuthRedirect();
 
-    const { isMobile, isDesktop } = useDeviceDetect();
-    const session = useSessionContext();
+    const { isMobile, isDesktop } = useDeviceDetect(); 
+    const { isLoading: isSessionLoading } = useSessionContext();
     const pathname = usePathname();
     const { isVetWithoutUserSession } = useRoleContext();
 
-    const isLoginRoute = pathname === "/login" || pathname.endsWith("/login");
-    const isVetRoute = pathname.startsWith("/vet-access");
+    // 2. Determinar si la ruta actual es una ruta pública/especial que no usa el layout principal.
+    const isAuthRoute = pathname === "/login" ||
+        pathname.startsWith("/auth/callback") ||
+        pathname.startsWith("/pages/auth/verify");
 
-    // No envolver con sidebar en login o vet-access
-    if (isLoginRoute || isVetRoute) {
-        return <>{children}</>;
+    if (isSessionLoading) {
+        return <Loading />; // Loader fullscreen o centrado
     }
 
-    // Mostrar loader mientras carga la sesión
-    if (session === undefined) {
-        return <LoadingComponent />;
+    if (isAuthRoute) {
+        return (
+            <AppContextProvider>
+                {children}
+            </AppContextProvider>
+        );
     }
 
-    // Si no hay sesión, bloquear render hasta redirect
-    if (session === null) {
-        return null;
-    }
-
-    // Si es vet-user con sesión y no está en vet-access, bloquear hasta redirect
     const isVetUserNow = isVetWithoutUserSession;
     if (isVetUserNow) {
         return null;

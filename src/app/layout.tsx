@@ -6,8 +6,13 @@ import "@picocss/pico";
 import { tooltipStyles } from "@/styles/tooltip";
 import { geistMono, geistSans } from "@/styles/geist";
 import { ClientAppProvider } from "../components";
+import { usePathname } from "next/navigation";
+import { SessionProvider } from "@/context/SessionProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const noClientAppProviderRoutes = ["/testing-supabase", "/test-supabase", "/minimal-test", "/login", "/auth/callback", "/pages/auth/verify"];
+  const shouldUseClientAppProvider = !noClientAppProviderRoutes.includes(pathname);
   return (
     <html lang="es" data-theme="light">
       <head>
@@ -15,9 +20,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <style>{tooltipStyles}</style>
-        <ClientAppProvider>
-          {children}
-        </ClientAppProvider>
+        <SessionProvider>
+          {shouldUseClientAppProvider ? (
+            <ClientAppProvider>
+              {children}
+            </ClientAppProvider>
+          ) : (
+            <>
+              {children}
+            </>
+          )}
+        </SessionProvider>
       </body>
     </html >
   );

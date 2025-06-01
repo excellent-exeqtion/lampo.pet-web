@@ -1,5 +1,5 @@
 // src/repositories/plan.repository.ts
-import { supabase } from '@/lib/client/supabase';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import { PlanVersionType } from '../types/index';
 
 export default class PlanRepository {

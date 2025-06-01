@@ -1,18 +1,27 @@
 // src/context/SessionProvider.tsx
 "use client";
+import React, { createContext, useContext } from "react";
+import { useSession as useAppSessionHook } from "@/hooks/useSession";
+import { Session as SupabaseSession } from "@supabase/supabase-js";
 
-import { createContext, useContext } from "react";
-import { useSession } from "@/hooks/useSession";
-import { AppSession } from "@/types/lib";
+interface AppSessionContextType {
+    db: SupabaseSession | null;
+    isLoading: boolean;
+    setSession: (session: SupabaseSession) => Promise<void>;
+}
 
-const SessionContext = createContext<AppSession>({ db: null });
+const SessionContext = createContext<AppSessionContextType>({
+    db: null,
+    isLoading: true,
+    setSession: async () => {}
+});
 
 export const useSessionContext = () => useContext(SessionContext);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-    const session = useSession();
+    const { session, isLoading, setSession } = useAppSessionHook();
     return (
-        <SessionContext.Provider value={{ db: session }}>
+        <SessionContext.Provider value={{ db: session, isLoading: isLoading, setSession }}>
             {children}
         </SessionContext.Provider>
     );

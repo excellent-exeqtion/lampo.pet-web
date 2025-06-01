@@ -1,30 +1,63 @@
 // src/hooks/useSession.tsx
 "use client";
 import { useState, useEffect } from "react";
-import type { Session as SupabaseSession } from "@supabase/supabase-js";
-import { getSession, onAuthStateChange } from "@/services/authService";
+import type { Session as SupabaseSession, AuthChangeEvent } from "@supabase/supabase-js";
+import { authClient } from "@/lib/auth";
 
-export function useSession(): SupabaseSession | null {
+export function useSession(): {
+  session: SupabaseSession | null;
+  setSession: (session: SupabaseSession) => Promise<void>;
+  isLoading: boolean;
+} {
   const [session, setSession] = useState<SupabaseSession | null>(null);
-  const [subscription, setSubscription] = useState<{ unsubscribe: () => void; }>({ unsubscribe: () => { } });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSession = async () => {
+    let mounted = true;
 
-      // Inicializa con la sesión actual
-      const currentSession = await getSession();
-      console.log('currentSession', currentSession)
-      setSession(currentSession);
+    const { data: authSubscription } = authClient.onAuthStateChange(
+      (event: AuthChangeEvent, sessionState: SupabaseSession | null) => {
+        if (mounted) {
+          setSession(sessionState);
 
-      // Envuelve `setSession` para ignorar el primer parámetro (event)
-      setSubscription(onAuthStateChange((_event, newSession) => {
-        setSession(newSession);
-      }));
-    }
-    fetchSession();
-    return () => subscription.unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+          if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+            if (isLoading) {
+              setIsLoading(false);
+            }
+          }
+        } else {
+          console.log('hooks/useSession: onAuthStateChange FIRED but component unmounted (Full App Context).');
+        }
+      });
 
-  return session;
+    authClient.getSession().then(currentSession => {
+      if (mounted) {
+        setSession(prev => JSON.stringify(prev) === JSON.stringify(currentSession) ? prev : currentSession);
+
+        if (isLoading) {
+          setIsLoading(false);
+        }
+      }
+    }).catch(error => {
+      if (mounted) {
+        console.error("hooks/useSession: authClient.getSession() PROMISE REJECTED (Full App Context):", error);
+        if (isLoading) {
+          setIsLoading(false);
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+      authSubscription.unsubscribe();
+    };
+  }, [isLoading]);
+
+  const setAppSession = async (session: SupabaseSession) =>{
+    await authClient.setSession(session);
+    setIsLoading(false);
+    setSession(session);
+  }
+
+  return { session, setSession: setAppSession, isLoading };
 }

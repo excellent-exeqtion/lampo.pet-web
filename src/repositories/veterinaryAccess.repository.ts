@@ -1,5 +1,5 @@
 // src/repositories/veterinaryAccess.repository.ts
-import { supabase } from "@/lib/client/supabase";
+import { supabase } from "@/lib/auth/supabase/browserClient";
 import { VeterinaryAccessType } from "../types";
 import PetCodeRepository from "./petCode.repository";
 
@@ -13,7 +13,7 @@ export default class VeterinaryAccessRepository {
             .from("veterinary_accesses")
             .insert(access)
             .select("*")
-            .single();  
+            .single();
 
         if (error) throw new Error(error.message);
         return data;

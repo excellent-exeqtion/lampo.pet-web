@@ -1,5 +1,5 @@
 // src/repositories/medicine.repository.ts
-import { supabase } from '@/lib/client/supabase';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { MedicineDataType } from '@/types/index';
 import { FormRepository } from '@/types/lib';
 

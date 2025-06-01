@@ -77,7 +77,7 @@ export default function Bubbles() {
       </div>
 
       {/* Vet Bubble */}
-      {isOwner && !isVet &&
+      {isOwner && !isVet && storage.storedPet.id &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowVetModal(true)}
@@ -105,7 +105,7 @@ export default function Bubbles() {
       }
 
       {/* Code Bubble */}
-      {isOwner && !isVet &&
+      {isOwner && !isVet && storage.storedPet.id &&
         <div className="tooltip-container" draggable>
           <button
             onClick={() => setShowCodeModal(true)}

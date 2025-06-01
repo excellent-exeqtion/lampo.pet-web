@@ -1,5 +1,5 @@
 // src/repositories/pet.repository.ts
-import { supabase } from "@/lib/client/supabase";
+import { supabase } from "@/lib/auth/supabase/browserClient";
 import { PetType } from "@/types/index";
 
 export default class PetRepository {

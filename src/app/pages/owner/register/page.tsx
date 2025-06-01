@@ -70,7 +70,7 @@ export default function RegisterPage() {
 
             const response = await postFetch("/api/plans/subscriptions", undefined, {
                 ownerId,
-                planVersionId: plan.id,
+                planVersionId: plan.id.toString(),
                 cycle,
                 priceAtPurchase,
                 discountApplied

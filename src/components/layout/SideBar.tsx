@@ -1,8 +1,9 @@
-// app/components/modals/side-bar.tsx
+// app/components/layout/SideBar.tsx
 "use client";
 import React, { useEffect, useState } from "react";
 import {
     FaBars,
+    FaCalendar,
     FaCloudSun,
     FaCog,
     FaCut,
@@ -31,7 +32,7 @@ import { useRoleContext } from "@/context/RoleProvider";
 
 export default function SideBar() {
     const { isMobile, isTablet, isDesktop } = useDeviceDetect();
-    const session = useSessionContext();
+    const { db: session } = useSessionContext();
     const storage = useStorageContext();
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
@@ -40,6 +41,7 @@ export default function SideBar() {
 
     const menuData = (show: boolean): MenuType[] => [
         { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner },
+        { label: "Calendario", icon: <FaCalendar />, url: "/", show: show },
         { label: "Datos básicos", icon: <FaUser />, url: "/pages/pet/basic-data", show },
         { label: "Vacunas", icon: <FaSyringe />, url: "/pages/pet/vaccines", show },
         { label: "Cirugías", icon: <FaCut />, url: "/pages/pet/surgeries", show },
@@ -53,7 +55,6 @@ export default function SideBar() {
         { label: "Agregar Consulta", icon: <FaCog />, url: `/pages/vet/consultation/${storage.storedPet.id}`, show: isVet && show },
     ];
     useEffect(() => {
-        console.log('session', session)
         const menu = menuData(storage.storedPet.id != "");
         setMenuItems(menu);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -62,6 +63,10 @@ export default function SideBar() {
     const goToLogin = () => {
         storage.setStoredVetAccess(Empty.VetAccess());
         router.push("/login");
+    }
+
+    if (menuItems.filter(m => m.show).length == 0) {
+        return <></>;
     }
 
     function item({ label, icon, url, show, showModal }: MenuType) {

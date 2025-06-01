@@ -15,7 +15,6 @@ export function useRole() {
     isVetWithSession || 
     isVetWithoutUserSession || 
     isVetWithUserSession;
-
   return {
     isOwner,
     isVet,

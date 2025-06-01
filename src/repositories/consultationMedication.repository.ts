@@ -1,5 +1,5 @@
 // src/repos/consultationMedication.repository.ts
-import { supabase } from '@/lib/client/supabase';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { ConsultationMedicationType } from '@/types/index';
 
 export default class ConsultationMedicationRepository {

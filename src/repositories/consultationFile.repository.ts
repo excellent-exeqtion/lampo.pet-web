@@ -1,5 +1,5 @@
 // src/repos/consultationFile.repository.ts
-import { supabase } from '@/lib/client/supabase';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { ConsultationFileType } from '@/types/index';
 
 const CONSULTATION_FILES_BUCKET = 'consultation-files'; // Define tu bucket

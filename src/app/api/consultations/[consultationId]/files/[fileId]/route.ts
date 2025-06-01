@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ConsultationFileRepository } from '@/repos/index';
 import { getWithErrorHandling } from '@/services/apiService';
 import { RepositoryError } from '@/types/lib';
-import { supabase } from '@/lib/client/supabase';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 
 // GET /api/consultations/files/{fileId}/download : Obtener URL firmada para descargar
 export async function GET(
@@ -22,9 +22,9 @@ export async function GET(
             .select('file_path')
             .eq('id', fileId)
             .single();
-        
+
         if (findError || !fileRecord) {
-             throw new RepositoryError(`Archivo con ID ${fileId} no encontrado o error al buscarlo: ${findError?.message}`);
+            throw new RepositoryError(`Archivo con ID ${fileId} no encontrado o error al buscarlo: ${findError?.message}`);
         }
 
         const { signedURL, error: urlError } = await ConsultationFileRepository.getSignedUrl(fileRecord.file_path);

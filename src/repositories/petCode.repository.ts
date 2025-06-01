@@ -1,6 +1,6 @@
 // src/repositories/petCode.repository.ts
 
-import { supabase } from "@/lib/client/supabase";
+import { supabase } from "@/lib/auth/supabase/browserClient";
 import { PetCodeType } from "@/types/index";
 import { Random } from "@/utils/index";
 

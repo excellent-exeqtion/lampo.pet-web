@@ -3,42 +3,50 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
-import { useRoleContext } from "@/context/RoleProvider";
+import { useStorageContext } from "@/context/StorageProvider"; // Para storedVetAccess si es relevante aquí
+import { useRoleContext } from "@/context/RoleProvider"; // Para la lógica de roles
 
 export default function useAuthRedirect() {
     const router = useRouter();
     const pathname = usePathname();
-    const session = useSessionContext();                      // undefined | null | AppSession
-    const { storedVetAccess } = useStorageContext();
+    const { db: session, isLoading: isSessionLoading } = useSessionContext(); // Obtener isLoading
+    const { storedVetAccess } = useStorageContext(); // Aunque su uso directo aquí podría disminuir
     const { isVetWithoutUserSession } = useRoleContext();
 
     useEffect(() => {
-        // 1) Espera a que la sesión esté cargada
-        if (session === undefined) return;
-
-        // 2) Detectores de ruta
-        const isLoginRoute = pathname === "/login" || pathname.endsWith("/login");
-        const isVetRoute = pathname.startsWith("/vet-access");
-        const isRoot = pathname === "/";
-
-        // 3) Redirigir a /login sólo desde la raíz si no hay sesión
-        if (session === null && isRoot) {
-            router.replace("/login");
+        // 1. No hacer nada si la sesión aún está cargando
+        if (isSessionLoading) {
             return;
         }
 
-        // 4) Redirigir a vet-access si es vet-user
-        if (isVetWithoutUserSession && !isVetRoute && !isLoginRoute) {
-            router.replace("/vet-access");
-            return;
+        // 2. Definición de rutas especiales
+        const isLoginRoute = pathname === "/login";
+        const isVerifyAuthRoute = pathname.startsWith("/pages/auth/verify"); // Ruta de verificación de email
+        const isCallbackAuthRoute = pathname.startsWith("/auth/callback"); // Ruta de callback de Supabase (OTP)
+        const isPublicRoute = isLoginRoute || isVerifyAuthRoute || isCallbackAuthRoute; // Rutas que no requieren sesión
+        const isVetAccessUIRoute = pathname.startsWith("/vet-access"); // Rutas UI para acceso veterinario sin cuenta
+
+        // 3. Lógica de Redirección
+        if (session) {
+            // ----- HAY SESIÓN -----
+            if (isLoginRoute) {
+                router.replace("/");
+                return;
+            }
+
+        } else {
+            // ----- NO HAY SESIÓN -----
+            if (isVetWithoutUserSession && !isVetAccessUIRoute && !isPublicRoute) {
+                router.replace("/vet-access");
+                return;
+            }
+
+            if (!isPublicRoute && !isVetAccessUIRoute) {
+                router.replace("/login");
+                return;
+            }
         }
 
-        // 5) Redirigir a /login desde otras rutas si no hay sesión
-        if (session === null && !isLoginRoute && !isVetRoute && !isRoot) {
-            router.replace("/login");
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session, storedVetAccess, pathname, router]);
+    }, [session, isSessionLoading, pathname, router, storedVetAccess, isVetWithoutUserSession]); // Añadir storedVetAccess e isVetWithoutUserSession si son cruciales para la lógica de redirección inmediata.
 }

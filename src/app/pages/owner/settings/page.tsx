@@ -233,7 +233,7 @@ export default function SettingsPage() {
 
 
       {/* ——— Sección Danger Zone para eliminar mascota ——— */}
-      {pet && (
+      {pet && storage.storedPet.id && (
         <section
           style={{
             marginTop: "3rem",

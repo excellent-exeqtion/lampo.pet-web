@@ -1,34 +1,36 @@
 // hooks/useAppStorage.ts
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType, VeterinarianType } from "@/types/index";
+import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType, VeterinarianType, PlanType } from "@/types/index";
 import { Empty } from "@/data/index";
 export interface StorageContextType {
-    resetSession: () => void;
-    resetPet: () => void;
-    storedPet: PetType;
-    setStoredPet: (value: PetType) => void;
-    storedBasicData: BasicDataType;
-    setStoredBasicData: (value: BasicDataType) => void;
-    storedOwnerData: OwnerDataType;
-    setStoredOwnerData: (value: OwnerDataType) => void;
-    storedVetData: VeterinarianType;
-    setStoredVetData: (value: VeterinarianType) => void;
-    storedVetAccess: VeterinaryAccessType;
-    setStoredVetAccess: (value: VeterinaryAccessType) => void;
-    storedPetCode: PetCodeType;
-    setStoredPetCode: (value: PetCodeType) => void;
-    storedOwnerPets: PetType[];
-    setStoredOwnerPets: (value: PetType[]) => void;
-    storedVaccineData: VaccineDataType[],
-    setStoredVaccineData: (value: VaccineDataType[] | null) => void,
-    storedConditionData: ConditionDataType[],
-    setStoredConditionData: (value: ConditionDataType[] | null) => void,
-    storedLabTestData: LabTestDataType[],
-    setStoredLabTestData: (value: LabTestDataType[] | null) => void,
-    storedMedicineData: MedicineDataType[],
-    setStoredMedicineData: (value: MedicineDataType[] | null) => void,
-    storedSurgeryData: SurgeryDataType[],
-    setStoredSurgeryData: (value: SurgeryDataType[] | null) => void,
+  resetSession: () => void;
+  resetPet: () => void;
+  storedPet: PetType;
+  setStoredPet: (value: PetType) => void;
+  storedBasicData: BasicDataType;
+  setStoredBasicData: (value: BasicDataType) => void;
+  storedOwnerData: OwnerDataType;
+  setStoredOwnerData: (value: OwnerDataType) => void;
+  storedVetData: VeterinarianType;
+  setStoredVetData: (value: VeterinarianType) => void;
+  storedVetAccess: VeterinaryAccessType;
+  setStoredVetAccess: (value: VeterinaryAccessType) => void;
+  storedPetCode: PetCodeType;
+  setStoredPetCode: (value: PetCodeType) => void;
+  storedOwnerPets: PetType[];
+  setStoredOwnerPets: (value: PetType[]) => void;
+  storedVaccineData: VaccineDataType[],
+  setStoredVaccineData: (value: VaccineDataType[] | null) => void,
+  storedConditionData: ConditionDataType[],
+  setStoredConditionData: (value: ConditionDataType[] | null) => void,
+  storedLabTestData: LabTestDataType[],
+  setStoredLabTestData: (value: LabTestDataType[] | null) => void,
+  storedMedicineData: MedicineDataType[],
+  setStoredMedicineData: (value: MedicineDataType[] | null) => void,
+  storedSurgeryData: SurgeryDataType[],
+  setStoredSurgeryData: (value: SurgeryDataType[] | null) => void,
+  storedPlanData: PlanType,
+  setStoredPlanData: (value: PlanType | null) => void,
 }
 
 export function useAppStorage() {
@@ -92,6 +94,11 @@ export function useAppStorage() {
     Empty.VetData()
   );
 
+  const [storedPlanData, setStoredPlanData] = useLocalStorage<PlanType | null>(
+    "planType",
+    null
+  );
+
   const resetPet = () => {
     setStoredBasicData(Empty.BasicData());
     setStoredConditionData(null);
@@ -101,7 +108,7 @@ export function useAppStorage() {
     setStoredVaccineData(null);
   }
 
-  const resetSession = () =>{
+  const resetSession = () => {
     resetPet();
     setStoredPetCode(Empty.PetCode());
     setStoredVetAccess(Empty.VetAccess());
@@ -137,5 +144,7 @@ export function useAppStorage() {
     setStoredVetAccess,
     storedPetCode,
     setStoredPetCode,
+    storedPlanData, 
+    setStoredPlanData
   } as StorageContextType;
 }

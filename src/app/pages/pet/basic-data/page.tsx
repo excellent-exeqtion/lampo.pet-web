@@ -8,12 +8,9 @@ import { FieldType } from "@/types/lib";
 import { BasicDataType, OwnerDataType } from "@/types/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch } from "@/app/api";
-import { useSession } from "@/hooks/useSession";
 import { useStorageContext } from "@/context/StorageProvider";
 
 export default function BasicDataPage() {
-  useSession();
-
   const { isMobile } = useDeviceDetect();
   const storage = useStorageContext();
   const [petData, setPetData] = useState<BasicDataType | null>(null);

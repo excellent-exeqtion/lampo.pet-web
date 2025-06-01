@@ -1,5 +1,5 @@
 // src/repos/consultationProcedure.repository.ts
-import { supabase } from '@/lib/client/supabase';
+import { supabase } from '@/lib/auth/supabase/browserClient';
 import type { ConsultationProcedureType } from '@/types/index';
 
 export default class ConsultationProcedureRepository {

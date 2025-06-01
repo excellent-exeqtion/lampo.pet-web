@@ -4,23 +4,23 @@ import { UIProvider } from "./UIProvider";
 import { OwnerSessionProvider } from "./OwnerSessionProvider";
 import { VetProvider } from "./VetContext";
 import { RoleProvider } from "./RoleProvider";
-import { SessionProvider } from "./SessionProvider";
 import { StorageProvider } from "./StorageProvider";
+import { PlanProvider } from "./PlanProvider";
 
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
-      <StorageProvider>
-        <RoleProvider>
-          <UIProvider>
+    <StorageProvider>
+      <RoleProvider>
+        <UIProvider>
+          <PlanProvider>
             <OwnerSessionProvider>
               <VetProvider>
                 {children}
               </VetProvider>
             </OwnerSessionProvider>
-          </UIProvider>
-        </RoleProvider>
-      </StorageProvider>
-    </SessionProvider>
+          </PlanProvider>
+        </UIProvider>
+      </RoleProvider>
+    </StorageProvider>
   );
 }

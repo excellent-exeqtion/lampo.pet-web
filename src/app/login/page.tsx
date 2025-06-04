@@ -177,7 +177,7 @@ export default function LoginPage() {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        background: "var(--primary-yellow)",
+        background: "var(--primary-ligthgray)",
         padding: "1rem",
       }}
     >

@@ -10,7 +10,7 @@ interface PlanContextType {
     hasStandardPlan: boolean;
     hasAdvancedPlan: boolean;
     hasLifetimePlan: boolean;
-    doesNotRequiresPlan: boolean;
+    requiresPlan: boolean;
 }
 
 const PlanContext = createContext<PlanContextType>({
@@ -20,7 +20,7 @@ const PlanContext = createContext<PlanContextType>({
     hasStandardPlan: false,
     hasAdvancedPlan: false,
     hasLifetimePlan: false,
-    doesNotRequiresPlan: false,
+    requiresPlan: false,
 });
 
 export const usePlanContext = () => useContext(PlanContext);
@@ -33,7 +33,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
         hasStandardPlan,
         hasAdvancedPlan,
         hasLifetimePlan,
-        doesNotRequiresPlan } = useSelectedPlan();
+        requiresPlan } = useSelectedPlan();
     return (
         <PlanContext.Provider value={{
             isLoading,
@@ -42,7 +42,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
             hasStandardPlan,
             hasAdvancedPlan,
             hasLifetimePlan,
-            doesNotRequiresPlan
+            requiresPlan
         }}>
             {children}
         </PlanContext.Provider>

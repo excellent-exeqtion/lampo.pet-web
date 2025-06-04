@@ -93,7 +93,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <main style={{ padding: "2rem", background: "var(--primary-yellow)" }}>
+        <main style={{ padding: "2rem", background: "var(--primary-inverse)" }}>
             <div
                 style={{
                     display: "grid",
@@ -146,7 +146,7 @@ export default function RegisterPage() {
                                         borderRadius: "4px",
                                         overflow: "hidden",
                                         marginBottom: "1rem",
-                                        background: darkBg ? "rgba(255,255,255,0.1)" : undefined,
+                                        background: darkBg ? "var(--primary--graytransparent)" : undefined,
                                     }}
                                 >
                                     <button

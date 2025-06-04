@@ -18,15 +18,22 @@ import {
   FaUserDoctor,
   FaPencil,
 } from "react-icons/fa6";
-import { FeatureLink } from "@/components/index";
+import { FeatureLink, Loading } from "@/components/index";
 import { useRoleContext } from "@/context/RoleProvider";
 import { useUI } from "@/context/UIProvider";
 import { useStorageContext } from "@/context/StorageProvider";
+import { useSessionContext } from "@/context/SessionProvider";
 
 export default function HomePage() {
   const { isOwner, isVet } = useRoleContext();
   const { setShowVetPetCodeModal, setShowAddPetModal, setShowEditPetModal } = useUI();
   const { storedPet } = useStorageContext();
+  const { isLoading: isLoadingSession } = useSessionContext();
+
+  if (isLoadingSession) {
+    return <Loading />;
+  }
+
   return (
     <main className="container" style={{ maxWidth: 700, margin: "3rem auto" }}>
       <section style={{ textAlign: "center", marginBottom: "2.5rem" }}>
@@ -37,7 +44,7 @@ export default function HomePage() {
       </section>
 
       <section>
-        <h2 style={{ marginBottom: "1.2rem", color: 'var(--pico-primary)'}}>¿Qué puedes hacer en Lampo?</h2>
+        <h2 style={{ marginBottom: "1.2rem", color: 'var(--pico-primary)' }}>¿Qué puedes hacer en Lampo?</h2>
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {isOwner &&
             <FeatureLink

@@ -34,6 +34,7 @@ export function useSelectedPlan(): {
         if (!response.ok) throw new ApiError(`Fallo al obtener la suscripción actual del dueño: ${ownerId}`);
         const { data } = await response.json();
         let subscription = Empty.Subscription();
+        subscription.id = -1;
         let hasSelectedPlan = false;
         if (data) {
             hasSelectedPlan = true;
@@ -74,7 +75,7 @@ export function useSelectedPlan(): {
             setRequiresPlan(false);
             return;
         }
-        if (!hasSelectedPlan) {
+        if (!hasSelectedPlan || subscription.id == -1) {
             setHasSelectedPlan(false);
             setHasLifetimePlan(false);
             setHasAdvancedPlan(false);

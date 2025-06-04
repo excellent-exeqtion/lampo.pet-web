@@ -44,8 +44,6 @@ export async function POST(
 
         const { data: { user } } = await (await createServerClient(options.cookies)).getUser();
         const uploadedByUserId = user?.id;
-        console.log('consultationId', consultationId);
-        console.log('uploadedByUserId', uploadedByUserId);
 
         const { data, error } = await ConsultationFileRepository.uploadAndCreateRecord(
             consultationId,

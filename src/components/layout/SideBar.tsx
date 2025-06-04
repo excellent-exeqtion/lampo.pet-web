@@ -34,7 +34,7 @@ import { FaPlusCircle } from 'react-icons/fa';
 
 export default function SideBar() {
     const { isMobile, isTablet, isDesktop } = useDeviceDetect();
-    const { db: session } = useSessionContext();
+    const { db: session, isLoading: isLoadingSession } = useSessionContext();
     const storage = useStorageContext();
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
@@ -68,7 +68,7 @@ export default function SideBar() {
         router.push("/login");
     }
 
-    if (menuItems.filter(m => m.show).length == 0) {
+    if (menuItems.filter(m => m.show).length == 0 || isLoadingSession) {
         return <></>;
     }
 

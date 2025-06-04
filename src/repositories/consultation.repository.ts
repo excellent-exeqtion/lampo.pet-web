@@ -83,7 +83,6 @@ export default class ConsultationRepository {
         };
 
         try {
-            console.log("Parámetros enviados a RPC insert_consultation_with_type:", JSON.stringify(rpcParams, null, 2));
             const { data, error } = await dbClient(options).rpc('insert_consultation_with_type', rpcParams);
 
             if (error) throw error;

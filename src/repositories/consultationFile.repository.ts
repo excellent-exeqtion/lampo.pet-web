@@ -116,13 +116,10 @@ export default class ConsultationFileRepository {
      */
     static async getSignedUrl(filePath: string, options: RepositoryOptions, expiresInSeconds = 3600): Promise<{ signedURL: string | null; error: Error | null }> {
         try {
-            console.log('filePath', filePath)
             const { data, error } = await dbClient(options)
                 .storage
                 .from(CONSULTATION_FILES_BUCKET)
                 .createSignedUrl(filePath, expiresInSeconds);
-
-                console.log('data', data);
 
             if (error) throw error;
             return { signedURL: data?.signedUrl || null, error: null };

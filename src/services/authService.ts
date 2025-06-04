@@ -5,11 +5,11 @@ import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.share
 
 export const handleLogout = async (storage: StorageContextType, router: AppRouterInstance): Promise<void> => {
   try {
+    storage.resetSession();
     await authClient.signOut();
   } catch (error) {
     console.error("Error during sign out in authService:", error);
   } finally {
-    storage.resetSession();
     router.replace("/login");
     router.refresh();
   }

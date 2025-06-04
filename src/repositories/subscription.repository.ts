@@ -18,7 +18,13 @@ export default class SubscriptionRepository {
                 price_at_purchase: params.priceAtPurchase,
                 discount_applied: params.discountApplied
             }])
-            .select()
+            .select(
+                `*,
+                plans_versions (
+                    plans (
+                        slug
+                    )
+                )`)
 
         if (error) throw error;
         if (!data || data.length === 0) return null;
@@ -41,7 +47,6 @@ export default class SubscriptionRepository {
             .eq('user_id', ownerId)
             .eq('status', 'active')
 
-            console.log('subscriptions', data)
         if (error) {
             if (error.code === 'PGRST116') return null
             throw error

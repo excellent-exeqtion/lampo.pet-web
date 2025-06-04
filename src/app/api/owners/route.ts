@@ -49,7 +49,6 @@ export async function POST(req: NextRequest) {
         OwnerDataTypeSchema,
         async (ownerData: OwnerDataType) => {
             try {
-                console.log('create owner', ownerData);
                 const { data, error } = await OwnerRepository.create(ownerData, options);
                 if (error) {
                     throw new RepositoryError(`Error creating record: ${JSON.stringify(ownerData)}`);

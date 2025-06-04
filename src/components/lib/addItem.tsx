@@ -1,5 +1,5 @@
 // src/components/lib/addItem.tsx
-
+"use client"
 import { tooltipStyles } from "@/styles/tooltip";
 import { FaInfoCircle } from "react-icons/fa";
 interface AddItemProps {

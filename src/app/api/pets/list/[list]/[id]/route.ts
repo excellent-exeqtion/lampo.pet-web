@@ -3,11 +3,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getWithErrorHandling, withErrorHandling, withValidationAndErrorHandling } from '@/services/apiService';
 import { Empty } from '@/data/index';
 import { RepositoryError, StepsStateType, StepStateError } from '@/types/lib';
+import { cookies } from "next/headers";
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string; list: string }> }
 ) {
+    const options = {
+        cookies: await cookies()
+    }
+
     return getWithErrorHandling(
         req,
         async () => {
@@ -15,7 +20,7 @@ export async function GET(
             const step = getStep(req);
             if (step.repository) {
                 try {
-                    const data = await step.repository.findByParentId(id);
+                    const data = await step.repository.findByParentId(id, options);
                     return NextResponse.json(data);
                 }
                 catch {
@@ -27,6 +32,10 @@ export async function GET(
 }
 
 export async function POST(req: NextRequest) {
+    const options = {
+        cookies: await cookies()
+    }
+
     const step = getStep(req);
     return withValidationAndErrorHandling(
         'POST',
@@ -36,7 +45,7 @@ export async function POST(req: NextRequest) {
             if (step.repository) {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const { data, error } = await step.repository.createAll(list as any[])
+                    const { data, error } = await step.repository.createAll(list as any[], options)
                     if (error) {
                         throw new RepositoryError(error.message);
                     }
@@ -53,6 +62,10 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest,
     { params }: { params: Promise<{ id: string; list: string }> }) {
+    const options = {
+        cookies: await cookies()
+    }
+
     const step = getStep(req);
     return withErrorHandling(
         'DELETE',
@@ -60,7 +73,7 @@ export async function DELETE(req: NextRequest,
         async () => {
             const { id } = await params;
             if (step.repository) {
-                const response = await step.repository.delete(id);
+                const response = await step.repository.delete(id, options);
                 if (!response) {
                     throw new RepositoryError("Error deleting record");
                 }

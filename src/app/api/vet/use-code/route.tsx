@@ -1,8 +1,13 @@
 // app/api/vet/use-code/route.ts
 import { NextResponse } from "next/server";
 import { PetCodeRepository, VeterinaryAccessRepository } from "@/repos/index";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
+  const options = {
+    cookies: await cookies()
+  }
+
   try {
     const {
       code,
@@ -14,7 +19,7 @@ export async function POST(req: Request) {
     } = await req.json();
 
     // 1) Obtener y validar código
-    const data = await PetCodeRepository.find(code);
+    const data = await PetCodeRepository.find(code, options);
     if (!data) {
       return NextResponse.json({ error: "Código inválido" }, { status: 404 });
     }
@@ -27,7 +32,7 @@ export async function POST(req: Request) {
     }
 
     // 2) Marcar como usado
-    await PetCodeRepository.markUsed(code);
+    await PetCodeRepository.markUsed(code, options);
 
     // 3) Registrar acceso veterinario
     const vetAccess = await VeterinaryAccessRepository.create({
@@ -38,11 +43,11 @@ export async function POST(req: Request) {
       professional_registration: registration,
       clinic_name: clinicName,
       city,
-    });
+    }, options);
 
     // 4) Devolver petId
     return NextResponse.json({ success: true, pet_id: data.pet_id, pet_code: data.id, vet_access: vetAccess.id });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Error interno" },

@@ -3,12 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ConsultationRepository } from '@/repos/index';
 import { getWithErrorHandling } from '@/services/apiService';
 import { RepositoryError } from '@/types/lib';
+import { cookies } from "next/headers";
 
 // GET /api/consultations/{consultationId} : Obtener una consulta específica
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ consultationId: string }> }
 ) {
+    const options = {
+        cookies: await cookies()
+    }
+
     return getWithErrorHandling(
         req,
         async () => {
@@ -17,7 +22,7 @@ export async function GET(
                 return NextResponse.json({ success: false, message: 'consultationId es requerido' }, { status: 400 });
             }
 
-            const { data, error } = await ConsultationRepository.findById(consultationId);
+            const { data, error } = await ConsultationRepository.findById(consultationId, options);
 
             if (error) {
                 throw new RepositoryError(`Error obteniendo consulta ${consultationId}: ${error.message}`);

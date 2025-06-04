@@ -1,6 +1,6 @@
 // hooks/useAppStorage.ts
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType, VeterinarianType, PlanType } from "@/types/index";
+import { PetType, PetCodeType, VeterinaryAccessType, BasicDataType, OwnerDataType, VaccineDataType, ConditionDataType, LabTestDataType, MedicineDataType, SurgeryDataType, VeterinarianType, SubscriptionType } from "@/types/index";
 import { Empty } from "@/data/index";
 export interface StorageContextType {
   resetSession: () => void;
@@ -29,8 +29,8 @@ export interface StorageContextType {
   setStoredMedicineData: (value: MedicineDataType[] | null) => void,
   storedSurgeryData: SurgeryDataType[],
   setStoredSurgeryData: (value: SurgeryDataType[] | null) => void,
-  storedPlanData: PlanType,
-  setStoredPlanData: (value: PlanType | null) => void,
+  storedSubscriptionData: SubscriptionType,
+  setStoredSubscriptionData: (value: SubscriptionType | null) => void,
 }
 
 export function useAppStorage() {
@@ -94,8 +94,8 @@ export function useAppStorage() {
     Empty.VetData()
   );
 
-  const [storedPlanData, setStoredPlanData] = useLocalStorage<PlanType | null>(
-    "planType",
+  const [storedSubscriptionData, setStoredSubscriptionData] = useLocalStorage<SubscriptionType | null>(
+    "subscriptionType",
     null
   );
 
@@ -115,6 +115,7 @@ export function useAppStorage() {
     setStoredOwnerData(Empty.OwnerData());
     setStoredOwnerPets([]);
     setStoredPet(Empty.Pet());
+    setStoredSubscriptionData(Empty.Subscription());
   }
 
   return {
@@ -144,7 +145,7 @@ export function useAppStorage() {
     setStoredVetAccess,
     storedPetCode,
     setStoredPetCode,
-    storedPlanData, 
-    setStoredPlanData
+    storedSubscriptionData: storedSubscriptionData, 
+    setStoredSubscriptionData: setStoredSubscriptionData
   } as StorageContextType;
 }

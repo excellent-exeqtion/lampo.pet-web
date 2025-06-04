@@ -23,6 +23,7 @@ export interface EntityFormProps<T extends { id?: string }> {
   fieldsConfig: FieldConfig<T>[];
   onNext: () => void;
   onBack: () => void;
+  setShowModal: Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function EntityFormComponent<T extends { id: string | undefined }>({
@@ -39,6 +40,7 @@ export default function EntityFormComponent<T extends { id: string | undefined }
   fieldsConfig,
   onNext,
   onBack,
+  setShowModal
 }: EntityFormProps<T>) {
   // 1) Carga los datos guardados
   const {
@@ -113,6 +115,7 @@ export default function EntityFormComponent<T extends { id: string | undefined }
       onBack={onBack}
       handleAdd={addItem}
       handleSubmit={() => submit(onNext)}
+      setShowModal={setShowModal}
     />
   );
 }

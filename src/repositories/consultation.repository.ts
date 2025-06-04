@@ -1,9 +1,10 @@
 // src/repos/consultation.repository.ts
-import { supabase } from '@/lib/auth/supabase/browserClient';
+import { dbClient } from '@/lib/auth';
 import type { ConsultationType, CreateConsultationPayload } from '@/types/index';
+import { RepositoryOptions } from '@/types/lib';
 
 export default class ConsultationRepository {
-    static async create(payload: CreateConsultationPayload): Promise<{ data: ConsultationType | null; error: Error | null }> {
+    static async create(payload: CreateConsultationPayload, options: RepositoryOptions): Promise<{ data: ConsultationType | null; error: Error | null }> {
         // Separar los campos principales para el JSONB y los arrays
         const {
             pet_id, // Este va como parámetro separado
@@ -83,7 +84,7 @@ export default class ConsultationRepository {
 
         try {
             console.log("Parámetros enviados a RPC insert_consultation_with_type:", JSON.stringify(rpcParams, null, 2));
-            const { data, error } = await supabase.rpc('insert_consultation_with_type', rpcParams);
+            const { data, error } = await dbClient(options).rpc('insert_consultation_with_type', rpcParams);
 
             if (error) throw error;
 
@@ -97,9 +98,9 @@ export default class ConsultationRepository {
     }
 
     // ... (tus otros métodos findByPetId, findById) ...
-    static async findByPetId(petId: string): Promise<{ data: ConsultationType[] | null; error: Error | null }> {
+    static async findByPetId(petId: string, options: RepositoryOptions): Promise<{ data: ConsultationType[] | null; error: Error | null }> {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await dbClient(options)
                 .from('consultations')
                 .select(`
                 *,
@@ -121,9 +122,9 @@ export default class ConsultationRepository {
         }
     }
 
-    static async findById(consultationId: string): Promise<{ data: ConsultationType | null; error: Error | null }> {
+    static async findById(consultationId: string, options: RepositoryOptions): Promise<{ data: ConsultationType | null; error: Error | null }> {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await dbClient(options)
                 .from('consultations')
                 .select(`
                 *,

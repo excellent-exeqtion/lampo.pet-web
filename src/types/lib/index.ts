@@ -1,5 +1,6 @@
 import { StorageContextType } from "@/hooks/useAppStorage";
-import { PostgrestError, Session } from "@supabase/supabase-js";
+import { AuthError, AuthSession } from "@/lib/auth";
+import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { NextResponse } from "next/server";
 import { Dispatch, SetStateAction } from "react";
 import { ZodObject } from "zod";
@@ -12,7 +13,7 @@ export interface AppContextType {
 }
 
 export interface AppSession {
-  db: Session | null;
+  db: AuthSession | null;
 }
 
 export interface FormType {
@@ -71,13 +72,17 @@ export interface FieldConfig<T> {
 }
 
 export interface FormRepository<T> {
-  createAll: (list: T[]) => Promise<{
+  createAll: (list: T[], options: RepositoryOptions) => Promise<{
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any[] | null;
-    error: PostgrestError | null;
+    error: AuthError | null;
   }>;
-  findByParentId: (parent_id: string) => Promise<T[] | null>;
-  delete: (id: string) => Promise<boolean>
+  findByParentId: (parent_id: string, options: RepositoryOptions) => Promise<T[] | null>;
+  delete: (id: string, options: RepositoryOptions) => Promise<boolean>
+}
+
+export interface RepositoryOptions {
+  cookies?: ReadonlyRequestCookies
 }
 
 export interface LogInType {
@@ -123,4 +128,4 @@ export class ApiError extends Error { }
 /**
  * Excepción que lanzamos cuando hay un problema con el cliente de autenticación.
  */
-export class AuthError extends Error { }
+export class AuthExceptionError extends Error { }

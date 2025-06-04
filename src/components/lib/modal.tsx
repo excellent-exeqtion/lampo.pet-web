@@ -10,9 +10,10 @@ interface ModalProps {
     setShowModal: Dispatch<SetStateAction<boolean>>;
     maxWidth?: string;
     dropdownRef?: React.RefObject<HTMLDivElement | null>;
+    hideClose?: boolean;
 }
 
-export default function ModalComponent({ children, title, description, setShowModal, maxWidth = "450px", dropdownRef }: ModalProps) {
+export default function ModalComponent({ children, title, description, setShowModal, maxWidth = "450px", dropdownRef, hideClose = false }: ModalProps) {
     return (
         <div
             style={{
@@ -38,7 +39,8 @@ export default function ModalComponent({ children, title, description, setShowMo
                 }}
             >
 
-                    {/* Close button */}
+                {/* Close button */}
+                {!hideClose &&
                     <button
                         onClick={() => setShowModal(false)}
                         style={{
@@ -55,10 +57,11 @@ export default function ModalComponent({ children, title, description, setShowMo
                     >
                         <FaTimes />
                     </button>
-                    <h2 className="modal-title">{title}</h2>
-                    <p className="description">{description}</p>
-                    {children}
-                </div>
+                }
+                <h2 className="modal-title">{title}</h2>
+                <p className="description">{description}</p>
+                {children}
+            </div>
         </div >
     );
 }

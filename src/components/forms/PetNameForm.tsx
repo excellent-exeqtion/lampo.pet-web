@@ -20,6 +20,7 @@ interface PetFormProps {
   onBack: () => void;
   stepStates: StepsStateType[];
   setStepStates: Dispatch<React.SetStateAction<StepsStateType[]>>;
+  setShowModal: Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function PetNameForm({
@@ -30,6 +31,7 @@ export default function PetNameForm({
   onBack,
   stepStates,
   setStepStates,
+  setShowModal
 }: PetFormProps) {
   const step = PetStep.Name;
   const setState = (stepState: StepStateEnum, stepError: string | null = null) => {
@@ -145,6 +147,7 @@ export default function PetNameForm({
       step={step}
       totalSteps={stepStates.length}
       error={error}
+      setShowModal={setShowModal}
     >
       <div style={{ display: 'grid', gap: '1rem', marginBottom: '30px' }}>
         <label>

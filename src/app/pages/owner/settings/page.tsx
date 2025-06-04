@@ -126,6 +126,7 @@ export default function SettingsPage() {
       storage.setStoredOwnerPets(
         storage.storedOwnerPets.filter((p) => p.id !== pet.id)
       );
+      storage.resetPet();
       storage.setStoredPet(Empty.Pet());
       router.replace("/");
     } else {

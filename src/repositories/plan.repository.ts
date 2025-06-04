@@ -1,13 +1,14 @@
 // src/repositories/plan.repository.ts
-import { supabase } from '@/lib/auth/supabase/browserClient';
 import { PlanVersionType } from '../types/index';
+import { dbClient } from '@/lib/auth';
+import { RepositoryOptions } from '@/types/lib';
 
 export default class PlanRepository {
   /**
    * Trae todas las versiones vigentes (effective_to IS NULL)
    */
-  static async getAllCurrent(): Promise<PlanVersionType[]> {
-    const { data, error } = await supabase
+  static async getAllCurrent(options: RepositoryOptions): Promise<PlanVersionType[]> {
+    const { data, error } = await dbClient(options)
       .from('plans_versions')
       .select(`
         id,
@@ -40,8 +41,9 @@ export default class PlanRepository {
   /**
    * Busca la versión actual de un plan por su slug
    */
-  static async getBySlug(slug: string): Promise<PlanVersionType | null> {
-    const { data, error } = await supabase
+  static async getBySlug(slug: string, options: RepositoryOptions): Promise<PlanVersionType | null> {
+    //TODO: Review  .overrideTypes<PlanVersionType[], { merge: false }>()
+    const { data, error } = await dbClient(options)
       .from('plans_versions')
       .select(`
         id,
@@ -62,7 +64,6 @@ export default class PlanRepository {
       `)
       .is('effective_to', null)
       .eq('plans.slug', slug)
-      .overrideTypes<PlanVersionType[], { merge: false }>()
 
     if (error) {
       if (error.code === 'PGRST116') return null // sin datos
@@ -78,8 +79,8 @@ export default class PlanRepository {
   /**
    * Trae todas las versiones históricas de un plan
    */
-  static async getVersions(planId: number): Promise<PlanVersionType[]> {
-    const { data, error } = await supabase
+  static async getVersions(planId: number, options: RepositoryOptions): Promise<PlanVersionType[]> {
+    const { data, error } = await dbClient(options)
       .from('plans_versions')
       .select('*')
       .eq('plan_id', planId)

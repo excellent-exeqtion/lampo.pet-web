@@ -1,44 +1,48 @@
 // lib/auth/supabase/serverClient.ts
 import { createServerClient as supabaseCreateServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { User } from '@supabase/supabase-js';
+import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 // Cliente Supabase para Server Components, API Routes y Middleware
-export async function createServerClient() {
-  const cookieStore = await cookies(); // Obtiene la instancia de cookies de Next.js
+export async function createServerClient(cookieStore: ReadonlyRequestCookies) {
 
-  return supabaseCreateServerClient( // Usa la función importada directamente
+  return (await supabaseCreateServerClient( // Usa la función importada directamente
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        // El método `get` toma el nombre de la cookie y devuelve su valor o undefined.
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        // El método `set` toma el nombre, valor y opciones de la cookie.
         set(name: string, value: string, options: CookieOptions) {
+          // Cuando Supabase llama a esto en una Route Handler,
+          // está indicando que una cookie necesita ser establecida en la RESPUESTA.
+          // La instancia de `cookieStore` aquí puede ser usada para esto.
           try {
-            // `cookieStore.set` puede tomar un objeto o argumentos separados.
-            // La versión más reciente de Next.js prefiere un objeto.
-            cookieStore.set({ name, value, ...options });
+            cookieStore.set(name, value, options); // Correcto para la respuesta
+            // O si la API de cookieStore requiere un objeto:
+            // cookieStore.set({ name, value, ...options });
           } catch (error) {
-            // Esto puede ocurrir si `set` se llama desde un Server Component.
-            // Se puede ignorar si tienes un middleware refrescando las sesiones.
-            // (Como es tu caso, esta captura está bien).
-            console.warn(`ServerClient: Failed to set cookie ${name} from a Server Component context. Error: ${error}`);
+            console.error(`SSR Error (Route Handler): Failed to set cookie ${name}`, error);
           }
         },
-        // El método `remove` toma el nombre y opciones de la cookie.
-        // Para eliminar una cookie, se suele establecer un valor vacío y una fecha de expiración pasada.
         remove(name: string, options: CookieOptions) {
           try {
-            cookieStore.set({ name, value: '', ...options });
+            // Para eliminar, establece el valor a vacío y usa las opciones para expirar.
+            cookieStore.set(name, '', options); // Correcto para la respuesta
+            // O si la API de cookieStore requiere un objeto:
+            // cookieStore.set({ name, value: '', ...options });
           } catch (error) {
-            // Similar a `set`, esto puede ocurrir en Server Components.
-            console.warn(`ServerClient: Failed to remove cookie ${name} from a Server Component context. Error: ${error}`);
+            console.error(`SSR Error (Route Handler): Failed to remove cookie ${name}`, error);
           }
         },
-      },
+      }
     }
-  );
+  )).auth;
+}
+
+export async function getUser(cookieStore: ReadonlyRequestCookies): Promise<User | null> {
+  const supabase = await createServerClient(cookieStore);
+  const { data: { user } } = await supabase.getUser();
+  return user;
 }

@@ -85,13 +85,10 @@ export default function LoginPage() {
             return;
           }
         }
-        // Si el registro en Supabase requiere confirmación por email, mostrar el modal.
-        // Si no (auto-confirm está habilitado), Supabase podría devolver una sesión directamente.
-        if (signUpData.user && !signUpData.user.email_confirmed_at) { // O si Supabase devuelve una sesión nula aquí
+        if (signUpData.user && !signUpData.user.email_confirmed_at) {
           setShowConfirmModal(true);
-        } else if (signUpData.user?.email_confirmed_at) { // Auto-confirmado o ya confirmado
-          // Supabase client JS debería manejar la sesión. Redirigir.
-          router.push('/pages/owner/register'); // O al dashboard/ruta post-login
+        } else if (signUpData.user?.email_confirmed_at) {
+          router.push('/pages/owner/register');
         }
 
       } else {
@@ -141,24 +138,12 @@ export default function LoginPage() {
   }
 
   const handleModalContinue = async () => {
-    // Si el usuario hace clic en "Ya confirmé", intentamos obtener la sesión actual.
-    // Si Supabase ya procesó la confirmación (el usuario hizo clic en el enlace del email),
-    // debería haber una sesión.
     setShowConfirmModal(false);
     setLoading(true);
-    // Podríamos intentar forzar un re-fetch de la sesión o simplemente redirigir
-    // y dejar que useAuthRedirect maneje la lógica si la sesión existe.
-    // router.refresh(); // Podría ayudar a que onAuthStateChange se dispare si hubo cambios
-
-    // Si el usuario ya está logueado (quizás confirmó en otra pestaña y volvió)
-    // o si la sesión se estableció de alguna manera.
     const currentSession = await authClient.getSession();
     if (currentSession) {
-      router.push("/pages/owner/register"); // O al dashboard
+      router.push("/pages/owner/register");
     } else {
-      // Si aún no hay sesión, puede que el usuario no haya confirmado realmente
-      // o haya un retraso. Podríamos mostrar un mensaje o simplemente volver al login.
-      // Por ahora, lo mantenemos simple, el usuario puede intentar loguearse.
       setInfoMessage("Si ya confirmaste tu correo, intenta iniciar sesión.");
     }
     setLoading(false);
@@ -169,7 +154,8 @@ export default function LoginPage() {
       <ModalComponent
         title="Confirma tu correo"
         description={`Te hemos enviado un correo de verificación a ${email}. Por favor revisa tu bandeja (y carpeta de spam) y haz clic en el enlace.`}
-        setShowModal={setShowConfirmModal} // Permite cerrar el modal
+        setShowModal={setShowConfirmModal}
+        hideClose={true}
       >
         <button
           className="contrast"
@@ -184,19 +170,18 @@ export default function LoginPage() {
     );
   }
 
-  // Renderizar el formulario de login/registro
   return (
     <main
       style={{
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        minHeight: "100vh", // Asegurar que ocupe toda la altura
+        minHeight: "100vh",
         background: "#F9FAFB",
-        padding: "1rem", // Espacio por si el form es muy grande en móviles
+        padding: "1rem",
       }}
     >
-      <article // Cambiado de form a article para que PicoCSS no aplique estilos de form globales aquí si no queremos
+      <article
         style={{
           background: "#fff",
           padding: "2rem",
@@ -264,14 +249,14 @@ export default function LoginPage() {
               aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               style={{
                 position: 'absolute',
-                right: '0.5rem', // Ajuste para que no esté tan pegado al borde del input
-                top: 'calc(50% + 8px)', // Ajustar para centrarlo verticalmente respecto al input
+                right: '0.5rem',
+                top: 'calc(50% + 8px)',
                 transform: 'translateY(-50%)',
                 background: 'none',
                 border: 'none',
                 padding: '0.25rem',
                 cursor: 'pointer',
-                color: '#555' // Color del ícono
+                color: '#555'
               }}
             >
               {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
@@ -289,22 +274,22 @@ export default function LoginPage() {
 
         {!isRegistering && (
           <p style={{ textAlign: "right", marginTop: "0.5rem" }}>
-            <button type="button" onClick={handleResetPassword} className="contrast" disabled={loading} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--pico-primary-focus)" }}>
+            <button type="button" onClick={handleResetPassword} className="contrast" disabled={loading} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--pico-primary)" }}>
               ¿Olvidaste tu contraseña?
             </button>
           </p>
         )}
 
-        <p style={{ textAlign: "center", marginTop: "1rem" }}>
+        <p style={{ textAlign: "center", padding: 0 }}>
           {isRegistering ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}
-          <button type="button" onClick={() => { setIsRegistering(!isRegistering); setError(""); setInfoMessage(""); }} disabled={loading} style={{ background: "none", border: "none", color: "var(--pico-primary)", cursor: "pointer", marginLeft: "0.25rem", textDecoration: "underline" }}>
+          <button type="button" onClick={() => { setIsRegistering(!isRegistering); setError(""); setInfoMessage(""); }} disabled={loading} style={{ background: "none", border: "none", color: "var(--pico-primary)", cursor: "pointer", marginLeft: "0.25rem", textDecoration: "underline", padding: 0 }}>
             {isRegistering ? "Inicia sesión" : "Regístrate"}
           </button>
         </p>
 
         {!isRegistering && (
-          <p style={{ textAlign: "center", marginTop: "1rem" }}>
-            <button type="button" onClick={goToVetPage} disabled={loading} style={{ background: "none", border: "none", color: "var(--pico-primary)", cursor: "pointer", textDecoration: "underline" }}>
+          <p style={{ textAlign: "center", padding: 0 }}>
+            <button type="button" onClick={goToVetPage} disabled={loading} style={{ background: "none", border: "none", color: "var(--pico-primary)", cursor: "pointer", textDecoration: "underline", padding: 0 }}>
               Soy médico veterinario sin registro
             </button>
           </p>

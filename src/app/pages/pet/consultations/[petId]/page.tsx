@@ -10,6 +10,7 @@ import { FaNotesMedical, FaListAlt, FaArrowLeft } from 'react-icons/fa';
 import { useStorageContext } from '@/context/StorageProvider';
 import { useSessionContext } from '@/context/SessionProvider'; // Para verificar el veterinario logueado
 import { Dates } from '@/utils/index';
+import { useRoleContext } from '@/context/RoleProvider';
 
 export default function PetConsultationsPage() {
     const params = useParams();
@@ -18,6 +19,7 @@ export default function PetConsultationsPage() {
 
     const { storedPet, setStoredPet } = useStorageContext();
     const { db: session } = useSessionContext(); // Usuario autenticado
+    const { isOwner } = useRoleContext();
 
     const [pet, setPet] = useState<PetType | null>(storedPet.id === petId ? storedPet : null);
     const [consultations, setConsultations] = useState<ConsultationType[]>([]);
@@ -60,7 +62,7 @@ export default function PetConsultationsPage() {
             }
         };
         fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [petId, storedPet, setStoredPet]); // pet no es dependencia para evitar bucle si se actualiza dentro
 
     const handleSelectConsultation = (consultation: ConsultationType) => {
@@ -141,12 +143,14 @@ export default function PetConsultationsPage() {
                             ))}
                         </div>
                     )}
-                    <button
-                        onClick={() => router.push(`/pages/vet/consultation/${petId}`)}
-                        style={{ marginTop: '1.5rem' }}
-                    >
-                        <FaListAlt style={{ marginRight: '0.5rem' }} /> Agregar Nueva Consulta
-                    </button>
+                    {!isOwner &&
+                        <button
+                            onClick={() => router.push(`/pages/vet/consultation/${petId}`)}
+                            style={{ marginTop: '1.5rem' }}
+                        >
+                            <FaListAlt style={{ marginRight: '0.5rem' }} /> Agregar Nueva Consulta
+                        </button>
+                    }
                 </>
             )}
         </main>

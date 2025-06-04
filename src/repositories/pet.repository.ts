@@ -1,10 +1,11 @@
 // src/repositories/pet.repository.ts
-import { supabase } from "@/lib/auth/supabase/browserClient";
+import { dbClient } from "@/lib/auth";
 import { PetType } from "@/types/index";
+import { RepositoryOptions } from "@/types/lib";
 
 export default class PetRepository {
-  static async upsert(pet: PetType) {
-    const { data, error } = await supabase.from('pets')
+  static async upsert(pet: PetType, options: RepositoryOptions) {
+    const { data, error } = await dbClient(options).from('pets')
       .upsert(pet, { onConflict: 'id' })
       .select();
 
@@ -14,8 +15,8 @@ export default class PetRepository {
   }
 
   /** Busca la mascota por ID */
-  static async findById(id: string): Promise<PetType> {
-    const { data, error } = await supabase
+  static async findById(id: string, options: RepositoryOptions): Promise<PetType> {
+    const { data, error } = await dbClient(options)
       .from("pets")
       .select("*")
       .eq("deleted", false)
@@ -25,8 +26,8 @@ export default class PetRepository {
     return data;
   }
   /** Busca la mascota por ID */
-  static async existsById(id: string): Promise<boolean> {
-    const { data, error } = await supabase
+  static async existsById(id: string, options: RepositoryOptions): Promise<boolean> {
+    const { data, error } = await dbClient(options)
       .from("pets")
       .select("*", { count: 'exact', head: true })
       .eq("deleted", false)
@@ -38,9 +39,10 @@ export default class PetRepository {
   /** Actualiza campos de la mascota */
   static async updateById(
     id: string,
-    updates: Partial<Pick<PetType, "image" | "name">>
+    updates: Partial<Pick<PetType, "image" | "name">>, 
+    options: RepositoryOptions
   ): Promise<boolean> {
-    const { data, error } = await supabase
+    const { data, error } = await dbClient(options)
       .from("pets")
       .update(updates)
       .eq("id", id);
@@ -50,8 +52,8 @@ export default class PetRepository {
   }
 
   /** Verifica que el usuario loggeado y la mascota seleccionada se encuentren en la base de datos  */
-  static async findByOwnerIdAndPetId(ownerId: string, pet_id: string): Promise<{ id: string } | null> {
-    const { data, error } = await supabase
+  static async findByOwnerIdAndPetId(ownerId: string, pet_id: string, options: RepositoryOptions): Promise<{ id: string } | null> {
+    const { data, error } = await dbClient(options)
       .from("pets")
       .select("id")
       .eq("deleted", false)
@@ -66,8 +68,8 @@ export default class PetRepository {
   }
 
   /** Retorna la primera mascota del owner, o null */
-  static async findByOwnerId(ownerId: string): Promise<PetType[]> {
-    const { data, error } = await supabase
+  static async findByOwnerId(ownerId: string, options: RepositoryOptions): Promise<PetType[]> {
+    const { data, error } = await dbClient(options)
       .from("pets")
       .select("*")
       .eq("deleted", false)
@@ -85,10 +87,10 @@ export default class PetRepository {
    * @param id ID de la mascota a borrar
    * @returns true si la operación no falló
    */
-  static async deleteById(id: string): Promise<boolean> {
+  static async deleteById(id: string, options: RepositoryOptions): Promise<boolean> {
     const now = new Date().toISOString();
     try {
-      const { error } = await supabase
+      const { error } = await dbClient(options)
         .from("pets")
         .update({ deleted: true, deleted_at: now })
         .eq("id", id);

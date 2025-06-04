@@ -2,14 +2,14 @@
 "use client";
 import React from "react";
 import { FaCut } from "react-icons/fa";
-import { PageComponent } from "@/components/index";
+import { Page } from "@/components/index";
 import { FieldData } from "@/data/index";
 import { useStorageContext } from "@/context/StorageProvider";
 
 export default function SurgeriesPage() {
     const storage = useStorageContext();
     return (
-        <PageComponent
+        <Page
             parentId={storage.storedPet.id}
             title="Cirugías"
             icon={<FaCut />}

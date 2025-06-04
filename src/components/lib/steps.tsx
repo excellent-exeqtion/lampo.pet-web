@@ -10,9 +10,10 @@ interface StepsProps {
   error: string | null;
   onNext: () => void;
   onBack: () => void;
+  setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function StepsComponent({ children, submitLoading, loadLoading, step, totalSteps, error, onNext, onBack }: StepsProps) {
+export default function StepsComponent({ children, submitLoading, loadLoading, step, totalSteps, error, onNext, onBack, setShowModal }: StepsProps) {
 
   return (
     <>
@@ -45,6 +46,17 @@ export default function StepsComponent({ children, submitLoading, loadLoading, s
           >
             {submitLoading ? "Guardando…" : (totalSteps - 1 == step ? "Finalizar" : "Siguiente")}
           </button>
+          {totalSteps - 1 != step &&
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              disabled={submitLoading || loadLoading}
+              className="btn-primary"
+              style={{ position: 'absolute', marginTop: '4rem', right: '2rem', visibility: 'hidden' }}
+            >
+              {submitLoading ? "Guardando…" : "Finalizar"}
+            </button>
+          }
         </div>
       </div>
     </>

@@ -18,9 +18,10 @@ interface BasicDataFormProps {
   onNext: () => void;
   stepStates: StepsStateType[];
   setStepStates: Dispatch<React.SetStateAction<StepsStateType[]>>;
+    setShowModal: Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function BasicDataForm({ pet, basicData, setBasicData, onNext, onBack, stepStates, setStepStates }: BasicDataFormProps) {
+export default function BasicDataForm({ pet, basicData, setBasicData, onNext, onBack, stepStates, setStepStates, setShowModal }: BasicDataFormProps) {
   const step = PetStep.BasicData;
   const setState = (stepState: StepStateEnum, stepError: string | null = null) => {
     Steps.ChangeState(stepStates, setStepStates, step, stepState, stepError);
@@ -159,7 +160,7 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   };
 
   return (
-    <StepsComponent onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={stepStates.length} error={error}>
+    <StepsComponent onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={stepStates.length} error={error} setShowModal={setShowModal}>
       {/* Sección: Información básica */}
       <fieldset>
         <legend><b>Información básica</b></legend>

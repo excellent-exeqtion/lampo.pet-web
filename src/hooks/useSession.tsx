@@ -1,22 +1,21 @@
 // src/hooks/useSession.tsx
 "use client";
 import { useState, useEffect } from "react";
-import type { Session as SupabaseSession, AuthChangeEvent } from "@supabase/supabase-js";
-import { authClient } from "@/lib/auth";
+import { authClient, AuthSession } from "@/lib/auth";
 
 export function useSession(): {
-  session: SupabaseSession | null;
-  setSession: (session: SupabaseSession) => Promise<void>;
+  session: AuthSession | null;
+  setSession: (session: AuthSession) => Promise<void>;
   isLoading: boolean;
 } {
-  const [session, setSession] = useState<SupabaseSession | null>(null);
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
     const { data: authSubscription } = authClient.onAuthStateChange(
-      (event: AuthChangeEvent, sessionState: SupabaseSession | null) => {
+      (event: string, sessionState: AuthSession | null) => {
         if (mounted) {
           setSession(sessionState);
 
@@ -53,7 +52,7 @@ export function useSession(): {
     };
   }, [isLoading]);
 
-  const setAppSession = async (session: SupabaseSession) =>{
+  const setAppSession = async (session: AuthSession) => {
     await authClient.setSession(session);
     setIsLoading(false);
     setSession(session);

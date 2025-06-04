@@ -1,16 +1,21 @@
 // app/api/pets/[id]/route.tsx
 import { NextResponse } from "next/server";
 import { PetRepository, PetCodeRepository } from "@/repos/index";
+import { cookies } from "next/headers";
 
 interface UpdateBody {
-    code: string;
-    name?: string;
-    image?: string;
+  code: string;
+  name?: string;
+  image?: string;
 }
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const options = {
+    cookies: await cookies()
+  }
+
   try {
     const { id } = await params;
     const { code, ...updates } = (await req.json()) as UpdateBody;
@@ -19,7 +24,7 @@ export async function PUT(
     }
 
     // 1) Validar código
-    const codeData = await PetCodeRepository.find(code);
+    const codeData = await PetCodeRepository.find(code, options);
     if (!codeData) {
       return NextResponse.json({ error: "Código inválido." }, { status: 401 });
     }
@@ -37,9 +42,9 @@ export async function PUT(
     }
 
     // 2) Actualizar pet
-    await PetRepository.updateById(id, updates);
+    await PetRepository.updateById(id, updates, options);
     return NextResponse.json({ success: true });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Error interno" },

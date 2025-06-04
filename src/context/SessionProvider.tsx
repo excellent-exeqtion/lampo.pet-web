@@ -2,12 +2,12 @@
 "use client";
 import React, { createContext, useContext } from "react";
 import { useSession as useAppSessionHook } from "@/hooks/useSession";
-import { Session as SupabaseSession } from "@supabase/supabase-js";
+import { AuthSession } from "@/lib/auth";
 
 interface AppSessionContextType {
-    db: SupabaseSession | null;
+    db: AuthSession | null;
     isLoading: boolean;
-    setSession: (session: SupabaseSession) => Promise<void>;
+    setSession: (session: AuthSession) => Promise<void>;
 }
 
 const SessionContext = createContext<AppSessionContextType>({

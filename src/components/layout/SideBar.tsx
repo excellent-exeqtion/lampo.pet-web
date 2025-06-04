@@ -11,7 +11,8 @@ import {
     FaHome,
     FaPills,
     FaPowerOff,
-    FaRocket,
+    //TODO: actualizar para menu de actualizar plan
+    //FaRocket,
     FaSyringe,
     FaUser
 } from "react-icons/fa";
@@ -41,15 +42,16 @@ export default function SideBar() {
 
     const menuData = (show: boolean): MenuType[] => [
         { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner },
-        { label: "Calendario", icon: <FaCalendar />, url: "/", show: show },
+        { label: "Calendario", icon: <FaCalendar />, url: "/pages/owner/calendar", show: show },
         { label: "Datos básicos", icon: <FaUser />, url: "/pages/pet/basic-data", show },
+        { label: "Consultas veterinarias", icon: <FaUserDoctor />, url: `/pages/pet/consultations/${storage.storedPet.id}`, show },
         { label: "Vacunas", icon: <FaSyringe />, url: "/pages/pet/vaccines", show },
         { label: "Cirugías", icon: <FaCut />, url: "/pages/pet/surgeries", show },
         { label: "Medicinas", icon: <FaPills />, url: "/pages/pet/medicines", show },
         { label: "Condiciones especiales", icon: <FaCloudSun />, url: "/pages/pet/conditions", show },
         { label: "Lab. de exámenes", icon: <FaFlask />, url: "/pages/pet/lab-tests", show },
-        { label: "Consultas veterinarias", icon: <FaUserDoctor />, url: `/pages/pet/consultations/${storage.storedPet.id}`, show },
-        { label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner },
+        //TODO: modal para actualizar el plan
+        //{ label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner },
         { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },
         { label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner && show },
         { label: "Agregar Consulta", icon: <FaCog />, url: `/pages/vet/consultation/${storage.storedPet.id}`, show: isVet && show },

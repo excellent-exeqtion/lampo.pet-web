@@ -1,11 +1,11 @@
 // src/repositories/labTest.repository.ts
-import { supabase } from '@/lib/auth/supabase/browserClient';
+import { dbClient } from '@/lib/auth';
 import type { LabTestDataType } from '@/types/index';
-import { FormRepository } from '@/types/lib';
+import { FormRepository, RepositoryOptions } from '@/types/lib';
 
 export default class LabTestRepository implements FormRepository<LabTestDataType> {
-    async createAll(tests: LabTestDataType[]) {
-        const { data, error } = await supabase
+    async createAll(tests: LabTestDataType[], options: RepositoryOptions) {
+        const { data, error } = await dbClient(options)
             .from('lab_tests')
             .upsert(tests, { onConflict: 'id' })
             .select();
@@ -15,17 +15,17 @@ export default class LabTestRepository implements FormRepository<LabTestDataType
         return { data, error };
     }
 
-    async findByParentId(parent_id: string): Promise<LabTestDataType[] | null> {
-        const { data, error } = await supabase.from('lab_tests').select('*').eq('deleted', false).eq('pet_id', parent_id);
+    async findByParentId(parent_id: string, options: RepositoryOptions): Promise<LabTestDataType[] | null> {
+        const { data, error } = await dbClient(options).from('lab_tests').select('*').eq('deleted', false).eq('pet_id', parent_id);
         if (error) throw new Error(error.message);
         if (!data) return null;
         return data;
     }
 
-    async delete(id: string) {
+    async delete(id: string, options: RepositoryOptions) {
         try {
             const currentTimestamp = new Date().toISOString();
-            await supabase.from('lab_tests').update({ deleted: true, deleted_at: currentTimestamp }).eq('id', id);
+            await dbClient(options).from('lab_tests').update({ deleted: true, deleted_at: currentTimestamp }).eq('id', id);
             return true;
         }
         catch {

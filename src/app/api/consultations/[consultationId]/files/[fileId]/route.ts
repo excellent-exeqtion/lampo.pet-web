@@ -3,13 +3,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ConsultationFileRepository } from '@/repos/index';
 import { getWithErrorHandling } from '@/services/apiService';
 import { RepositoryError } from '@/types/lib';
-import { supabase } from '@/lib/auth/supabase/browserClient';
+import { cookies } from "next/headers";
+
 
 // GET /api/consultations/files/{fileId}/download : Obtener URL firmada para descargar
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ fileId: string }> }
 ) {
+    const options = {
+        cookies: await cookies()
+    }
+
     return getWithErrorHandling(req, async () => {
         const { fileId } = await params;
         if (!fileId) {
@@ -17,17 +22,13 @@ export async function GET(
         }
 
         // Primero, necesitamos el filePath del registro del archivo
-        const { data: fileRecord, error: findError } = await supabase
-            .from('consultation_files')
-            .select('file_path')
-            .eq('id', fileId)
-            .single();
+        const { data: fileRecord, error: findError } = await ConsultationFileRepository.getFile(fileId, options);
 
         if (findError || !fileRecord) {
             throw new RepositoryError(`Archivo con ID ${fileId} no encontrado o error al buscarlo: ${findError?.message}`);
         }
 
-        const { signedURL, error: urlError } = await ConsultationFileRepository.getSignedUrl(fileRecord.file_path);
+        const { signedURL, error: urlError } = await ConsultationFileRepository.getSignedUrl(fileRecord.file_path, options);
 
         if (urlError || !signedURL) {
             throw new RepositoryError(`Error generando URL firmada para archivo ${fileId}: ${urlError?.message || 'No URL returned'}`);
@@ -46,6 +47,10 @@ export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ fileId: string }> }
 ) {
+    const options = {
+        cookies: await cookies()
+    }
+    
     return getWithErrorHandling(
         req,
         async () => {
@@ -58,7 +63,7 @@ export async function DELETE(
             // Por ejemplo, solo el veterinario que subió el archivo o el dueño de la mascota
             // pueden eliminarlo, o solo dentro de un tiempo límite.
 
-            const { error } = await ConsultationFileRepository.delete(fileId);
+            const { error } = await ConsultationFileRepository.delete(fileId, options);
 
             if (error) {
                 throw new RepositoryError(`Error eliminando archivo ${fileId}: ${error.message}`);

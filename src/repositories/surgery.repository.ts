@@ -1,11 +1,11 @@
 // src/repositories/surgery.repository.ts
-import { supabase } from '@/lib/auth/supabase/browserClient';
+import { dbClient } from '@/lib/auth';
 import type { SurgeryDataType } from '@/types/index';
-import { FormRepository } from '@/types/lib';
+import { FormRepository, RepositoryOptions } from '@/types/lib';
 
 export default class SurgeryRepository implements FormRepository<SurgeryDataType> {
-    async createAll(surgeries: SurgeryDataType[]) {
-        const { data, error } = await supabase
+    async createAll(surgeries: SurgeryDataType[], options: RepositoryOptions) {
+        const { data, error } = await dbClient(options)
             .from('surgeries')
             .upsert(surgeries, { onConflict: 'id' })
             .select();
@@ -15,17 +15,17 @@ export default class SurgeryRepository implements FormRepository<SurgeryDataType
         return { data, error };
     }
 
-    async findByParentId(parent_id: string): Promise<SurgeryDataType[] | null> {
-        const { data, error } = await supabase.from('surgeries').select('*').eq('deleted', false).eq('pet_id', parent_id);
+    async findByParentId(parent_id: string, options: RepositoryOptions): Promise<SurgeryDataType[] | null> {
+        const { data, error } = await dbClient(options).from('surgeries').select('*').eq('deleted', false).eq('pet_id', parent_id);
         if (error) throw new Error(error.message);
         if (!data) return null;
         return data;
     }
 
-    async delete(id: string) {
+    async delete(id: string, options: RepositoryOptions) {
         try {
             const currentTimestamp = new Date().toISOString();
-            await supabase.from('surgeries').update({ deleted: true, deleted_at: currentTimestamp }).eq('id', id);
+            await dbClient(options).from('surgeries').update({ deleted: true, deleted_at: currentTimestamp }).eq('id', id);
             return true;
         }
         catch {

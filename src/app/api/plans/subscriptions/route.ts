@@ -2,22 +2,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SubscriptionRepository } from "@/repos/index";
 import { withValidationAndErrorHandling } from "@/services/apiService";
-import { z } from "zod";
 import { CreateSubscriptionType } from "@/types/index";
-import { Cookies } from "@/utils/index";
-
-const SubscriptionSchema = z.object({
-  ownerId: z.string(),
-  planVersionId: z.string(),
-  cycle: z.enum(["monthly", "annual"]),
-  priceAtPurchase: z.number(),
-  discountApplied: z.number()
-});
+import { cookies } from "next/headers";
+import { SubscriptionInsertSchema } from "@/schemas/validationSchemas";
 
 export async function POST(req: NextRequest) {
-  return withValidationAndErrorHandling("POST", req, SubscriptionSchema, async (data: CreateSubscriptionType) => {
-    const accessToken = await Cookies.getAccessTokenFromCookie();
-    const result = await SubscriptionRepository.create(data, accessToken);
+  const options = {
+    cookies: await cookies()
+  }
+
+  return withValidationAndErrorHandling("POST", req, SubscriptionInsertSchema, async (data: CreateSubscriptionType) => {
+    const result = await SubscriptionRepository.create(data, options);
     return NextResponse.json({ success: true, subscription: result });
   });
 }

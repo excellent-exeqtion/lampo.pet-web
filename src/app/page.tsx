@@ -1,11 +1,11 @@
 "use client";
 import React from "react";
 import "@picocss/pico";
-import CalendarModule from "./pages/pet/calendar/page";
+import HomePage from "./pages/home/page";
 
 export default function Home() {
   return (
-    <CalendarModule />
+    <HomePage />
   );
 }
 

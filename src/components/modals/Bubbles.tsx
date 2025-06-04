@@ -11,6 +11,7 @@ import { useUI } from "@/context/UIProvider";
 import { useStorageContext } from "@/context/StorageProvider";
 import { useRoleContext } from "@/context/RoleProvider";
 import VeterinarianPetCodeModal from "./VeterinarianPetCodeModal";
+import PlanSelectModal from "./PlanSelectModal";
 
 const bubbleStyleBase: React.CSSProperties = {
   backgroundColor: "#ffffff",
@@ -44,7 +45,8 @@ export default function Bubbles() {
     showAddPetModal,
     showEditPetModal,
     setShowVetPetCodeModal,
-    showVetPetCodeModal
+    showVetPetCodeModal,
+    showPlanModal
   } = useUI();
 
   useEffect(() => {
@@ -140,6 +142,7 @@ export default function Bubbles() {
       {showAddPetModal && <AddPetModal />}
       {showEditPetModal && <AddPetModal editPet={storage.storedPet} />}
       {showVetPetCodeModal && <VeterinarianPetCodeModal />}
+      {showPlanModal && <PlanSelectModal />}
     </div>
   );
 }

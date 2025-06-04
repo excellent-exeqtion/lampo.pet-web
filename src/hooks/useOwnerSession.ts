@@ -8,13 +8,15 @@ import { Empty } from "../data";
 import { PetType } from "../types";
 import { useSessionContext } from "@/context/SessionProvider";
 import { usePlanContext } from "@/context/PlanProvider";
+import { usePathname } from "next/navigation";
 
 export function useOwnerSession(): { isLoading: boolean } {
     const { db: session } = useSessionContext();
+    const pathname = usePathname();
     const storage = useStorageContext();
-    const { setShowAddPetModal } = useUI();
+    const { setShowAddPetModal, setShowPlanModal } = useUI();
     const { isOwner } = useRoleContext();
-    const { hasSelectedPlan } = usePlanContext();
+    const { hasSelectedPlan, isLoading: isLoadingPlan } = usePlanContext();
 
     const [loadingOwnerPets, setLoadingOwnerPets] = useState(true);
     const [loadingSelectedPet, setLoadingSelectedPet] = useState(true);
@@ -44,8 +46,17 @@ export function useOwnerSession(): { isLoading: boolean } {
         if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
             storage.setStoredPet(initialPet);
         }
-        if (!initialPet.id && isOwner && hasSelectedPlan) {
+        if (isOwner && !hasSelectedPlan && pathname !== '/pages/owner/register' && !isLoadingPlan) {
+            setShowPlanModal(true);
+        }
+        else{
+            setShowPlanModal(false);
+        }
+        if (!initialPet.id && isOwner && hasSelectedPlan && !loadingSelectedPet) {
             setShowAddPetModal(true);
+        }
+        else{
+            setShowAddPetModal(false);
         }
         setLoadingSelectedPet(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps

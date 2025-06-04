@@ -1,6 +1,6 @@
 // app/pages/index.tsx
 export { default as BasicDataPage } from "./pet/basic-data/page";
-export { default as CalendarPage } from "./pet/calendar/page";
+export { default as CalendarPage } from "./owner/calendar/page";
 export { default as ConditionsPage } from "./pet/conditions/page";
 export { default as LabTestsPage } from "./pet/lab-tests/page";
 export { default as LoginPage } from "../login/page";

@@ -6,9 +6,14 @@ import type { OwnerDataType } from '@/types/index';
 import { withValidationAndErrorHandling } from '@/services/apiService';
 import { OwnerDataTypeSchema } from '@/schemas/validationSchemas';
 import { RepositoryError } from '@/types/lib';
+import { cookies } from "next/headers";
 
 // PUT /api/owner : crea o actualiza datos del dueño
 export async function PUT(request: NextRequest) {
+    const options = {
+        cookies: await cookies()
+    }
+
     try {
         const payload: OwnerDataType = await request.json();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,14 +22,14 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: 'El campo owner_id es requerido' }, { status: 400 });
         }
 
-        const existing = await OwnerRepository.findById(ownerId);
+        const existing = await OwnerRepository.findById(ownerId, options);
         if (existing) {
-            await OwnerRepository.update(payload);
+            await OwnerRepository.update(payload, options);
         } else {
-            await OwnerRepository.create(payload);
+            await OwnerRepository.create(payload, options);
         }
 
-        const saved = await OwnerRepository.findById(ownerId);
+        const saved = await OwnerRepository.findById(ownerId, options);
         return NextResponse.json({ owner: saved });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -34,14 +39,18 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+    const options = {
+        cookies: await cookies()
+    }
+
     return withValidationAndErrorHandling(
         'POST',
         req,
         OwnerDataTypeSchema,
         async (ownerData: OwnerDataType) => {
             try {
-                    console.log('create owner', ownerData);
-                const { data, error } = await OwnerRepository.create(ownerData);
+                console.log('create owner', ownerData);
+                const { data, error } = await OwnerRepository.create(ownerData, options);
                 if (error) {
                     throw new RepositoryError(`Error creating record: ${JSON.stringify(ownerData)}`);
                 }

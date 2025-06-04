@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ConsultationFileRepository } from '@/repos/index';
 import { getWithErrorHandling } from '@/services/apiService';
 import { RepositoryError } from '@/types/lib';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { cookies } from "next/headers";
+import { createServerClient } from '@/lib/auth';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf', 'image/webp', 'image/gif'];
@@ -14,6 +14,10 @@ export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ consultationId: string }> }
 ) {
+    const options = {
+        cookies: await cookies()
+    }
+
     return getWithErrorHandling(req, async () => {
         const { consultationId } = await params;
         if (!consultationId) {
@@ -38,14 +42,14 @@ export async function POST(
             return NextResponse.json({ success: false, message: `Tipo de archivo no permitido. Permitidos: ${ALLOWED_FILE_TYPES.join(', ')}` }, { status: 415 });
         }
 
-        const supabase = createServerComponentClient({ cookies });
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await (await createServerClient(options.cookies)).getUser();
         const uploadedByUserId = user?.id;
 
         const { data, error } = await ConsultationFileRepository.uploadAndCreateRecord(
             consultationId,
             petId,
             file,
+            options,
             uploadedByUserId
         );
 
@@ -65,6 +69,10 @@ export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ consultationId: string }> }
 ) {
+    const options = {
+        cookies: await cookies()
+    }
+
     return getWithErrorHandling(
         req,
         async () => {
@@ -73,7 +81,7 @@ export async function GET(
                 return NextResponse.json({ success: false, message: 'consultationId es requerido' }, { status: 400 });
             }
 
-            const { data, error } = await ConsultationFileRepository.findByConsultationId(consultationId);
+            const { data, error } = await ConsultationFileRepository.findByConsultationId(consultationId, options);
 
             if (error) {
                 throw new RepositoryError(`Error obteniendo archivos para consulta ${consultationId}: ${error.message}`);

@@ -1,5 +1,4 @@
-import { QueryParamError, StepStateError, RepositoryError, ValidationResult } from "@/types/lib";
-import { AuthError } from "@supabase/supabase-js";
+import { QueryParamError, StepStateError, RepositoryError, ValidationResult, AuthExceptionError } from "@/types/lib";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodSchema, ZodError } from "zod";
 
@@ -40,7 +39,7 @@ export async function getWithErrorHandling(
             )
         }
         // 6) Error con la autenticación -> 500
-        if (err instanceof AuthError) {
+        if (err instanceof AuthExceptionError) {
             return NextResponse.json(
                 { success: false, message: `Error en la autenticación | ${err.message}` },
                 { status: 500 }
@@ -114,7 +113,7 @@ export async function withErrorHandling(
             )
         }
         // 6) Error con la autenticación -> 500
-        if (err instanceof AuthError) {
+        if (err instanceof AuthExceptionError) {
             return NextResponse.json(
                 { success: false, message: `Error en la autenticación | ${err.message}` },
                 { status: 500 }
@@ -185,7 +184,7 @@ export async function withValidationAndErrorHandling<T>(
             )
         }
         // 6) Error con la autenticación -> 500
-        if (err instanceof AuthError) {
+        if (err instanceof AuthExceptionError) {
             return NextResponse.json(
                 { success: false, message: `Error en la autenticación | ${err.message}` },
                 { status: 500 }

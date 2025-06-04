@@ -12,15 +12,16 @@ interface FormProps<T extends { id: string | undefined }> {
     submitLoading: boolean;
     loadLoading: boolean;
     error: string | null;
-    form: (entity: T , i: number) => React.JSX.Element
+    form: (entity: T, i: number) => React.JSX.Element
     onBack: () => void;
     handleAdd: () => void;
     handleSubmit: () => Promise<void>;
+    setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function FormComponent<T extends { id: string | undefined }>({ entityList, step, totalSteps, entityName, submitLoading, loadLoading, error, form, onBack, handleAdd, handleSubmit }: FormProps<T> ) {
+export default function FormComponent<T extends { id: string | undefined }>({ entityList, step, totalSteps, entityName, submitLoading, loadLoading, error, form, onBack, handleAdd, handleSubmit, setShowModal }: FormProps<T>) {
     return (
-        <StepsComponent onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={totalSteps} error={error} >
+        <StepsComponent onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={totalSteps} error={error} setShowModal={setShowModal}>
             <EntitiesComponent form={form} entityList={entityList} entityName={entityName} loadLoading={loadLoading} handleAdd={handleAdd} />
         </StepsComponent >
     );

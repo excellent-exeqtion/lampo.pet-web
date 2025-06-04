@@ -112,10 +112,12 @@ export interface FeatureType {
     text: string;
     badge?: string;
 }
+
 export interface PlanType {
     id: number;
     slug: string;
 }
+
 export interface PlanVersionType {
     id: number;
     plan_id: number;
@@ -144,6 +146,7 @@ export interface SubscriptionType {
     started_at: string;
     expires_at: string | null;
     updated_at: string;
+    plans_versions: PlanVersionType;
 }
 
 export interface CreateSubscriptionType {

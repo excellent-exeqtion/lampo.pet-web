@@ -1,36 +1,26 @@
 // src/repositories/subscription.repository.ts
-import { supabase } from '@/lib/auth/supabase/browserClient';
+import { dbClient } from '@/lib/auth';
 import { CreateSubscriptionType, SubscriptionType } from '@/types/index';
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabaseWithToken(access_token: string) {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // O usa la PUBLIC ANON KEY (pero nunca pongas la service key en frontend)
-        {
-            global: { headers: { Authorization: `Bearer ${access_token}` } }
-        }
-    );
-}
+import { RepositoryOptions } from '@/types/lib';
 
 export default class SubscriptionRepository {
     /**
      * Crea una suscripción en estado pending
      */
-    static async create(params: CreateSubscriptionType, accessToken: string): Promise<SubscriptionType | null> {
-        const { data, error } = await getSupabaseWithToken(accessToken)
+    static async create(params: CreateSubscriptionType, options: RepositoryOptions): Promise<SubscriptionType | null> {
+        const { data, error } = await dbClient(options)
             .from('subscriptions')
             .insert([{
                 user_id: params.ownerId,
                 plan_version_id: params.planVersionId,
                 cycle: params.cycle,
-                status: 'pending',
+                status: params.planVersionId == parseInt(process.env.FREE_PLAN ?? "0") ? 'active' : 'pending',
                 price_at_purchase: params.priceAtPurchase,
                 discount_applied: params.discountApplied
             }])
             .select()
 
-        if (error) throw error
+        if (error) throw error;
         if (!data || data.length === 0) return null;
         return data[0];
     }
@@ -38,13 +28,20 @@ export default class SubscriptionRepository {
     /**
      * Obtiene la suscripción activa de un owner
      */
-    static async getActiveByOwner(ownerId: string): Promise<SubscriptionType | null> {
-        const { data, error } = await supabase
+    static async getActiveByOwner(ownerId: string, options: RepositoryOptions): Promise<SubscriptionType | null> {
+        const { data, error } = await dbClient(options)
             .from('subscriptions')
-            .select('*')
-            .eq('owner_id', ownerId)
+            .select(
+                `*,
+                plans_versions (
+                    plans (
+                        slug
+                    )
+                )`)
+            .eq('user_id', ownerId)
             .eq('status', 'active')
 
+            console.log('subscriptions', data)
         if (error) {
             if (error.code === 'PGRST116') return null
             throw error
@@ -56,8 +53,8 @@ export default class SubscriptionRepository {
     /**
      * Lista todas las suscripciones de un owner
      */
-    static async getByOwner(ownerId: string): Promise<SubscriptionType[] | null> {
-        const { data, error } = await supabase
+    static async getByOwner(ownerId: string, options: RepositoryOptions): Promise<SubscriptionType[] | null> {
+        const { data, error } = await dbClient(options)
             .from('subscriptions')
             .select('*')
             .eq('user_id', ownerId)
@@ -76,8 +73,8 @@ export default class SubscriptionRepository {
         status: 'active' | 'canceled' | 'expired'
         externalId?: string
         expiresAt?: string
-    }): Promise<SubscriptionType | null> {
-        const { data, error } = await supabase
+    }, options: RepositoryOptions): Promise<SubscriptionType | null> {
+        const { data, error } = await dbClient(options)
             .from('subscriptions')
             .update({
                 status: params.status,

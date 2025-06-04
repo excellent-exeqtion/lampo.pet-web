@@ -1,9 +1,10 @@
-import { cookies } from 'next/headers';
+// src/utils/cookies.ts
+import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
-export async function getAccessTokenFromCookie() {
+export function getAccessTokenFromCookie(cookies: ReadonlyRequestCookies) {
     const projectRef = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_REF;
     const cookieName = `sb-${projectRef}-auth-token`;
-    const cookieValue = (await cookies()).get(cookieName)?.value;
+    const cookieValue = cookies.get(cookieName)?.value;
     if (!cookieValue) return null;
 
   // Decodifica base64url a base64

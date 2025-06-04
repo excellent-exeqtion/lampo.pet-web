@@ -4,6 +4,7 @@ import { getRequiredQueryParam, withValidationAndErrorHandling, getWithErrorHand
 import PetRepository from '@/repos/pet.repository'
 import { z } from 'zod'
 import { PetType } from '@/types/index'
+import { cookies } from "next/headers";
 
 const petSchema = z.object({
     id: z.string().optional(),
@@ -13,23 +14,31 @@ const petSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
+    const options = {
+        cookies: await cookies()
+    }
+
     return getWithErrorHandling(
         req,
         async () => {
             // ahora delegamos la validación del ownerId
             const ownerId = getRequiredQueryParam(req, 'ownerId')
-            const pets = await PetRepository.findByOwnerId(ownerId)
+            const pets = await PetRepository.findByOwnerId(ownerId, options)
             return NextResponse.json(pets, { status: 200 })
         });
 }
 
 export async function POST(req: NextRequest) {
+    const options = {
+        cookies: await cookies()
+    }
+
     return withValidationAndErrorHandling(
         'POST',
         req,
         petSchema,
         async (pet) => {
-            const { data, error } = await PetRepository.upsert(pet as PetType)
+            const { data, error } = await PetRepository.upsert(pet as PetType, options)
             if (error) {
                 return NextResponse.json(
                     { success: false, message: error.message },

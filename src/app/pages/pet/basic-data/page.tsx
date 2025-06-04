@@ -9,6 +9,7 @@ import { BasicDataType, OwnerDataType } from "@/types/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch } from "@/app/api";
 import { useStorageContext } from "@/context/StorageProvider";
+import { Empty } from "@/data/index";
 
 export default function BasicDataPage() {
   const { isMobile } = useDeviceDetect();
@@ -31,8 +32,16 @@ export default function BasicDataPage() {
         const resPet = await getFetch(`/api/pets/basic-data/${storage.storedPet.id}`);
         if (!resPet.ok) throw new Error("Falló fetch basic-data");
         const basicData: BasicDataType = await resPet.json();
-        storage.setStoredBasicData(basicData);
-        setPetData(basicData);
+        const pet = Empty.BasicData();
+        pet.pet_id = 'x';
+        if(!basicData){
+          setPetData(pet);
+          storage.setStoredBasicData(pet);
+        }
+        else{
+          setPetData(basicData);
+          storage.setStoredBasicData(basicData);
+        }
       } catch (err) {
         console.error("Error cargando datos:", err);
       }

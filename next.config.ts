@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
     MAILTRAP_PROJECT: process.env.MAILTRAP_PROJECT,
     MAILTRAP_SUBJECT: process.env.MAILTRAP_SUBJECT,
     CODE_EXPIRE_AT: process.env.CODE_EXPIRE_AT,
+    FREE_PLAN: process.env.FREE_PLAN,
+    DISABLE_ALL_PLANS: process.env.DISABLE_ALL_PLANS,
     PROTOCOL: process.env.PROTOCOL,
     PRODUCTION_URL: process.env.PRODUCTION_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,

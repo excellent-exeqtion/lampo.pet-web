@@ -2,11 +2,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
-import { PlanVersionType } from "@/types/index";
+import { PlanVersionType, SubscriptionType } from "@/types/index";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/useSession";
 import { getFetch, postFetch } from "@/app/api";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useStorageContext } from "@/context/StorageProvider";
 
 export default function RegisterPage() {
     useSession();
@@ -17,6 +18,7 @@ export default function RegisterPage() {
     );
     const [loading, setLoading] = useState<boolean>(false);
     const session = useSessionContext();
+    const { setStoredSubscriptionData } = useStorageContext();
 
     useEffect(() => {
         async function load() {
@@ -80,8 +82,9 @@ export default function RegisterPage() {
             if (!response.ok || !json.success) {
                 throw new Error(json.message || "Error al crear suscripción");
             }
+            setStoredSubscriptionData(json.subscription as SubscriptionType);
 
-            router.replace("/pages/pet/register");
+            router.replace("/");
         } catch (e) {
             console.error("Error creando suscripción:", e);
         } finally {
@@ -151,8 +154,8 @@ export default function RegisterPage() {
                                         style={{
                                             flex: 1,
                                             padding: "0.5rem",
-                                            background: cycle === "monthly" ? "#fff" : "transparent",
-                                            color: darkBg ? "#fff" : "#111",
+                                            background: cycle === "monthly" ? "#fff" : "lightgray",
+                                            color: "#111",
                                             border: "none",
                                             cursor: "pointer",
                                             fontSize: "0.875rem",
@@ -170,6 +173,7 @@ export default function RegisterPage() {
                                                     fontSize: "0.75rem",
                                                     padding: "0.25rem 0.5rem",
                                                     borderRadius: "4px",
+                                                    marginBottom: "10px"
                                                 }}
                                             >
                                                 {discountMonthlyLabel}
@@ -181,8 +185,8 @@ export default function RegisterPage() {
                                         style={{
                                             flex: 1,
                                             padding: "0.5rem",
-                                            background: cycle === "annual" ? "#fff" : "transparent",
-                                            color: darkBg ? "#fff" : "#111",
+                                            background: cycle === "annual" ? "#fff" : "lightgray",
+                                            color: "#111",
                                             border: "none",
                                             cursor: "pointer",
                                             fontSize: "0.875rem",
@@ -210,7 +214,7 @@ export default function RegisterPage() {
                                 </div>
                             )}
 
-                            <h3 style={{ marginTop: isStandard ? "2rem" : 0, marginBottom: "0.5rem" }}>
+                            <h3 style={{ marginTop: isStandard ? "2rem" : 0, marginBottom: "0.5rem", color: darkBg ? 'lightgray' : 'var(--pico-color)' }}>
                                 {plan.title}
                             </h3>
                             <p
@@ -218,12 +222,13 @@ export default function RegisterPage() {
                                     fontSize: "0.875rem",
                                     marginBottom: "1rem",
                                     opacity: darkBg ? 0.75 : 1,
+                                    color: darkBg ? 'lightgray' : 'var(--pico-color)'
                                 }}
                             >
                                 {plan.description}
                             </p>
 
-                            <div style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "0.25rem" }}>
+                            <div style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "0.25rem", color: darkBg ? '#FBBF24' : 'var(--pico-color)' }}>
                                 {cycle === "annual"
                                     ? formatPrice(plan.price_year)
                                     : formatPrice(plan.price_month)}
@@ -252,7 +257,7 @@ export default function RegisterPage() {
                                                 color: darkBg ? "#FBBF24" : borderColor,
                                             }}
                                         />
-                                        <span style={{ fontSize: "0.875rem" }}>{feat.text}</span>
+                                        <span style={{ fontSize: "0.875rem", color: darkBg ? 'lightgray' : 'var(--pico-color)' }}>{feat.text}</span>
                                         {feat.badge && (
                                             <span
                                                 style={{
@@ -279,10 +284,10 @@ export default function RegisterPage() {
                                     padding: "0.75rem",
                                     fontWeight: 600,
                                     fontSize: "1rem",
-                                    opacity: loading ? 0.6 : 1,
-                                    cursor: loading ? "not-allowed" : "pointer",
+                                    opacity: loading || (plan.slug !== "free" && process.env.DISABLE_ALL_PLANS == 'true') ? 0.6 : 1,
+                                    cursor: loading || (plan.slug !== "free" && process.env.DISABLE_ALL_PLANS == 'true') ? "not-allowed" : "pointer",
                                 }}
-                                disabled={loading}
+                                disabled={loading || (plan.slug !== "free" && process.env.DISABLE_ALL_PLANS == 'true')}
                             >
                                 {plan.slug === "free" ? "Selecciona este plan GRATIS" : "Continuar al pago"}
                             </button>

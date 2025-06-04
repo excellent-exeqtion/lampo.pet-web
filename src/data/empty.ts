@@ -116,10 +116,7 @@ export function PlanVersion(): PlanVersionType {
         features: [],
         effective_from: '',
         effective_to: null,
-        plans: {
-            id: 0,
-            slug: ''
-        }
+        plans: Plan()
     }
 };
 export function Subscription(): SubscriptionType {
@@ -134,7 +131,8 @@ export function Subscription(): SubscriptionType {
         discount_applied: 0,
         started_at: '',
         expires_at: null,
-        updated_at: ''
+        updated_at: '',
+        plans_versions: PlanVersion()
     }
 };
 

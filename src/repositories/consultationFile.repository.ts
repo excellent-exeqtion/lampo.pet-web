@@ -1,6 +1,7 @@
 // src/repos/consultationFile.repository.ts
-import { supabase } from '@/lib/auth/supabase/browserClient';
+import { dbClient } from '@/lib/auth';
 import type { ConsultationFileType } from '@/types/index';
+import { RepositoryOptions } from '@/types/lib';
 
 const CONSULTATION_FILES_BUCKET = 'consultation-files'; // Define tu bucket
 
@@ -9,6 +10,7 @@ export default class ConsultationFileRepository {
         consultationId: string,
         petId: string, // Necesario para la ruta del archivo
         file: File,
+        options: RepositoryOptions,
         uploadedByUserId?: string | null
     ): Promise<{ data: ConsultationFileType | null; error: Error | null }> {
         const fileName = `${file.name}`; // Podrías añadir un timestamp o UUID para unicidad
@@ -16,7 +18,7 @@ export default class ConsultationFileRepository {
 
         try {
             // 1. Subir archivo a Supabase Storage
-            const { error: uploadError } = await supabase.storage
+            const { error: uploadError } = await dbClient(options).storage
                 .from(CONSULTATION_FILES_BUCKET)
                 .upload(filePath, file);
 
@@ -32,7 +34,7 @@ export default class ConsultationFileRepository {
                 uploaded_by_user_id: uploadedByUserId || undefined,
             };
 
-            const { data: dbData, error: dbError } = await supabase
+            const { data: dbData, error: dbError } = await dbClient(options)
                 .from('consultation_files')
                 .insert(fileRecord)
                 .select()
@@ -40,21 +42,21 @@ export default class ConsultationFileRepository {
 
             if (dbError) {
                 // Si falla la inserción en BD, intentar eliminar el archivo de Storage (rollback)
-                await supabase.storage.from(CONSULTATION_FILES_BUCKET).remove([filePath]);
+                await dbClient(options).storage.from(CONSULTATION_FILES_BUCKET).remove([filePath]);
                 throw dbError;
             }
 
             return { data: dbData, error: null };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error('Error in ConsultationFileRepository.uploadAndCreateRecord:', error);
             return { data: null, error };
         }
     }
 
-    static async findByConsultationId(consultationId: string): Promise<{ data: ConsultationFileType[] | null; error: Error | null }> {
+    static async findByConsultationId(consultationId: string, options: RepositoryOptions): Promise<{ data: ConsultationFileType[] | null; error: Error | null }> {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await dbClient(options)
                 .from('consultation_files')
                 .select('*')
                 .eq('consultation_id', consultationId)
@@ -62,17 +64,17 @@ export default class ConsultationFileRepository {
 
             if (error) throw error;
             return { data, error: null };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error('Error in ConsultationFileRepository.findByConsultationId:', error);
             return { data: null, error };
         }
     }
 
-    static async delete(fileId: string): Promise<{ error: Error | null }> {
+    static async delete(fileId: string, options: RepositoryOptions): Promise<{ error: Error | null }> {
         try {
             // 1. Obtener el path del archivo para eliminarlo de Storage
-            const { data: fileRecord, error: findError } = await supabase
+            const { data: fileRecord, error: findError } = await dbClient(options)
                 .from('consultation_files')
                 .select('file_path')
                 .eq('id', fileId)
@@ -82,7 +84,7 @@ export default class ConsultationFileRepository {
             if (!fileRecord) throw new Error('File record not found for deletion.');
 
             // 2. Eliminar de la base de datos
-            const { error: dbDeleteError } = await supabase
+            const { error: dbDeleteError } = await dbClient(options)
                 .from('consultation_files')
                 .delete()
                 .eq('id', fileId);
@@ -90,7 +92,7 @@ export default class ConsultationFileRepository {
             if (dbDeleteError) throw dbDeleteError;
 
             // 3. Eliminar de Supabase Storage
-            const { error: storageDeleteError } = await supabase.storage
+            const { error: storageDeleteError } = await dbClient(options).storage
                 .from(CONSULTATION_FILES_BUCKET)
                 .remove([fileRecord.file_path]);
 
@@ -101,7 +103,7 @@ export default class ConsultationFileRepository {
             }
 
             return { error: null };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error('Error in ConsultationFileRepository.delete:', error);
             return { error };
@@ -112,19 +114,30 @@ export default class ConsultationFileRepository {
      * Genera una URL firmada para descargar un archivo.
      * La URL tiene un tiempo de expiración.
      */
-    static async getSignedUrl(filePath: string, expiresInSeconds = 3600): Promise<{ signedURL: string | null; error: Error | null }> {
+    static async getSignedUrl(filePath: string, options: RepositoryOptions, expiresInSeconds = 3600): Promise<{ signedURL: string | null; error: Error | null }> {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await dbClient(options)
                 .storage
                 .from(CONSULTATION_FILES_BUCKET)
                 .createSignedUrl(filePath, expiresInSeconds);
 
             if (error) throw error;
             return { signedURL: data?.signedUrl || null, error: null };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error('Error creating signed URL:', error);
             return { signedURL: null, error };
         }
+    }
+
+    static async getFile(fileId: string, options: RepositoryOptions) {
+        const { data: fileRecord, error: findError } = await dbClient(options)
+            .from('consultation_files')
+            .select('file_path')
+            .eq('id', fileId)
+
+        if (findError) throw new Error(findError.message);
+        if (!fileRecord || fileRecord.length === 0) return null;
+        return fileRecord[0];
     }
 }

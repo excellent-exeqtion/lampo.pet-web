@@ -157,6 +157,7 @@ export default function AddPetModal({ editPet }: AddPetModalProps) {
                         onBack={back}
                         stepStates={stepStates}
                         setStepStates={setStepStates}
+                        setShowModal={editPet == undefined ? setShowAddPetModal : setShowEditPetModal}
                     />
                 );
 
@@ -170,6 +171,7 @@ export default function AddPetModal({ editPet }: AddPetModalProps) {
                         onBack={back}
                         stepStates={stepStates}
                         setStepStates={setStepStates}
+                        setShowModal={editPet == undefined ? setShowAddPetModal : setShowEditPetModal}
                     />
                 );
 
@@ -195,6 +197,7 @@ export default function AddPetModal({ editPet }: AddPetModalProps) {
                         fieldsConfig={cfg.fieldsConfig}
                         onNext={step === PetStep.Surgeries ? finalize : next}
                         onBack={back}
+                        setShowModal={editPet == undefined ? setShowAddPetModal : setShowEditPetModal}
                     />
                 );
             }

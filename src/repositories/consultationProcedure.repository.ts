@@ -1,11 +1,13 @@
 // src/repos/consultationProcedure.repository.ts
-import { supabase } from '@/lib/auth/supabase/browserClient';
+import { dbClient } from '@/lib/auth';
 import type { ConsultationProcedureType } from '@/types/index';
+import { RepositoryOptions } from '@/types/lib';
 
 export default class ConsultationProcedureRepository {
     static async createAll(
         consultationId: string,
-        procedures: Omit<ConsultationProcedureType, 'id' | 'consultation_id' | 'created_at'>[]
+        procedures: Omit<ConsultationProcedureType, 'id' | 'consultation_id' | 'created_at'>[],
+        options: RepositoryOptions
     ): Promise<{ data: ConsultationProcedureType[] | null; error: Error | null }> {
         const proceduresToInsert = procedures.map(proc => ({
             ...proc,
@@ -13,7 +15,7 @@ export default class ConsultationProcedureRepository {
         }));
 
         try {
-            const { data, error } = await supabase
+            const { data, error } = await dbClient(options)
                 .from('consultation_procedures')
                 .insert(proceduresToInsert)
                 .select();
@@ -27,9 +29,9 @@ export default class ConsultationProcedureRepository {
         }
     }
 
-    static async findByConsultationId(consultationId: string): Promise<{ data: ConsultationProcedureType[] | null; error: Error | null }> {
+    static async findByConsultationId(consultationId: string, options: RepositoryOptions): Promise<{ data: ConsultationProcedureType[] | null; error: Error | null }> {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await dbClient(options)
                 .from('consultation_procedures')
                 .select('*')
                 .eq('consultation_id', consultationId)
@@ -44,9 +46,9 @@ export default class ConsultationProcedureRepository {
         }
     }
 
-    static async delete(procedureId: string): Promise<{ error: Error | null }> {
+    static async delete(procedureId: string, options: RepositoryOptions): Promise<{ error: Error | null }> {
         try {
-            const { error } = await supabase
+            const { error } = await dbClient(options)
                 .from('consultation_procedures')
                 .delete()
                 .eq('id', procedureId);

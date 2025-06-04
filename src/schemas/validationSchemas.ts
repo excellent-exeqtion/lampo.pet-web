@@ -179,6 +179,14 @@ export const SubscriptionTypeSchema = z.object({
   updated_at: z.string(),
 });
 
+export const SubscriptionInsertSchema = z.object({
+  ownerId: z.string(),
+  planVersionId: z.string(),
+  cycle: z.enum(["monthly", "annual"]),
+  priceAtPurchase: z.number(),
+  discountApplied: z.number()
+});
+
 
 export const ConsultationProcedurePayloadSchema = z.object({
   procedure_name: z.string().min(1, "El nombre del procedimiento es requerido."),

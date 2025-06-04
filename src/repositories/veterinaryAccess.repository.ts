@@ -1,5 +1,6 @@
 // src/repositories/veterinaryAccess.repository.ts
-import { supabase } from "@/lib/auth/supabase/browserClient";
+import { dbClient } from "@/lib/auth";
+import { RepositoryOptions } from "@/types/lib";
 import { VeterinaryAccessType } from "../types";
 import PetCodeRepository from "./petCode.repository";
 
@@ -8,8 +9,8 @@ export default class VeterinaryAccessRepository {
     static async create(access: Omit<
         VeterinaryAccessType,
         "id" | "created_at"
-    >): Promise<VeterinaryAccessType> {
-        const { data, error } = await supabase
+    >, options: RepositoryOptions): Promise<VeterinaryAccessType> {
+        const { data, error } = await dbClient(options)
             .from("veterinary_accesses")
             .insert(access)
             .select("*")
@@ -22,12 +23,13 @@ export default class VeterinaryAccessRepository {
     /** Obtiene datos de acceso por código (para validaciones o historial) */
     static async findByCodeAndByPetId(
         code: string,
-        pet_id: string
+        pet_id: string, 
+        options: RepositoryOptions
     ): Promise<VeterinaryAccessType | null> {
         try {
-            const petCode = await PetCodeRepository.find(code);
+            const petCode = await PetCodeRepository.find(code, options);
             if (!petCode) return null;
-            const { data, error } = await supabase
+            const { data, error } = await dbClient(options)
                 .from("veterinary_accesses")
                 .select("*")
                 .eq("pet_code_id", petCode.id)

@@ -1,11 +1,13 @@
 // src/repos/consultationMedication.repository.ts
-import { supabase } from '@/lib/auth/supabase/browserClient';
+import { dbClient } from '@/lib/auth';
 import type { ConsultationMedicationType } from '@/types/index';
+import { RepositoryOptions } from '@/types/lib';
 
 export default class ConsultationMedicationRepository {
     static async createAll(
         consultationId: string,
-        medications: Omit<ConsultationMedicationType, 'id' | 'consultation_id' | 'created_at'>[]
+        medications: Omit<ConsultationMedicationType, 'id' | 'consultation_id' | 'created_at'>[], 
+        options: RepositoryOptions
     ): Promise<{ data: ConsultationMedicationType[] | null; error: Error | null }> {
         const medicationsToInsert = medications.map(med => ({
             ...med,
@@ -13,7 +15,7 @@ export default class ConsultationMedicationRepository {
         }));
 
         try {
-            const { data, error } = await supabase
+            const { data, error } = await dbClient(options)
                 .from('consultation_medications')
                 .insert(medicationsToInsert)
                 .select();
@@ -27,9 +29,9 @@ export default class ConsultationMedicationRepository {
         }
     }
 
-    static async findByConsultationId(consultationId: string): Promise<{ data: ConsultationMedicationType[] | null; error: Error | null }> {
+    static async findByConsultationId(consultationId: string, options: RepositoryOptions): Promise<{ data: ConsultationMedicationType[] | null; error: Error | null }> {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await dbClient(options)
                 .from('consultation_medications')
                 .select('*')
                 .eq('consultation_id', consultationId)
@@ -43,9 +45,9 @@ export default class ConsultationMedicationRepository {
             return { data: null, error };
         }
     }
-     static async delete(medicationId: string): Promise<{ error: Error | null }> {
+     static async delete(medicationId: string, options: RepositoryOptions): Promise<{ error: Error | null }> {
         try {
-            const { error } = await supabase
+            const { error } = await dbClient(options)
                 .from('consultation_medications')
                 .delete()
                 .eq('id', medicationId);

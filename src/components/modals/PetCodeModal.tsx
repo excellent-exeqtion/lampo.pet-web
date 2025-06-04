@@ -62,7 +62,7 @@ export default function PetCodeModal() {
       }
 
       {error && (
-        <p style={{ color: "red", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
+        <p style={{ color: "var(--primary-red)", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
           {error}
         </p>
       )}
@@ -84,9 +84,9 @@ export default function PetCodeModal() {
                   display: "inline-block",
                   width: "2rem",
                   padding: "0.5rem 0",
-                  border: "1px solid #ccc",
+                  border: "1px solid var(--primary-lightgray)",
                   borderRadius: "0.25rem",
-                  color: "#007BFF",
+                  color: "var(--pico-primary)",
                   fontWeight: "bold",
                   textAlign: "center",
                   fontFamily: "monospace",
@@ -106,12 +106,12 @@ export default function PetCodeModal() {
               }}
               title="Copiar código"
             >
-              <FaCopy size={20} color={copied ? "green" : "#007BFF"} />
+              <FaCopy size={20} color={copied ? "green" : "var(--pico-primary)"} />
             </button>
           </div>
 
           {copied && (
-            <p style={{ color: "green", marginBottom: "0.5rem", fontSize: "0.8rem" }}>
+            <p style={{ color: "var(--primary-green)", marginBottom: "0.5rem", fontSize: "0.8rem" }}>
               ¡Código copiado!
             </p>
           )}

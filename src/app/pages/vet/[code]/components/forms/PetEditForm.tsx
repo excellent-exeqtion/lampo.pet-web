@@ -66,7 +66,7 @@ export default function PetEditForm({ code, pet, disabled = false }: Props) {
 
       {alert && (
         // ← solo basar color en formFailed
-        <p style={{ color: formFailed ? "red" : "green" }}>{alert}</p>
+        <p style={{ color: formFailed ? "var(--primary-red)" : "var(--primary-green)" }}>{alert}</p>
       )}
     </form>
   );

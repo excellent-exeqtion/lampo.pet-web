@@ -175,10 +175,10 @@ export default function PetNameForm({
           <div
             {...getRootProps()}
             style={{
-              border: `2px dashed ${isDragActive ? '#4285f4' : '#ccc'}`,
+              border: `2px dashed ${isDragActive ? 'var(--pico-primary)' : 'var(--primary-lightgray)'}`,
               borderRadius: '4px',
               padding: '1.5rem',
-              backgroundColor: isDragActive ? '#e8f0fe' : '#f5f5f5',
+              backgroundColor: isDragActive ? 'var(--primary-skin)' : 'var(--primary-darkerskin)',
               textAlign: 'center',
               cursor: 'pointer'
             }}
@@ -186,7 +186,7 @@ export default function PetNameForm({
           >
             <input {...getInputProps()} />
             <FaCloudUploadAlt
-              style={{ fontSize: '2rem', color: isDragActive ? '#4285f4' : '#888' }}
+              style={{ fontSize: '2rem', color: isDragActive ? 'var(--pico-primary)' : 'var(--primary-darkgray)' }}
             />
             <p style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>
               <b>Selecciona o</b> arrastra y suelta la foto aquí

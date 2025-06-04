@@ -41,7 +41,7 @@ export function MedicationsSection({ medications, onChange }: MedicationsSection
         <fieldset>
             <legend>Medicamentos Administrados/Prescritos en Consulta</legend>
             {medications.map((med, index) => (
-                <div key={index} style={{ border: '1px solid #e0e0e0', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' }}>
+                <div key={index} style={{ border: '1px solid var(--primary-inverse)', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' }}>
                     <div className="grid">
                         <label htmlFor={`medication_name_${index}`}>
                             Nombre del Medicamento

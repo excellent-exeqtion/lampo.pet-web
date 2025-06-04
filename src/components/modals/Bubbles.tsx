@@ -14,15 +14,15 @@ import VeterinarianPetCodeModal from "./VeterinarianPetCodeModal";
 import PlanSelectModal from "./PlanSelectModal";
 
 const bubbleStyleBase: React.CSSProperties = {
-  backgroundColor: "#ffffff",
-  border: "1px solid rgb(1, 114, 173)",
+  backgroundColor: "var(--primary-inverse)",
+  border: "1px solid var(--pico-primary)",
   borderRadius: "50%",
   width: "3rem",
   height: "3rem",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  color: "rgb(1, 114, 173)",
+  color: "var(--pico-primary)",
   fontSize: "1.25rem",
   cursor: "pointer",
 };

@@ -58,7 +58,7 @@ export default function VetPage({ params }: VetPageProps) {
       <h1>Editar datos de mascota</h1>
 
       {!isValid && (
-        <p style={{ marginBottom: "1rem", color: "red" }}>
+        <p style={{ marginBottom: "1rem", color: "var(--primary-red)" }}>
           {message}
         </p>
       )}

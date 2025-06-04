@@ -15,18 +15,18 @@ export default function DataNotFoundComponent({ message }: DataNotFoundProps) {
         alignItems: "center",
         justifyContent: "center",
         padding: "2rem",
-        backgroundColor: "#F3F4F6",
+        backgroundColor: "var(--pico--primary)",
         borderRadius: "0.5rem",
-        color: "#6B7280",
+        color: "var(--primary-lightgray)",
         textAlign: "center",
         maxWidth: "400px",
         margin: "2rem auto",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        boxShadow: "0 2px 8px var(--primary-lighttransparent)",
       }}
     >
       <FaInbox
         size={48}
-        style={{ marginBottom: "1rem", color: "#D1D5DB" }}
+        style={{ marginBottom: "1rem", color: "var(--primary-skin)" }}
       />
       <p style={{ fontSize: "1.25rem", lineHeight: "1.5" }}>
         {message}

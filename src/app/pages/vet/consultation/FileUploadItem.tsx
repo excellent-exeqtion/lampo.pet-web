@@ -27,7 +27,7 @@ export function FileUploadItem({ file, onDelete /*, onDownload */ }: FileUploadI
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '0.5rem',
-            border: '1px solid #eee',
+            border: '1px solid var(--primary-inverse)',
             borderRadius: '4px',
             marginBottom: '0.5rem',
             fontSize: '0.9rem'
@@ -35,7 +35,7 @@ export function FileUploadItem({ file, onDelete /*, onDownload */ }: FileUploadI
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {getFileIcon()}
                 <span>{file.file_name}</span>
-                <span style={{ fontSize: '0.75rem', color: '#777' }}> ({(file.file_size_bytes! / 1024).toFixed(1)} KB)</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--primary-lightgray)' }}> ({(file.file_size_bytes! / 1024).toFixed(1)} KB)</span>
             </div>
             <div>
                 {/* 

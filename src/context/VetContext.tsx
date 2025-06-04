@@ -5,7 +5,7 @@ import { getFetch } from "@/app/api";
 import type { VeterinarianType } from "@/types/index";
 import { useSessionContext } from "./SessionProvider";
 import { useRoleContext } from "./RoleProvider";
-import { useUI } from "./UIProvider";
+//import { useUI } from "./UIProvider";
 import { useStorageContext } from "./StorageProvider";
 
 interface VetContextType {
@@ -26,7 +26,7 @@ export function VetProvider({ children }: VetProviderProps) {
     const [vet, setVet] = useState<VeterinarianType | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const { isVetWithSession } = useRoleContext();
-    const { setShowVetPetCodeModal } = useUI();
+    //const { setShowVetPetCodeModal } = useUI();
     const storage = useStorageContext();
 
     // Función para obtener datos del veterinario desde API
@@ -52,9 +52,10 @@ export function VetProvider({ children }: VetProviderProps) {
                 else{
                     setVet(storage.storedVetData);
                 }
-                if (!storage.storedVetAccess.id) {
+                //TODO: check if we want to open directly the modal to ask for the code.
+                /*if (!storage.storedVetAccess.id) {
                     setShowVetPetCodeModal(true);
-                }
+                }*/
             }
         } catch (error) {
             console.error(error);

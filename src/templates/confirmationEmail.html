@@ -4,19 +4,19 @@
   <meta charset="UTF-8">
   <title>Confirma tu correo</title>
 </head>
-<body style="margin:0; padding:0; background-color:#F9FAFB; font-family: 'Helvetica Neue', Arial, sans-serif;">
+<body style="margin:0; padding:0; background-color:var(--primary-inverse); font-family: 'Helvetica Neue', Arial, sans-serif;">
 
   <!-- Contenedor principal -->
-  <div style="max-width:600px; margin:40px auto; background:#FFFFFF; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+  <div style="max-width:600px; margin:40px auto; background:var(--primary-inverse); border-radius:8px; overflow:hidden; box-shadow:0 2px 8px var(--primary-lighttransparent);">
 
     <!-- Header: logo y fondo principal -->
-    <div style="background:#3B82F6; padding:20px; text-align:center;">
+    <div style="background:var(--pico-primary); padding:20px; text-align:center;">
       <img src="https://lampo-pet-web-git-main-excellent-exeqtions-projects.vercel.app/logo.png" alt="Lampo" width="140" style="display:block; margin:0 auto;">
     </div>
 
     <!-- Cuerpo del mensaje -->
-    <div style="padding:30px; color:#333333; line-height:1.6;">
-      <h2 style="margin-top:0; color:#333333;">¡Bienvenido a Lampo!</h2>
+    <div style="padding:30px; color:var(--primary-darkgray); line-height:1.6;">
+      <h2 style="margin-top:0; color:var(--primary-darkgray);">¡Bienvenido a Lampo!</h2>
       <p>Para completar tu registro y acceder a todas las funcionalidades de nuestra plataforma, por favor confirma tu correo electrónico.</p>
 
       <!-- Botón de llamada a la acción -->
@@ -24,8 +24,8 @@
         <a
           href="{{ .ConfirmationURL }}auth/verify"
           style="
-            background-color:#3B82F6;
-            color:#FFFFFF;
+            background-color:var(--pico-primary);
+            color:var(--primary-inverse);
             text-decoration:none;
             padding:12px 24px;
             border-radius:4px;
@@ -36,13 +36,13 @@
         </a>
       </div>
 
-      <p style="font-size:14px; color:#777777; margin-bottom:0;">
+      <p style="font-size:14px; color:var(--primary-darkgray); margin-bottom:0;">
         Si no solicitaste este correo, puedes ignorar este mensaje.
       </p>
     </div>
 
     <!-- Footer -->
-    <div style="background:#F9FAFB; text-align:center; padding:20px; font-size:12px; color:#777777;">
+    <div style="background:var(--primary-inverse); text-align:center; padding:20px; font-size:12px; color:var(--primary-darkgray);">
       © {{ .Year }} Lampo. Todos los derechos reservados.
     </div>
 

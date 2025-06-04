@@ -6,9 +6,20 @@
 [data-theme="light"],
 :root:not([data-theme="dark"]) {
   --primary: #e53935;
-  --primary-hover: #d32f2f;
+  --primary-hover: var(--primary-red);
   --primary-focus: rgba(229, 57, 53, 0.125);
   --primary-inverse: #FFF;
+  --primary-yellow: #FBBF24;
+  --primary-lightyellow: #fff3cd;
+  --primary-darkblue: #0B1446;
+  --primary-green: #10B981;
+  --primary-red: #d73a49;
+  --primary-lightgray: #ccc;
+  --primary-darkgray: #888;
+  --primary-skin: #e8f0fe;
+  --primary-darkerskin: #f5f5f5;
+  --primary-lighttransparent: rgba(0, 0, 0, 0.1);
+  --primary--graytransparent: rgba(255, 255, 255, 0.1);
 }
 
 /* Red Dark scheme (Auto) */
@@ -19,6 +30,18 @@
     --primary-hover: #f44336;
     --primary-focus: rgba(229, 57, 53, 0.25);
     --primary-inverse: #FFF;
+    --primary-yellow: #FBBF24;
+    --primary-lightyellow: #fff3cd;
+    --primary-darkblue: #0B1446;
+    --primary-green: #10B981;
+    --primary-red: #d73a49;
+    --primary-lightgray: #ccc;
+    --primary-darkgray: #888;
+    --primary-skin: #e8f0fe;
+    --primary-darkerskin: #f5f5f5;
+    --primary-lighttransparent: rgba(0, 0, 0, 0.1);
+    --primary-darkertransparent: rgba(0, 0, 0, 0.5);
+    --primary--graytransparent: rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -29,56 +52,80 @@
   --primary-hover: #f44336;
   --primary-focus: rgba(229, 57, 53, 0.25);
   --primary-inverse: #FFF;
-}
+  --primary-yellow: #FBBF24;
+  --primary-lightyellow: #fff3cd;
+  --primary-darkblue: #0B1446;
+  --primary-green: #10B981;
+  --primary-red: #d73a49;
+  --primary-lightgray: #ccc;
+  --primary-darkgray: #888;
+  --primary-skin: #e8f0fe;
+  --primary-darkerskin: #f5f5f5;
+  --primary-lighttransparent: rgba(0, 0, 0, 0.1);
+  --primary-darkertransparent: rgba(0, 0, 0, 0.5);
+  --primary--graytransparent: rgba(255, 255, 255, 0.1);
 
-/* Red (Common styles) */
-:root {
-  --form-element-active-border-color: var(--primary);
-  --form-element-focus-color: var(--primary-focus);
-  --switch-color: var(--primary-inverse);
-  --switch-checked-background-color: var(--primary);
-}
+  /* Red (Common styles) */
+  :root {
+    --form-element-active-border-color: var(--primary);
+    --form-element-focus-color: var(--primary-focus);
+    --switch-color: var(--primary-inverse);
+    --switch-checked-background-color: var(--primary);
+    --primary-yellow: #FBBF24;
+    --primary-lightyellow: #fff3cd;
+    --primary-darkblue: #0B1446;
+    --primary-green: #10B981;
+    --primary-red: #d73a49;
+    --primary-lightgray: #ccc;
+    --primary-darkgray: #888;
+    --primary-skin: #e8f0fe;
+    --primary-darkerskin: #f5f5f5;
+    --primary-lighttransparent: rgba(0, 0, 0, 0.1);
+    --primary-darkertransparent: rgba(0, 0, 0, 0.5);
+    --primary--graytransparent: rgba(255, 255, 255, 0.1);
+  }
 
-.pet-dropdown {
-  --pico-box-shadow: 'none' !important;
-}
+  .pet-dropdown {
+    --pico-box-shadow: 'none' !important;
+  }
 
-.pet-selection:hover {
-  background-color: gray;
-}
+  .pet-selection:hover {
+    background-color: gray;
+  }
 
-body {
-  -webkit-touch-callout: none;
-  /* iOS Safari */
-  -webkit-user-select: none;
-  /* Safari */
-  -khtml-user-select: none;
-  /* Konqueror HTML */
-  -moz-user-select: none;
-  /* Old versions of Firefox */
-  -ms-user-select: none;
-  /* Internet Explorer/Edge */
-  user-select: none;
-  /* Non-prefixed version, currently
+  body {
+    -webkit-touch-callout: none;
+    /* iOS Safari */
+    -webkit-user-select: none;
+    /* Safari */
+    -khtml-user-select: none;
+    /* Konqueror HTML */
+    -moz-user-select: none;
+    /* Old versions of Firefox */
+    -ms-user-select: none;
+    /* Internet Explorer/Edge */
+    user-select: none;
+    /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
-}
+  }
 
-.modal-title {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: #02659a !important;
-}
+  .modal-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--pico-primary) !important;
+  }
 
-.modal-description {
-  font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 1.5rem;
-}
+  .modal-description {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 1.5rem;
+  }
 
-.text-error {
-  color: #d32f2f;
-}
+  .text-error {
+    color: var(--primary-red);
+  }
 
-main {
-  background-color: rgb(249, 250, 251);
+  main {
+    background-color: rgb(249, 250, 251);
+  }
 }

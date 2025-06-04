@@ -26,7 +26,7 @@ export default function CircularImageComponent({ src, width, borderSize = '5px',
                 height: width,
                 borderRadius: '50%',
                 overflow: 'hidden',
-                border: `${borderSize} solid #02659a`,
+                border: `${borderSize} solid var(--pico-primary)`,
                 cursor: 'pointer'
             }}
             >
@@ -50,7 +50,7 @@ export default function CircularImageComponent({ src, width, borderSize = '5px',
                 height: width,
                 borderRadius: '50%',
                 overflow: 'hidden',
-                border: '5px solid #02659a',
+                border: '5px solid var(--pico-primary)',
                 cursor: 'pointer'
             }}
         >
@@ -68,14 +68,14 @@ export default function CircularImageComponent({ src, width, borderSize = '5px',
                         left: 0,
                         width: '100%',
                         height: '100%',
-                        backgroundColor: 'rgba(255,255,255,0.6)',
+                        backgroundColor: 'var(--primary--graytransparent)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         borderRadius: '50%'
                     }}
                 >
-                    <span style={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
+                    <span style={{ fontWeight: 'bold', color: 'var(--primary-darkgray)', textAlign: 'center' }}>
                         {overlayText}
                     </span>
                 </div>

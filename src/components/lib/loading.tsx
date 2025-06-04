@@ -7,7 +7,7 @@ export default function LoadingComponent() {
       <FaSpinner
         size={48}
         style={{
-          color: "#3b82f6",
+          color: "var(--pico-primary)",
           marginBottom: "1rem",
           animation: "spin 1s linear infinite"
         }}
@@ -21,7 +21,7 @@ export default function LoadingComponent() {
           justify-content: center;
           height: 100%;
           padding: 2rem;
-          color: #6b7280;
+          color: var(--primary-lightgray);
         }
         @keyframes spin {
           from { transform: rotate(0deg); }

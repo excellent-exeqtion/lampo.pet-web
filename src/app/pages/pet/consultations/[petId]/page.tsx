@@ -130,7 +130,7 @@ export default function PetConsultationsPage() {
                                     style={{
                                         marginBottom: '1rem',
                                         cursor: 'pointer',
-                                        borderLeft: '5px solid var(--primary)'
+                                        borderLeft: '5px solid var(--pico-primary)'
                                     }}
                                     className="pico-paper" // Usar alguna clase de Pico para el estilo de "papel"
                                 >

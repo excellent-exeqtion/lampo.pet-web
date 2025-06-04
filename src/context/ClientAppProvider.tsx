@@ -54,7 +54,7 @@ export default function ClientAppProvider({ children }: Props) {
                     gridTemplateColumns: gridCols,
                     minHeight: "100vh",
                     transition: "grid-template-columns 0.3s ease",
-                    backgroundColor: "#F9FAFB",
+                    backgroundColor: "var(--primary-inverse)",
                     fontFamily: "'Inter', sans-serif",
                     marginLeft: '2%',
                 }}

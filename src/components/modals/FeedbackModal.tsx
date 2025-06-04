@@ -40,7 +40,7 @@ export default function FeedbackModal() {
           minHeight: "4rem",
           padding: "0.5rem",
           borderRadius: "0.5rem",
-          border: "1px solid #ccc",
+          border: "1px solid var(--primary-lightgray)",
           marginTop: "0.75rem",
         }}
         disabled={sending}

@@ -14,7 +14,6 @@ import { ProceduresSection } from './sections/ProceduresSection';
 import { MedicationsSection } from './sections/MedicationsSection';
 import { ObservationsSignatureSection } from './sections/ObservationsSignatureSection';
 import { useStorageContext } from '@/context/StorageProvider';
-import { useVetContext } from '@/context/VetContext';
 
 interface ConsultationFormProps {
     pet: PetType;
@@ -23,8 +22,7 @@ interface ConsultationFormProps {
 }
 
 export function ConsultationForm({ pet, onSubmit, isSubmitting }: ConsultationFormProps) {
-    const { storedOwnerData } = useStorageContext();
-    const { vet: veterinarianProfessionalData } = useVetContext();
+    const { storedOwnerData, storedVetAccess } = useStorageContext();
 
     const [formData, setFormData] = useState<Partial<CreateConsultationPayload>>(() => {
         const today = new Date();
@@ -159,7 +157,7 @@ export function ConsultationForm({ pet, onSubmit, isSubmitting }: ConsultationFo
                     1. Identificación
                 </summary>
                 {openSection === 'identity' && ( // Renderizar contenido solo si está abierto
-                    <IdentitySection formData={formData} handleChange={handleChange} />
+                    <IdentitySection vetData={storedVetAccess} formData={formData} handleChange={handleChange} />
                 )}
             </details>
 
@@ -264,8 +262,7 @@ export function ConsultationForm({ pet, onSubmit, isSubmitting }: ConsultationFo
                     <ObservationsSignatureSection
                         formData={formData}
                         handleChange={handleChange}
-                        professionalName={veterinarianProfessionalData ? `${veterinarianProfessionalData.first_name} ${veterinarianProfessionalData.last_name}` : "N/A"}
-                        professionalRegistration={veterinarianProfessionalData?.registration || "N/A"}
+                        vetData={storedVetAccess}
                     />
                 )}
             </details>

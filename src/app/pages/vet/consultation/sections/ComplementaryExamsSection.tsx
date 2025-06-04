@@ -100,7 +100,7 @@ export function ComplementaryExamsSection({
         if (!fileToRemove.id) return;
         // Lógica para llamar a la API DELETE /api/consultations/files/[fileId]
         try {
-            const response = await fetch(`/api/consultations/files/${fileToRemove.id}`, { method: 'DELETE' });
+            const response = await fetch(`/api/consultations/${consultationId}/files/${fileToRemove.id}`, { method: 'DELETE' });
             const result = await response.json();
             if (!response.ok || !result.success) {
                 throw new Error(result.message || "Error eliminando archivo del servidor.");
@@ -147,7 +147,7 @@ export function ComplementaryExamsSection({
 
                 {/* Lista de archivos locales pendientes de subir */}
                 {localFiles.length > 0 && (
-                    <div style={{ marginTop: '1rem', border: '1px dashed #ccc', padding: '1rem' }}>
+                    <div style={{ marginTop: '1rem', border: '1px dashed var(--primary-lightgray)', padding: '1rem' }}>
                         <p>Archivos listos para subir:</p>
                         <ul>
                             {localFiles.map((file, index) => (

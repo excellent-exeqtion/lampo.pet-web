@@ -1,19 +1,17 @@
 // src/components/forms/consultation/sections/ObservationsSignatureSection.tsx
 import React from 'react';
-import type { CreateConsultationPayload } from '@/types/index';
+import type { CreateConsultationPayload, VeterinaryAccessType } from '@/types/index';
 
 interface ObservationsSignatureSectionProps {
     formData: Partial<CreateConsultationPayload>;
     handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-    professionalName: string;
-    professionalRegistration: string;
+    vetData: VeterinaryAccessType;
 }
 
 export function ObservationsSignatureSection({
     formData,
     handleChange,
-    professionalName,
-    professionalRegistration
+    vetData
 }: ObservationsSignatureSectionProps) {
     return (
         <fieldset>
@@ -33,11 +31,11 @@ export function ObservationsSignatureSection({
             <div className="grid">
                 <label>
                     Nombre MV o MVZ Tratante
-                    <input type="text" value={professionalName} readOnly disabled />
+                    <input type="text" value={`${vetData?.vet_first_name || ''} ${vetData?.vet_last_name || ''}`} readOnly disabled/>
                 </label>
                 <label>
                     Matrícula Profesional
-                    <input type="text" value={professionalRegistration} readOnly disabled />
+                    <input type="text" value={vetData.professional_registration} readOnly disabled />
                 </label>
             </div>
             <label>
@@ -50,6 +48,7 @@ export function ObservationsSignatureSection({
                     value={formData.signature_confirmation || ""}
                     onChange={handleChange}
                     placeholder="Confirmo la veracidad de esta consulta bajo mi matrícula profesional."
+                    required
                 />
             </label>
         </fieldset>

@@ -8,9 +8,9 @@ export const tooltipStyles =
         .tooltip-container .tooltip-text {
           visibility: hidden;
           width: max-content;
-          background-color: white;
-          color:rgb(1, 114, 173);
-          border: 1px solid rgb(1, 114, 173);
+          background-color: var(--primary-inverse);
+          color:var(--pico-primary);
+          border: 1px solid var(--pico-primary);
           text-align: center;
           padding: 4px 8px;
           border-radius: 4px;

@@ -44,6 +44,8 @@ export async function POST(
 
         const { data: { user } } = await (await createServerClient(options.cookies)).getUser();
         const uploadedByUserId = user?.id;
+        console.log('consultationId', consultationId);
+        console.log('uploadedByUserId', uploadedByUserId);
 
         const { data, error } = await ConsultationFileRepository.uploadAndCreateRecord(
             consultationId,
@@ -52,6 +54,7 @@ export async function POST(
             options,
             uploadedByUserId
         );
+        console.log('error', error);
 
         if (error || !data) {
             console.log(`Error subiendo archivo: ${error?.message || 'No data returned'}`)

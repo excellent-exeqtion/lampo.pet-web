@@ -517,3 +517,27 @@ GRANT EXECUTE ON FUNCTION insert_consultation_with_type(
     consultation_procedure_input[], -- p_procedures
     consultation_medication_input[]  -- p_medications
 ) TO authenticated;
+
+
+
+--MANUAL CREATE STORAGE IN SUPABASE PAGE
+-- Permite subir archivos si el usuario está autenticado
+create policy "Authenticated can upload consultation files"
+on storage.objects
+for insert
+with check (bucket_id = 'consultation-files' AND auth.role() = 'authenticated');
+
+-- Permitir que usuarios autenticados puedan generar URLs firmadas
+create policy "Authenticated can read consultation files"
+on storage.objects
+for select
+using (bucket_id = 'consultation-files' AND auth.role() = 'authenticated');
+
+-- Permitir que usuarios autenticados puedan eliminar archivos de consultation-files
+create policy "Authenticated can delete consultation files"
+on storage.objects
+for delete
+using (
+  bucket_id = 'consultation-files'
+  AND auth.role() = 'authenticated'
+);

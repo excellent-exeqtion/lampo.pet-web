@@ -17,9 +17,9 @@ export default function AddItemComponent({ entityName, loadLoading, handleAdd, c
 
         /* Override específico para tooltip de advertencia */
         .tooltip-container.tooltip-warning .tooltip-text {
-          background-color: #fff3cd !important;  /* amarillo pálido */
-          color: #856404 !important;            /* texto oscuro */
-          border-color: #ffeeba !important;      /* borde amarillo */
+          background-color: var(--primary-lightyellow) !important;  /* amarillo pálido */
+          color: var(--primary-yellow) !important;            /* texto oscuro */
+          border-color: var(--primary-yellow) !important;      /* borde amarillo */
 
           /* Posicionar a la derecha del icono */
           top: 50%;
@@ -31,7 +31,7 @@ export default function AddItemComponent({ entityName, loadLoading, handleAdd, c
         }
         .tooltip-container>svg {    
             font-size: 33px;
-            color: #856404;
+            color: var(--primary-yellow);
             margin-left: 10px;
         }
       `}</style>

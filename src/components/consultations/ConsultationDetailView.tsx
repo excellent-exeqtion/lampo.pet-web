@@ -82,7 +82,7 @@ export default function ConsultationDetailView({ consultation, currentUserId, on
 
     const handleDownloadFile = async (file: ConsultationFileType) => {
         try {
-            const response = await fetch(`/api/consultations/files/${file.id}/download`);
+            const response = await fetch(`/api/consultations/${consultation.id}//files/${file.id}`);
             const result = await response.json();
             if (response.ok && result.success && result.downloadUrl) {
                 window.open(result.downloadUrl, '_blank');
@@ -97,7 +97,7 @@ export default function ConsultationDetailView({ consultation, currentUserId, on
     const handleDeleteFile = async (fileId: string) => {
         if (!confirm("¿Está seguro de que desea eliminar este archivo? Esta acción no se puede deshacer.")) return;
         try {
-            const response = await fetch(`/api/consultations/files/${fileId}`, { method: 'DELETE' });
+            const response = await fetch(`/api/consultations/${consultation.id}//files/${fileId}`, { method: 'DELETE' });
             const result = await response.json();
             if (!response.ok || !result.success) {
                 throw new Error(result.message || "Error eliminando archivo.");
@@ -114,7 +114,7 @@ export default function ConsultationDetailView({ consultation, currentUserId, on
         if (!hasValue(value)) return null; // Usar el helper hasValue
         const displayValue = typeof value === 'boolean' ? (value ? 'Sí' : 'No') : value;
         return (
-            <div style={{ marginBottom: '0.8rem', paddingBottom: '0.5rem', borderBottom: '1px dotted #eee' }}>
+            <div style={{ marginBottom: '0.8rem', paddingBottom: '0.5rem', borderBottom: '1px dotted var(--primary-inverse)' }}>
                 <strong style={{ display: 'block', color: 'var(--secondary)', fontSize: '0.9em' }}>{label}:</strong>
                 {isTextArea ? (
                     <p style={{ whiteSpace: 'pre-wrap', margin: '0.25rem 0 0 0' }}>{displayValue}</p>
@@ -284,7 +284,7 @@ export default function ConsultationDetailView({ consultation, currentUserId, on
                         <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
                             <h5>Archivos Adjuntos:</h5>
                             {consultation.files.map(file => (
-                                <div key={file.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.2rem', borderBottom: '1px solid #f0f0f0' }}>
+                                <div key={file.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.2rem', borderBottom: '1px solid var(--primary-inverse)' }}>
                                     <span style={{ display: 'flex', alignItems: 'center' }}><FaPaperclip style={{ marginRight: '0.5rem', color: 'var(--muted-color)' }} /> {file.file_name} <small style={{ marginLeft: '0.5rem', color: 'var(--muted-font-color)' }}>({(file.file_size_bytes || 0 / 1024).toFixed(1)}KB)</small></span>
                                     <div>
                                         <button onClick={() => handleDownloadFile(file)} className="outline secondary pico-button-small" aria-label="Descargar" title="Descargar" style={{ marginRight: '0.5rem', padding: '0.3rem 0.6rem' }}>

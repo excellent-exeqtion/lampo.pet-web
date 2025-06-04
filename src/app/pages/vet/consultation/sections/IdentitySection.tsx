@@ -1,13 +1,14 @@
 // src/components/forms/consultation/sections/IdentitySection.tsx
 import React from 'react';
-import type { CreateConsultationPayload } from '@/types/index';
+import type { CreateConsultationPayload, VeterinaryAccessType } from '@/types/index';
 
 interface IdentitySectionProps {
     formData: Partial<CreateConsultationPayload>;
+    vetData: VeterinaryAccessType;
     handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
-export function IdentitySection({ formData, handleChange }: IdentitySectionProps) {
+export function IdentitySection({ vetData, formData, handleChange }: IdentitySectionProps) {
     return (
         <fieldset>
             <legend>1. Identificación de la Institución e Historia Clínica</legend>
@@ -18,7 +19,8 @@ export function IdentitySection({ formData, handleChange }: IdentitySectionProps
                         type="text"
                         id="institution_name"
                         name="institution_name" // Campo nuevo, añadir a CreateConsultationPayload y tabla
-                        value={formData.institution_name || ''}
+                        value={vetData.clinic_name || ''}
+                        readOnly disabled
                         onChange={handleChange}
                         placeholder="Ej: Clínica Veterinaria XYZ"
                     />

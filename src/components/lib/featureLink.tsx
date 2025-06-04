@@ -24,8 +24,8 @@ export default function FeatureLink({ icon, href, title, desc, click }: FeatureL
           textDecoration: "none",
           padding: "1rem",
           borderRadius: "0.75rem",
-          background: "var(--card-background, #f8fafc)",
-          boxShadow: "0 1px 6px rgba(0,0,0,0.03)",
+          background: "var(--primary-inverse)",
+          boxShadow: "0 1px 6px var(--primary-lighttransparent)",
           transition: "background 0.2s",
         }}
       >
@@ -33,7 +33,7 @@ export default function FeatureLink({ icon, href, title, desc, click }: FeatureL
         <span>
           <strong>{title}</strong>
           <br />
-          <span style={{ fontSize: "0.98rem", color: "#64748b" }}>{desc}</span>
+          <span style={{ fontSize: "0.98rem", color: "var(--primary-darkgray)" }}>{desc}</span>
         </span>
       </Link>
     </li>

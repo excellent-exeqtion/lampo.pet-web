@@ -61,8 +61,8 @@ export default function ChangePetModal() {
             justifyContent: "space-between",
             padding: "0.5rem 1rem",
             borderRadius: "0.5rem",
-            border: "1px solid #ccc",
-            background: "#fff",
+            border: "1px solid var(--primary-lightgray)",
+            background: "var(--primary-inverse)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center" }}>
@@ -70,7 +70,7 @@ export default function ChangePetModal() {
               src={storage.storedPet.image || "/pets/pet.jpg"}
               width={60}
               borderSize="3px" />
-            <span style={{ color: '#000', marginLeft: '10px' }}>
+            <span style={{ color: 'var(--pico-contrast)', marginLeft: '10px' }}>
               {storage.storedPet.name ?? "Selecciona una mascota"}
             </span>
           </div>
@@ -84,8 +84,8 @@ export default function ChangePetModal() {
               top: "100%",
               left: 0,
               right: 0,
-              background: "#fff",
-              border: "1px solid #ccc",
+              background: "var(--primary-inverse)",
+              border: "1px solid var(--primary-lightgray)",
               borderRadius: "0.5rem",
               maxHeight: 200,
               overflowY: "auto",
@@ -111,7 +111,7 @@ export default function ChangePetModal() {
                   src={pet.image || "/pets/pet.jpg"}
                   width={50}
                   borderSize="3px" />
-                <span style={{ color: '#000', marginLeft: '8px' }}>{pet.name}</span>
+                <span style={{ color: 'var(--pico-contrast)', marginLeft: '8px' }}>{pet.name}</span>
               </li>
             ))}
             <li
@@ -124,7 +124,7 @@ export default function ChangePetModal() {
                 cursor: "pointer",
               }}>
               <FaPlus />
-              <span style={{ color: '#000', marginLeft: '20px' }}>Agregar mascota</span>
+              <span style={{ color: 'var(--pico-contrast)', marginLeft: '20px' }}>Agregar mascota</span>
             </li>
           </ul>
         )}

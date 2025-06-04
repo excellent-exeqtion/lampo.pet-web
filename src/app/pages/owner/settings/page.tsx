@@ -239,7 +239,7 @@ export default function SettingsPage() {
           style={{
             marginTop: "3rem",
             padding: "1rem",
-            border: "1px solid #d73a49",
+            border: "1px solid var(--primary-red)",
             borderRadius: "6px",
           }}
         >
@@ -248,7 +248,7 @@ export default function SettingsPage() {
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
-              color: "#d73a49",
+              color: "var(--primary-red)",
             }}
           >
             <FaExclamationTriangle /> Danger Zone
@@ -257,8 +257,8 @@ export default function SettingsPage() {
           <button
             type="button"
             style={{
-              backgroundColor: "#d73a49",
-              color: "white",
+              backgroundColor: "var(--primary-red)",
+              color: "var(--primary-inverse)",
               padding: "0.5rem 1rem",
               border: "none",
               borderRadius: "4px",
@@ -277,7 +277,7 @@ export default function SettingsPage() {
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
+            backgroundColor: "var(--primary-darkertransparent)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -308,7 +308,7 @@ export default function SettingsPage() {
                 padding: "0.5rem",
                 marginTop: "0.5rem",
                 marginBottom: "1rem",
-                border: "1px solid #ccc",
+                border: "1px solid var(--primary-lightgray)",
                 borderRadius: "4px",
               }}
             />
@@ -332,8 +332,8 @@ export default function SettingsPage() {
                 type="button"
                 disabled={confirmText !== pet.name}
                 style={{
-                  backgroundColor: "#d73a49",
-                  color: "white",
+                  backgroundColor: "var(--primary-red)",
+                  color: "var(--primary-inverse)",
                   padding: "0.5rem 1rem",
                   border: "none",
                   borderRadius: "4px",

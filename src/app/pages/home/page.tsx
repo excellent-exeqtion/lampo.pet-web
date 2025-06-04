@@ -9,6 +9,7 @@ import {
   FaCloudSun,
   FaFlask,
   FaCog,
+  FaPlusCircle,
 } from "react-icons/fa";
 
 import {
@@ -28,14 +29,14 @@ export default function HomePage() {
   return (
     <main className="container" style={{ maxWidth: 700, margin: "3rem auto" }}>
       <section style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-        <h1>Lampo: Gestión clínica de mascotas</h1>
+        <h1 style={{ color: 'var(--pico-primary)' }}>Lampo: Gestión clínica de mascotas</h1>
         <p>
           Lampo es la plataforma digital que centraliza el historial médico, agenda y gestión de mascotas, permitiendo a dueños y veterinarios acceder y actualizar información de forma sencilla, segura y colaborativa.
         </p>
       </section>
 
       <section>
-        <h2 style={{ marginBottom: "1.2rem" }}>¿Qué puedes hacer en Lampo?</h2>
+        <h2 style={{ marginBottom: "1.2rem", color: 'var(--pico-primary)'}}>¿Qué puedes hacer en Lampo?</h2>
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {isOwner &&
             <FeatureLink
@@ -122,7 +123,7 @@ export default function HomePage() {
           {isVet &&
             <FeatureLink
               icon={<FaUserDoctor />}
-              click={storedPet.id ? () => setShowVetPetCodeModal(true) : undefined}
+              click={storedPet.id ? undefined : () => setShowVetPetCodeModal(true)}
               href={storedPet.id ? `/pages/pet/consultations/${storedPet.id}` : ''}
               title="Consultas veterinarias"
               desc="Visualiza y carga documentos de visitas médicas, diagnósticos y recomendaciones de tus pacientes."
@@ -138,8 +139,8 @@ export default function HomePage() {
           }
           {isVet &&
             <FeatureLink
-              icon={<FaCog />}
-              click={storedPet.id ? () => setShowVetPetCodeModal(true) : undefined}
+              icon={<FaPlusCircle />}
+              click={storedPet.id ? undefined : () => setShowVetPetCodeModal(true)}
               href={storedPet.id ? `/pages/vet/consultation/${storedPet.id}` : ''}
               title="Agregar Consulta"
               desc="Puedes registrar nuevas consultas médicas para tus pacientes directamente desde aquí."
@@ -150,7 +151,7 @@ export default function HomePage() {
 
       <section style={{ marginTop: "3rem", textAlign: "center" }}>
         <p>
-          <strong>¿Listo para comenzar?</strong> Selecciona una sección en el menú o desde aquí para explorar todas las funciones de Lampo.
+          <strong style={{ color: 'var(--pico-primary)' }}>¿Listo para comenzar?</strong> Selecciona una sección en el menú o desde aquí para explorar todas las funciones de Lampo.
         </p>
       </section>
     </main>

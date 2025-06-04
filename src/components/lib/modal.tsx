@@ -19,7 +19,7 @@ export default function ModalComponent({ children, title, description, setShowMo
             style={{
                 position: "fixed",
                 inset: 0,
-                backgroundColor: "rgba(0,0,0,0.5)",
+                backgroundColor: "var(--primary-darkertransparent)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -30,7 +30,7 @@ export default function ModalComponent({ children, title, description, setShowMo
             <div
                 ref={dropdownRef}
                 style={{
-                    backgroundColor: "#fff",
+                    backgroundColor: "var(--primary-inverse)",
                     borderRadius: "1rem",
                     padding: "2rem",
                     width: "90%",
@@ -51,7 +51,7 @@ export default function ModalComponent({ children, title, description, setShowMo
                             border: "none",
                             fontSize: "1rem",
                             cursor: "pointer",
-                            color: '#000'
+                            color: 'var(--pico-contrast)'
                         }}
                         aria-label="Cerrar modal"
                     >

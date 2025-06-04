@@ -36,7 +36,7 @@ export function ProceduresSection({ procedures, onChange }: ProceduresSectionPro
         <fieldset>
             <legend>Procedimientos Realizados en Consulta</legend>
             {procedures.map((proc, index) => (
-                <div key={index} className="grid" style={{ alignItems: 'flex-end', marginBottom: '1rem', border: '1px solid #e0e0e0', padding: '1rem', borderRadius: '4px' }}>
+                <div key={index} className="grid" style={{ alignItems: 'flex-end', marginBottom: '1rem', border: '1px solid var(--primary-inverse)', padding: '1rem', borderRadius: '4px' }}>
                     <label htmlFor={`procedure_name_${index}`}>
                         Nombre del Procedimiento
                         <input

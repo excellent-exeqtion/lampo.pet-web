@@ -1,4 +1,4 @@
-// src/app/api/consultations/files/[fileId]/route.ts
+// src/app/api/consultations/[consultationId]/files/[fileId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { ConsultationFileRepository } from '@/repos/index';
 import { getWithErrorHandling } from '@/services/apiService';
@@ -6,7 +6,7 @@ import { RepositoryError } from '@/types/lib';
 import { cookies } from "next/headers";
 
 
-// GET /api/consultations/files/{fileId}/download : Obtener URL firmada para descargar
+// GET /api/consultations/{consultationId}/files/{fileId} : Obtener URL firmada para descargar
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ fileId: string }> }
@@ -22,10 +22,9 @@ export async function GET(
         }
 
         // Primero, necesitamos el filePath del registro del archivo
-        const { data: fileRecord, error: findError } = await ConsultationFileRepository.getFile(fileId, options);
-
-        if (findError || !fileRecord) {
-            throw new RepositoryError(`Archivo con ID ${fileId} no encontrado o error al buscarlo: ${findError?.message}`);
+        const fileRecord = await ConsultationFileRepository.getFile(fileId, options);
+        if (!fileRecord) {
+            throw new RepositoryError(`Archivo con ID ${fileId} no encontrado o error al buscarlo.`);
         }
 
         const { signedURL, error: urlError } = await ConsultationFileRepository.getSignedUrl(fileRecord.file_path, options);
@@ -42,7 +41,7 @@ export async function GET(
 }
 
 
-// DELETE /api/consultations/files/{fileId} : Eliminar un archivo
+// DELETE /api/consultations/{consultationId}/files/{fileId} : Eliminar un archivo
 export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ fileId: string }> }
@@ -50,7 +49,7 @@ export async function DELETE(
     const options = {
         cookies: await cookies()
     }
-    
+
     return getWithErrorHandling(
         req,
         async () => {

@@ -93,7 +93,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <main style={{ padding: "2rem", background: "#F9FAFB" }}>
+        <main style={{ padding: "2rem", background: "var(--primary-yellow)" }}>
             <div
                 style={{
                     display: "grid",
@@ -105,11 +105,11 @@ export default function RegisterPage() {
                     const key = plan.id.toString();
                     const cycle = cycles[key] || "monthly";
                     const isStandard = plan.slug === "standard";
-                    const borderColor = "#3B82F6";
+                    const borderColor = "var(--pico-primary)";
                     const darkBg = isStandard;
                     const cardStyle: React.CSSProperties = darkBg
-                        ? { background: "#0B1446", color: "#fff", borderRadius: "8px" }
-                        : { border: `2px solid ${borderColor}`, background: "#fff", borderRadius: "8px" };
+                        ? { background: "var(--primary-darkblue)", color: "var(--primary-inverse)", borderRadius: "8px" }
+                        : { border: `2px solid ${borderColor}`, background: "var(--primary-inverse)", borderRadius: "8px" };
 
                     const discountMonthlyLabel =
                         plan.discount_month > 0 ? `${plan.discount_month}% Descuento` : undefined;
@@ -128,7 +128,7 @@ export default function RegisterPage() {
                                         top: "1rem",
                                         left: "1rem",
                                         background: borderColor,
-                                        color: "#fff",
+                                        color: "var(--primary-inverse)",
                                         fontSize: "0.75rem",
                                         padding: "0.25rem 0.75rem",
                                         borderRadius: "4px",
@@ -154,8 +154,8 @@ export default function RegisterPage() {
                                         style={{
                                             flex: 1,
                                             padding: "0.5rem",
-                                            background: cycle === "monthly" ? "#fff" : "lightgray",
-                                            color: "#111",
+                                            background: cycle === "monthly" ? "var(--primary-inverse)" : "lightgray",
+                                            color: "var(--pico-contrast)",
                                             border: "none",
                                             cursor: "pointer",
                                             fontSize: "0.875rem",
@@ -168,8 +168,8 @@ export default function RegisterPage() {
                                                     position: "absolute",
                                                     top: "-0.5rem",
                                                     right: "0.5rem",
-                                                    background: "#FBBF24",
-                                                    color: "#111827",
+                                                    background: "var(--primary-yellow)",
+                                                    color: "var(--pico-contrast)",
                                                     fontSize: "0.75rem",
                                                     padding: "0.25rem 0.5rem",
                                                     borderRadius: "4px",
@@ -185,8 +185,8 @@ export default function RegisterPage() {
                                         style={{
                                             flex: 1,
                                             padding: "0.5rem",
-                                            background: cycle === "annual" ? "#fff" : "lightgray",
-                                            color: "#111",
+                                            background: cycle === "annual" ? "var(--primary-inverse)" : "lightgray",
+                                            color: "var(--pico-contrast)",
                                             border: "none",
                                             cursor: "pointer",
                                             fontSize: "0.875rem",
@@ -200,8 +200,8 @@ export default function RegisterPage() {
                                                     position: "absolute",
                                                     top: "-0.5rem",
                                                     right: "0.5rem",
-                                                    background: "#FBBF24",
-                                                    color: "#111827",
+                                                    background: "var(--primary-yellow)",
+                                                    color: "var(--pico-contrast)",
                                                     fontSize: "0.75rem",
                                                     padding: "0.25rem 0.5rem",
                                                     borderRadius: "4px",
@@ -228,7 +228,7 @@ export default function RegisterPage() {
                                 {plan.description}
                             </p>
 
-                            <div style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "0.25rem", color: darkBg ? '#FBBF24' : 'var(--pico-color)' }}>
+                            <div style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "0.25rem", color: darkBg ? 'var(--primary-yellow)' : 'var(--pico-color)' }}>
                                 {cycle === "annual"
                                     ? formatPrice(plan.price_year)
                                     : formatPrice(plan.price_month)}
@@ -254,7 +254,7 @@ export default function RegisterPage() {
                                         <FaCheck
                                             style={{
                                                 marginRight: "0.5rem",
-                                                color: darkBg ? "#FBBF24" : borderColor,
+                                                color: darkBg ? "var(--primary-yellow)" : borderColor,
                                             }}
                                         />
                                         <span style={{ fontSize: "0.875rem", color: darkBg ? 'lightgray' : 'var(--pico-color)' }}>{feat.text}</span>
@@ -262,8 +262,8 @@ export default function RegisterPage() {
                                             <span
                                                 style={{
                                                     marginLeft: "0.5rem",
-                                                    background: "#10B981",
-                                                    color: "#fff",
+                                                    background: "var(--primary-green)",
+                                                    color: "var(--primary-inverse)",
                                                     fontSize: "0.75rem",
                                                     padding: "0.25rem 0.5rem",
                                                     borderRadius: "4px",

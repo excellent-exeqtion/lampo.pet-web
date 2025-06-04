@@ -30,6 +30,7 @@ import { useStorageContext } from "@/context/StorageProvider";
 import { handleLogout } from "@/services/authService";
 import { useSessionContext } from "@/context/SessionProvider";
 import { useRoleContext } from "@/context/RoleProvider";
+import { FaPlusCircle } from 'react-icons/fa';
 
 export default function SideBar() {
     const { isMobile, isTablet, isDesktop } = useDeviceDetect();
@@ -41,8 +42,8 @@ export default function SideBar() {
     const { isOwner, isVet } = useRoleContext();
 
     const menuData = (show: boolean): MenuType[] => [
-        { label: "Inicio", icon: <FaHome />, url: "/", show: isOwner },
-        { label: "Calendario", icon: <FaCalendar />, url: "/pages/owner/calendar", show: show },
+        { label: "Inicio", icon: <FaHome />, url: "/", show: true },
+        { label: "Calendario", icon: <FaCalendar />, url: "/pages/owner/calendar", show: isOwner },
         { label: "Datos básicos", icon: <FaUser />, url: "/pages/pet/basic-data", show },
         { label: "Consultas veterinarias", icon: <FaUserDoctor />, url: `/pages/pet/consultations/${storage.storedPet.id}`, show },
         { label: "Vacunas", icon: <FaSyringe />, url: "/pages/pet/vaccines", show },
@@ -54,7 +55,7 @@ export default function SideBar() {
         //{ label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner },
         { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },
         { label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner && show },
-        { label: "Agregar Consulta", icon: <FaCog />, url: `/pages/vet/consultation/${storage.storedPet.id}`, show: isVet && show },
+        { label: "Agregar Consulta", icon: <FaPlusCircle />, url: `/pages/vet/consultation/${storage.storedPet.id}`, show: isVet && show },
     ];
     useEffect(() => {
         const menu = menuData(storage.storedPet.id != "");
@@ -105,8 +106,8 @@ export default function SideBar() {
                         display: "flex",
                         flexDirection: "column",
                         paddingTop: "1rem",
-                        backgroundColor: "#ffffff",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                        backgroundColor: "var(--primary-inverse)",
+                        boxShadow: "0 4px 12px var(--primary-lighttransparent)",
                     }}
                 >
                     <div style={{ padding: "0 1rem 1rem", display: 'flex', alignItems: 'center' }}>
@@ -121,7 +122,7 @@ export default function SideBar() {
                     <nav style={{ padding: "0 1rem" }}>
                         <ul>
                             {menuItems.map(item)}
-                            {session && <li><a style={{ background: "none", border: "none", color: '#d32f2f' }} onClick={() => handleLogout(storage, router)}> <FaPowerOff style={{ marginRight: '1rem' }} />Cerrar sesión</a></li>}
+                            {session && <li><a style={{ background: "none", border: "none", color: 'var(--primary-red)' }} onClick={() => handleLogout(storage, router)}> <FaPowerOff style={{ marginRight: '1rem' }} />Cerrar sesión</a></li>}
                             {!session && <li><button onClick={goToLogin}>Iniciar sesión</button></li>}
                         </ul>
                     </nav>
@@ -142,8 +143,8 @@ export default function SideBar() {
                         bottom: 0,
                         left: 0,
                         width: "64px",
-                        backgroundColor: "#ffffff",
-                        boxShadow: "2px 0 8px rgba(0,0,0,0.05)",
+                        backgroundColor: "var(--primary-inverse)",
+                        boxShadow: "2px 0 8px var(--primary-lighttransparent)",
                         zIndex: 1000,
                         display: "flex",
                         flexDirection: "column",
@@ -172,7 +173,7 @@ export default function SideBar() {
                                 <button
                                     key={label}
                                     onClick={() => showModal(true)}
-                                    style={{ background: "none", border: "none", color: '#02659a', padding: '0' }}
+                                    style={{ background: "none", border: "none", color: 'var(--pico-primary)', padding: '0' }}
                                 >
                                     {content}
                                 </button>
@@ -182,7 +183,7 @@ export default function SideBar() {
                                 <Link
                                     key={label}
                                     href={url}
-                                    style={{ display: "flex", justifyContent: "center", alignItems: "center", color: '#02659a' }}
+                                    style={{ display: "flex", justifyContent: "center", alignItems: "center", color: 'var(--pico-primary)' }}
                                 >
                                     {content}
                                 </Link>
@@ -195,7 +196,7 @@ export default function SideBar() {
                         <div className="tooltip-container" style={{ cursor: "pointer" }}>
                             <button
                                 onClick={session ? () => handleLogout(storage, router) : goToLogin}
-                                style={{ background: "none", border: "none", fontSize: "1.75rem", color: '#d32f2f' }}
+                                style={{ background: "none", border: "none", fontSize: "1.75rem", color: 'var(--primary-red)' }}
                             >
                                 {session ? <FaPowerOff /> : <FaBars />}
                             </button>

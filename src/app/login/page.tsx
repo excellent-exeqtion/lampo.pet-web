@@ -177,16 +177,16 @@ export default function LoginPage() {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        background: "#F9FAFB",
+        background: "var(--primary-yellow)",
         padding: "1rem",
       }}
     >
       <article
         style={{
-          background: "#fff",
+          background: "var(--primary-inverse)",
           padding: "2rem",
           borderRadius: "0.5rem",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          boxShadow: "0 2px 8px var(--primary-lighttransparent)",
           width: "100%",
           maxWidth: "550px",
         }}
@@ -256,7 +256,7 @@ export default function LoginPage() {
                 border: 'none',
                 padding: '0.25rem',
                 cursor: 'pointer',
-                color: '#555'
+                color: 'var(--primary-darkgray)'
               }}
             >
               {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}

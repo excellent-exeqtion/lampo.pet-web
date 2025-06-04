@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import ModalComponent from "@/components/lib/modal";
 import { postFetch } from "@/app/api";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { ownerSignUp } from "@/services/authService";
+import { authClient } from "@/lib/auth";
 
 export default function VetRegisterPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function VetRegisterPage() {
     setLoading(true);
     try {
       // 1) Crear cuenta en auth
-      const { data: { user } } = await ownerSignUp(email, password, 'veterinarian');
+      const { data: { user } } = await authClient.signUp(email, password, 'veterinarian');
       const vetId = user?.id;
       /*
       const signUpRes = await postFetch("/api/auth/sign-up", undefined, { email, password, role: 'veterinarian' });
@@ -101,10 +101,10 @@ export default function VetRegisterPage() {
       <h1>Registro Veterinario</h1>
       <form onSubmit={handleSubmit}
         style={{
-          background: "#fff",
+          background: "var(--primary-inverse)",
           padding: "2rem",
           borderRadius: "0.5rem",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          boxShadow: "0 2px 8px var(--primary-lighttransparent)",
           width: "100%",
           maxWidth: "550px",
         }}>
@@ -189,11 +189,11 @@ export default function VetRegisterPage() {
               cursor: 'pointer',
             }}
           >
-            {showPassword ? <FaEyeSlash size={23} color={'#000'} style={{ marginTop: '16px' }} /> : <FaEye size={23} color={'#000'} style={{ marginTop: '16px' }} />}
+            {showPassword ? <FaEyeSlash size={23} color={'var(--pico-contrast)'} style={{ marginTop: '16px' }} /> : <FaEye size={23} color={'var(--pico-contrast)'} style={{ marginTop: '16px' }} />}
           </button>
         </label>
 
-        {error && <p style={{ color: "red", marginTop: "0.5rem" }}>{error}</p>}
+        {error && <p style={{ color: "var(--primary-red)", marginTop: "0.5rem" }}>{error}</p>}
 
         <button
           type="submit"

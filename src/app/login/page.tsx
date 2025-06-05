@@ -133,7 +133,7 @@ export default function LoginPage() {
   };
 
   const goToVetPage = () => {
-    router.push("/vet-access"); // Usar router.push
+    router.replace("/vet-access"); // Usar router.push
   }
 
   const handleModalContinue = async () => {

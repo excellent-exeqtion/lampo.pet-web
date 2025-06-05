@@ -46,10 +46,6 @@ export function useOwnerSession(): { isLoading: boolean } {
         if (JSON.stringify(initialPet) !== JSON.stringify(storage.storedPet)) {
             storage.setStoredPet(initialPet);
         }
-        console.log('isOwner', isOwner)
-        console.log('!hasSelectedPlan', !hasSelectedPlan)
-        console.log("pathname !== '/pages/owner/register'", pathname !== '/pages/owner/register')
-        console.log('!isLoadingPlan', !isLoadingPlan)
 
         if (isOwner && !hasSelectedPlan && pathname !== '/pages/owner/register' && !isLoadingPlan) {
             setShowPlanModal(true);

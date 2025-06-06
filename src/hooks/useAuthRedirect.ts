@@ -22,16 +22,21 @@ export default function useAuthRedirect() {
 
         // 2. Definición de rutas especiales
         const isLoginRoute = pathname === "/login";
+        const isLandingRoute = pathname === "/";
         const isVerifyAuthRoute = pathname.startsWith("/pages/auth/verify"); // Ruta de verificación de email
         const isCallbackAuthRoute = pathname.startsWith("/auth/callback"); // Ruta de callback de Supabase (OTP)
         const isPublicRoute = isLoginRoute || isVerifyAuthRoute || isCallbackAuthRoute; // Rutas que no requieren sesión
         const isVetAccessUIRoute = pathname.startsWith("/vet-access"); // Rutas UI para acceso veterinario sin cuenta
 
+        if(isLandingRoute){
+            console.log('landing')
+            return;
+        }
         // 3. Lógica de Redirección
         if (session) {
             // ----- HAY SESIÓN -----
             if (isLoginRoute) {
-                router.replace("/");
+                router.replace("/pages/home");
                 return;
             }
 

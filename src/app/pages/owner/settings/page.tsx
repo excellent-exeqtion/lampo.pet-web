@@ -128,7 +128,7 @@ export default function SettingsPage() {
       );
       storage.resetPet();
       storage.setStoredPet(Empty.Pet());
-      router.replace("/");
+      router.replace("/pages/home");
     } else {
       console.error("Error al eliminar mascota");
     }

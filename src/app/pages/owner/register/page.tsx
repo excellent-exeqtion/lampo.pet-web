@@ -84,7 +84,7 @@ export default function RegisterPage() {
             }
             setStoredSubscriptionData(json.subscription as SubscriptionType);
 
-            router.replace("/");
+            router.replace("/pages/home");
         } catch (e) {
             console.error("Error creando suscripción:", e);
         } finally {

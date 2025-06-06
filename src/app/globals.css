@@ -21,6 +21,14 @@
   --primary-lighttransparent: rgba(0, 0, 0, 0.1);
   --primary-darkertransparent: rgba(0, 0, 0, 0.5);
   --primary--graytransparent: rgba(255, 255, 255, 0.1);
+
+  --primary: var(--pico-primary);
+  --primary-dark: var(--primary-darkblue);
+  --section-bg: var(--primary-inverse);
+  --hero-bg: var(--pico-primary);
+  --footer-bg: var(--pico-contrast);
+  --font-title: 'Poppins', Arial, sans-serif;
+  --font-main: 'Poppins', Arial, sans-serif;
 }
 
 /* Red Dark scheme (Auto) */
@@ -43,6 +51,14 @@
     --primary-lighttransparent: rgba(0, 0, 0, 0.1);
     --primary-darkertransparent: rgba(0, 0, 0, 0.5);
     --primary--graytransparent: rgba(255, 255, 255, 0.1);
+
+    --primary: var(--pico-primary);
+    --primary-dark: var(--primary-darkblue);
+    --section-bg: var(--primary-inverse);
+    --hero-bg: var(--pico-primary);
+    --footer-bg: var(--pico-contrast);
+    --font-title: 'Poppins', Arial, sans-serif;
+    --font-main: 'Poppins', Arial, sans-serif;
   }
 }
 
@@ -66,6 +82,14 @@
   --primary-darkertransparent: rgba(0, 0, 0, 0.5);
   --primary--graytransparent: rgba(255, 255, 255, 0.1);
 
+  --primary: var(--pico-primary);
+  --primary-dark: var(--primary-darkblue);
+  --section-bg: var(--primary-inverse);
+  --hero-bg: var(--pico-primary);
+  --footer-bg: var(--pico-contrast);
+  --font-title: 'Poppins', Arial, sans-serif;
+  --font-main: 'Poppins', Arial, sans-serif;
+
   /* Red (Common styles) */
   :root {
     --form-element-active-border-color: var(--primary);
@@ -84,6 +108,14 @@
     --primary-lighttransparent: rgba(0, 0, 0, 0.1);
     --primary-darkertransparent: rgba(0, 0, 0, 0.5);
     --primary--graytransparent: rgba(255, 255, 255, 0.1);
+
+    --primary: var(--pico-primary);
+    --primary-dark: var(--primary-darkblue);
+    --section-bg: var(--primary-inverse);
+    --hero-bg: var(--pico-primary);
+    --footer-bg: var(--pico-contrast);
+    --font-title: 'Poppins', Arial, sans-serif;
+    --font-main: 'Poppins', Arial, sans-serif;
   }
 
   .pet-dropdown {
@@ -92,6 +124,19 @@
 
   .pet-selection:hover {
     background-color: gray;
+  }
+
+  * {
+    -webkit-user-select: none !important;
+    -khtml-user-select: none  !important;
+    -moz-user-select: -moz-none  !important;
+    -o-user-select: none  !important;
+    user-select: none  !important;
+    box-sizing: border-box  !important;
+  }
+
+  body {
+    font-family: var(--font-main);
   }
 
   body {
@@ -128,5 +173,15 @@
 
   main {
     background-color: rgb(249, 250, 251);
+  }
+
+
+  .no-select {
+    -webkit-user-select: none;
+    /* Safari */
+    -ms-user-select: none;
+    /* IE 10 and IE 11 */
+    user-select: none !important;
+    /* Standard syntax */
   }
 }

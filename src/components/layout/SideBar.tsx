@@ -42,7 +42,7 @@ export default function SideBar() {
     const { isOwner, isVet } = useRoleContext();
 
     const menuData = (show: boolean): MenuType[] => [
-        { label: "Inicio", icon: <FaHome />, url: "/", show: true },
+        { label: "Inicio", icon: <FaHome />, url: "/pages/home", show: true },
         { label: "Calendario", icon: <FaCalendar />, url: "/pages/owner/calendar", show: isOwner },
         { label: "Datos básicos", icon: <FaUser />, url: "/pages/pet/basic-data", show },
         { label: "Consultas veterinarias", icon: <FaUserDoctor />, url: `/pages/pet/consultations/${storage.storedPet.id}`, show },

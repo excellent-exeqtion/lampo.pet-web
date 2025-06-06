@@ -24,6 +24,7 @@ export default function ClientAppProvider({ children }: Props) {
     // 2. Determinar si la ruta actual es una ruta pública/especial que no usa el layout principal.
     const isAuthRoute = pathname === "/login" ||
         pathname.startsWith("/auth/callback") ||
+        pathname.startsWith("/landing") ||
         pathname.startsWith("/pages/auth/verify");
 
     if (isSessionLoading) {

@@ -39,7 +39,7 @@ export default function LoginPage() {
   // Redirigir si ya hay sesión
   useEffect(() => {
     if (session) {
-      router.replace("/"); // O a la página de dashboard
+      router.replace("/pages/home"); // O a la página de dashboard
     }
   }, [session, router]);
 
@@ -102,7 +102,7 @@ export default function LoginPage() {
         }
         setSession(signInData.session);
 
-        router.replace('/');
+        router.replace('/pages/home');
       }
     } catch (err) {
       console.error("Auth CATCH block error:", err);

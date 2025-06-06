@@ -71,7 +71,7 @@ export default function VerifyEmailPage() {
           handleSessionFromURL();
         } else if (event === 'USER_UPDATED' && session) {
           setIsLoading(false);
-          router.replace("/");
+          router.replace("/pages/home");
           authListener?.unsubscribe();
         }
       }

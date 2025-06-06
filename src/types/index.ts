@@ -157,6 +157,18 @@ export interface CreateSubscriptionType {
     discountApplied: number;
 }
 
+export interface ProfessionalData {
+    foto: string;
+    nombres: string;
+    apellidos: string;
+    tituloObtenido: string;
+    universidad: string;
+    numeroMatricula: string;
+    actaGrado: string;
+    estado: 'Habilitado' | 'Desconocido'; // Usamos tipos literales para mayor precisión
+    matriculaBuscada: string;
+}
+
 export enum PetStep {
     Name = 0,
     BasicData = 1,

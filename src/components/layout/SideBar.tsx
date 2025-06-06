@@ -39,7 +39,7 @@ export default function SideBar() {
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
     const { setShowEditPetModal } = useUI();
-    const { isOwner, isVet } = useRoleContext();
+    const { isOwner, isVet, isVetWithSession } = useRoleContext();
 
     const menuData = (show: boolean): MenuType[] => [
         { label: "Inicio", icon: <FaHome />, url: "/pages/home", show: true },
@@ -53,7 +53,8 @@ export default function SideBar() {
         { label: "Lab. de exámenes", icon: <FaFlask />, url: "/pages/pet/lab-tests", show },
         //TODO: modal para actualizar el plan
         //{ label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner },
-        { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },
+        { label: "Configuración", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },
+        { label: "Configuración", icon: <FaCog />, url: "/pages/vet/settings", show: isVetWithSession },
         { label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner && show },
         { label: "Agregar Consulta", icon: <FaPlusCircle />, url: `/pages/vet/consultation/${storage.storedPet.id}`, show: isVet && show },
     ];
@@ -61,7 +62,7 @@ export default function SideBar() {
         const menu = menuData(storage.storedPet.id != "");
         setMenuItems(menu);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storage.storedPet, storage.storedOwnerPets, session, storage.storedVetAccess, setShowEditPetModal]);
+    }, [storage.storedPet, storage.storedOwnerPets, session, storage.storedVetAccess, setShowEditPetModal, isVetWithSession]);
 
     const goToLogin = () => {
         storage.setStoredVetAccess(Empty.VetAccess());

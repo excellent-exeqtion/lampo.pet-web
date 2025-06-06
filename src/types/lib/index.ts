@@ -85,6 +85,13 @@ export interface RepositoryOptions {
   cookies?: ReadonlyRequestCookies
 }
 
+export interface ReposError {
+  message: string;
+  status: number;
+}
+
+export type RepositoryResponse<T> = | { data: T; error: null } | { data: null; error: ReposError };
+
 export interface LogInType {
   email: string;
   password: string;

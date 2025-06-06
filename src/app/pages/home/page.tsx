@@ -25,7 +25,7 @@ import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
 
 export default function HomePage() {
-  const { isOwner, isVet } = useRoleContext();
+  const { isOwner, isVet, isVetWithSession } = useRoleContext();
   const { setShowVetPetCodeModal, setShowAddPetModal, setShowEditPetModal } = useUI();
   const { storedPet } = useStorageContext();
   const { isLoading: isLoadingSession } = useSessionContext();
@@ -152,6 +152,14 @@ export default function HomePage() {
               href={storedPet.id ? `/pages/vet/consultation/${storedPet.id}` : ''}
               title="Agregar Consulta"
               desc="Puedes registrar nuevas consultas médicas para tus pacientes directamente desde aquí."
+            />
+          }
+          {isVetWithSession &&
+            <FeatureLink
+              icon={<FaCog />}
+              href="/pages/vet/settings"
+              title="Configuración de Veterinario"
+              desc="Actualiza tus datos de perfil profesional que se usan en las historias clínicas."
             />
           }
         </ul>

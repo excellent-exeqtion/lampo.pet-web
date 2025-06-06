@@ -1,0 +1,8 @@
+{
+  "Invalid login credentials": "Credenciales de acceso inválidas.",
+  "User already registered": "El usuario ya está registrado.",
+  "User not found": "Usuario no encontrado.",
+  "Email not confirmed": "El correo no ha sido confirmado.",
+  "Password should be at least 6 characters.": "La contraseña debe tener al menos 6 caracteres.",
+  "default": "Ocurrió un error inesperado. Intenta de nuevo."
+}

@@ -10,10 +10,17 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import ModalComponent from "@/components/lib/modal";
 import { authClient } from "@/lib/auth";
 import { useSessionContext } from "@/context/SessionProvider";
+import { useTranslation } from "react-i18next";
 
 export default function LoginPage() {
   const router = useRouter();
   const { db: session, setSession } = useSessionContext();
+  const { t: translate } = useTranslation('errors');
+
+  const t = (error?: string): string => {
+    const errorMsg = error ?? "";
+    return translate(errorMsg, { defaultValue: translate('default') })
+  }
 
   // Estados comunes
   const [email, setEmail] = useState("");
@@ -56,8 +63,7 @@ export default function LoginPage() {
         const { data: signUpData, error: signUpError } = await authClient.signUp(email, password, 'owner');
 
         if (signUpError || !signUpData?.user) {
-          console.error("Signup error:", signUpError);
-          setError(signUpError?.message || "Error al registrar el usuario. Inténtalo de nuevo.");
+          setError(t(signUpError?.message) || "Error al registrar el usuario. Inténtalo de nuevo.");
           setLoading(false);
           return;
         }
@@ -78,7 +84,7 @@ export default function LoginPage() {
           });
           if (!response.ok) {
             const errorData = await response.json();
-            setError(errorData.message || "Error creando el perfil del dueño.");
+            setError(t(errorData.message) || "Error creando el perfil del dueño.");
             // Considerar un rollback o manejo de error si el perfil no se crea después del auth.
             setLoading(false);
             return;
@@ -95,8 +101,7 @@ export default function LoginPage() {
         const { data: signInData, error: signInError } = await authClient.signIn(email, password);
 
         if (signInError || !signInData?.session) {
-          console.error("LOGIN FAILED:", signInError);
-          setError(signInError?.message || "Email o contraseña incorrectos.");
+          setError(t(signInError?.message) || "Email o contraseña incorrectos.");
           setLoading(false);
           return;
         }

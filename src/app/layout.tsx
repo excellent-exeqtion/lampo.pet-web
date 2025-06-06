@@ -8,11 +8,13 @@ import { geistMono, geistSans } from "@/styles/geist";
 import { ClientAppProvider } from "../components";
 import { usePathname } from "next/navigation";
 import { SessionProvider } from "@/context/SessionProvider";
+import '../i18n';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const noClientAppProviderRoutes = ["/", "/login", "/vet-access", "/pages/auth/verify"];
   const shouldUseClientAppProvider = !noClientAppProviderRoutes.includes(pathname);
+
   return (
     <html lang="es" data-theme="light" className="no-select">
       <head>

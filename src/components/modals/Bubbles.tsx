@@ -1,7 +1,7 @@
 // app/components/modals/Bubbles.tsx
 "use client"
 import React, { useEffect, useState } from "react";
-import { FaShareAlt, FaCommentDots, FaUserMd, FaExchangeAlt } from "react-icons/fa";
+import { FaShareAlt, FaCommentDots, FaUserMd, FaExchangeAlt, FaUserPlus } from "react-icons/fa";
 import FeedbackModal from "./FeedbackModal";
 import PetCodeModal from "./PetCodeModal";
 import VeterinaryModal from "./VeterinaryModal";
@@ -12,6 +12,8 @@ import { useStorageContext } from "@/context/StorageProvider";
 import { useRoleContext } from "@/context/RoleProvider";
 import VeterinarianPetCodeModal from "./VeterinarianPetCodeModal";
 import PlanSelectModal from "./PlanSelectModal";
+import InviteUserModal from "./InviteUserModal";
+import MissingPetModal from "./MissingPet";
 
 const bubbleStyleBase: React.CSSProperties = {
   backgroundColor: "var(--primary-inverse)",
@@ -46,7 +48,10 @@ export default function Bubbles() {
     showEditPetModal,
     setShowVetPetCodeModal,
     showVetPetCodeModal,
-    showPlanModal
+    showPlanModal,
+    showInviteUserModal,
+    setShowInviteUserModal,
+    showMissingPetModal
   } = useUI();
 
   useEffect(() => {
@@ -77,6 +82,20 @@ export default function Bubbles() {
         </button>
         <span className="tooltip-text tooltip-left">Enviar feedback</span>
       </div>
+
+      {/* //TODO: create admin user, and enable other users to invite another users.*/ }
+      {showInviteUserModal &&
+        <div className="tooltip-container" draggable>
+          <button
+            onClick={() => setShowInviteUserModal(true)}
+            style={bubbleStyleBase}
+            aria-label="Invita a un amigo"
+          >
+            <FaUserPlus />
+          </button>
+          <span className="tooltip-text tooltip-left">Invita a un amigo</span>
+        </div>
+      }
 
       {/* Vet Bubble */}
       {isOwner && !isVet && storage.storedPet.id &&
@@ -143,6 +162,8 @@ export default function Bubbles() {
       {showEditPetModal && <AddPetModal editPet={storage.storedPet} />}
       {showVetPetCodeModal && <VeterinarianPetCodeModal />}
       {showPlanModal && <PlanSelectModal />}
+      {showInviteUserModal && <InviteUserModal />}
+      {showMissingPetModal && <MissingPetModal />}
     </div>
   );
 }

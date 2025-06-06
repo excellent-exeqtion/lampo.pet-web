@@ -29,6 +29,7 @@ export interface BrowserAuthClient {
     resetPassword(email: string): Promise<ResetPasswordResponse>;
     signUp(email: string, password: string, role: string): Promise<SignUpResponse>;
     setSession(session: { access_token: string; refresh_token: string; }): Promise<void>;
+    inviteUser(email: string): Promise<void>;
 }
 
 export interface ServerAuthClient {

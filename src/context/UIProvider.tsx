@@ -20,6 +20,10 @@ export interface UIState {
     setShowVetPetCodeModal: React.Dispatch<React.SetStateAction<boolean>>;
     showPlanModal: boolean;
     setShowPlanModal: React.Dispatch<React.SetStateAction<boolean>>;
+    showInviteUserModal: boolean;
+    setShowInviteUserModal: React.Dispatch<React.SetStateAction<boolean>>;
+    showMissingPetModal: boolean;
+    setShowMissingPetModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const UIContext = createContext({} as UIState);
@@ -34,6 +38,8 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     const [showEditPetModal, setShowEditPetModal] = useState(false);
     const [showVetPetCodeModal, setShowVetPetCodeModal] = useState(false);
     const [showPlanModal, setShowPlanModal] = useState(false);
+    const [showInviteUserModal, setShowInviteUserModal] = useState(false);
+    const [showMissingPetModal, setShowMissingPetModal] = useState(false);
     const storage = useStorageContext();
 
     const closeEditPetModal: React.Dispatch<React.SetStateAction<boolean>> = (close: SetStateAction<boolean>) => {
@@ -60,7 +66,11 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
             showVetPetCodeModal,
             setShowVetPetCodeModal,
             showPlanModal,
-            setShowPlanModal
+            setShowPlanModal,
+            showInviteUserModal,
+            setShowInviteUserModal,
+            showMissingPetModal,
+            setShowMissingPetModal,
         }}>
             {children}
         </UIContext.Provider>

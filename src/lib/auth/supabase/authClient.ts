@@ -65,4 +65,8 @@ export class SupabaseAuthClient implements BrowserAuthClient {
             console.error("Error setting session:", error);
         }
     }
+
+    async inviteUser(email: string): Promise<void> {
+        await supabase.auth.admin.inviteUserByEmail(email)
+    }
 }

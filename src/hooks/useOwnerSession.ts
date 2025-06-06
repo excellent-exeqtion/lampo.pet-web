@@ -14,7 +14,7 @@ export function useOwnerSession(): { isLoading: boolean } {
     const { db: session } = useSessionContext();
     const pathname = usePathname();
     const storage = useStorageContext();
-    const { setShowAddPetModal, setShowPlanModal } = useUI();
+    const { setShowMissingPetModal, setShowPlanModal } = useUI();
     const { isOwner } = useRoleContext();
     const { hasSelectedPlan, isLoading: isLoadingPlan } = usePlanContext();
 
@@ -54,7 +54,7 @@ export function useOwnerSession(): { isLoading: boolean } {
             setShowPlanModal(false);
         }
         if (!initialPet.id && isOwner && hasSelectedPlan && !loadingSelectedPet) {
-            setShowAddPetModal(true);
+            setShowMissingPetModal(true);
         }
         setLoadingSelectedPet(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps

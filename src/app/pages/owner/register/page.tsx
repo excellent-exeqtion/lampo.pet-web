@@ -8,6 +8,7 @@ import { useSession } from "@/hooks/useSession";
 import { getFetch, postFetch } from "@/app/api";
 import { useSessionContext } from "@/context/SessionProvider";
 import { useStorageContext } from "@/context/StorageProvider";
+import { Currency } from "@/utils/index";
 
 export default function RegisterPage() {
     useSession();
@@ -55,13 +56,6 @@ export default function RegisterPage() {
     const handleCycle = (planId: string, cycle: "monthly" | "annual") => {
         setCycles((prev) => ({ ...prev, [planId]: cycle }));
     };
-
-    const formatPrice = (cents: number) =>
-        new Intl.NumberFormat("es-CO", {
-            style: "currency",
-            currency: "USD",
-            minimumFractionDigits: 2,
-        }).format(cents / 100);
 
     const handleSelect = async (plan: PlanVersionType) => {
         setLoading(true);
@@ -230,8 +224,8 @@ export default function RegisterPage() {
 
                             <div style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "0.25rem", color: darkBg ? 'var(--primary-yellow)' : 'var(--pico-color)' }}>
                                 {cycle === "annual"
-                                    ? formatPrice(plan.price_year)
-                                    : formatPrice(plan.price_month)}
+                                    ? Currency.format(plan.price_year)
+                                    : Currency.format(plan.price_month)}
                             </div>
                             <div
                                 style={{

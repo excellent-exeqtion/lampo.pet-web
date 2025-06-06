@@ -22,7 +22,7 @@ export default function StepsComponent({ children, submitLoading, loadLoading, s
           {children}
         </div>
         {error && (
-          <p className="text-error">
+          <p style={{ color: "var(--primary-red)" }}>
             {error}
           </p>
         )}

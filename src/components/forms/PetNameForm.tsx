@@ -110,6 +110,9 @@ export default function PetNameForm({
     setSubmitLoading(true);
     try {
       if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
+        if(!pet.id && storage.storedOwnerPets.filter(p => p.name == pet.name).length > 0){
+            throw new ApiError('Ya tienes una mascota registrada con ese mismo nombre.');
+        }
         const newId = pet.id || (await generateUniquePetId());
         const newPet: PetType = { id: newId, name: pet.name, image: pet.image, owner_id: ownerId };
         if (JSON.stringify(newPet) != JSON.stringify(pet)) {

@@ -1,11 +1,11 @@
 // src/repositories/owner.repository.ts
-import { dbClient } from '@/lib/auth';
+import { createBrowserClient, dbClient } from '@/lib/auth';
 import type { OwnerDataType } from '@/types/index';
 import { RepositoryOptions } from '@/types/lib';
 
 export default class OwnerRepository {
-    static async create(owner: OwnerDataType, options: RepositoryOptions) {
-        return dbClient(options).from('owners').insert(owner);
+    static async create(owner: OwnerDataType) {
+        return createBrowserClient().from('owners').insert(owner);
     }
 
     static async findById(owner_id: string, options: RepositoryOptions): Promise<OwnerDataType | null> {

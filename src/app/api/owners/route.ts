@@ -25,8 +25,6 @@ export async function PUT(request: NextRequest) {
         const existing = await OwnerRepository.findById(ownerId, options);
         if (existing) {
             await OwnerRepository.update(payload, options);
-        } else {
-            await OwnerRepository.create(payload, options);
         }
 
         const saved = await OwnerRepository.findById(ownerId, options);
@@ -39,17 +37,16 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    const options = {
-        cookies: await cookies()
-    }
-
     return withValidationAndErrorHandling(
         'POST',
         req,
         OwnerDataTypeSchema,
         async (ownerData: OwnerDataType) => {
             try {
-                const { data, error } = await OwnerRepository.create(ownerData, options);
+                console.log('ownerData', ownerData);
+                const { data, error } = await OwnerRepository.create(ownerData);
+                console.log('data', data);
+                console.log('error', error);
                 if (error) {
                     throw new RepositoryError(`Error creating record: ${JSON.stringify(ownerData)}`);
                 }

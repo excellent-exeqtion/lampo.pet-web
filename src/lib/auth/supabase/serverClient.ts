@@ -44,5 +44,5 @@ export async function createServerClient(cookieStore: ReadonlyRequestCookies) {
 export async function getUser(cookieStore: ReadonlyRequestCookies): Promise<User | null> {
   const supabase = await createServerClient(cookieStore);
   const { data: { user } } = await supabase.getUser();
-  return user;
+  return user as User;
 }

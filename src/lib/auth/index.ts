@@ -7,6 +7,7 @@ import { getClientWithToken as getSupabaseClientWithToken } from "./supabase/tok
 import { createServerClient as createSupabaseServerClient } from "./supabase/serverClient";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { RepositoryOptions } from "@/types/lib";
+import { createBrowserClient as SupabaseCreateBrowserClient } from "./supabase/browserClient";
 
 export type SignInResponse = { data?: { session: AuthSession; user: AuthUser } | null; error?: AuthError | null };
 export type SignUpResponse = { data: { user: AuthUser | null, /* session?: AuthSession | null */ }; error: AuthError | null }; // session es opcional en signup
@@ -58,3 +59,5 @@ const dbClientImpl = (options: RepositoryOptions): any => {
 };;
 
 export { dbClientImpl as dbClient };
+
+export { SupabaseCreateBrowserClient as createBrowserClient }

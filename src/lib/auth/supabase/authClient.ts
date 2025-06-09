@@ -1,10 +1,10 @@
 // lib/auth/supabase/authClient.ts
 import type { BrowserAuthClient, AuthSession, SignInResponse, SignUpResponse, ResetPasswordResponse, AuthUser } from "..";
-import { supabase } from "./browserClient";
+import { createBrowserClient } from "./browserClient";
 
 export class SupabaseAuthClient implements BrowserAuthClient {
     async getSession(): Promise<AuthSession | null> {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await createBrowserClient().auth.getSession();
         if (error) {
             console.error("Error getting session:", error);
             return null;
@@ -15,14 +15,14 @@ export class SupabaseAuthClient implements BrowserAuthClient {
     onAuthStateChange(
         cb: (event: string, session: AuthSession | null) => void
     ): { data: { unsubscribe(): void } } {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = createBrowserClient().auth.onAuthStateChange((event, session) => {
             cb(event, session as AuthSession | null);
         });
         return { data: { unsubscribe: () => subscription.unsubscribe() } };
     }
 
     async signIn(email: string, password: string): Promise<SignInResponse> {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await createBrowserClient().auth.signInWithPassword({ email, password });
         if (error) {
             return { error };
         }
@@ -32,21 +32,21 @@ export class SupabaseAuthClient implements BrowserAuthClient {
     }
 
     async signOut(): Promise<void> {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await createBrowserClient().auth.signOut();
         if (error) {
             console.error("Error signing out:", error);
         }
     }
 
     async resetPassword(email: string): Promise<ResetPasswordResponse> {
-        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        const { data, error } = await createBrowserClient().auth.resetPasswordForEmail(email, {
             // TODO: redirectTo: 'tu-url-de-reset-password-si-es-diferente-a-la-configurada-en-supabase'
         });
         return { data, error };
     }
 
     async signUp(email: string, password: string, role = 'owner'): Promise<SignUpResponse> {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await createBrowserClient().auth.signUp({
             email,
             password,
             options: {
@@ -60,13 +60,13 @@ export class SupabaseAuthClient implements BrowserAuthClient {
     }
 
     async setSession(session: { access_token: string; refresh_token: string }): Promise<void> {
-        const { error } = await supabase.auth.setSession(session);
+        const { error } = await createBrowserClient().auth.setSession(session);
         if (error) {
             console.error("Error setting session:", error);
         }
     }
 
     async inviteUser(email: string): Promise<void> {
-        await supabase.auth.admin.inviteUserByEmail(email)
+        await createBrowserClient().auth.admin.inviteUserByEmail(email)
     }
 }

@@ -83,6 +83,7 @@ export default function LoginPage() {
             }),
           });
           if (!response.ok) {
+            console.log('response', response);
             const errorData = await response.json();
             setError(t(errorData.message) || "Error creando el perfil del dueño.");
             // Considerar un rollback o manejo de error si el perfil no se crea después del auth.

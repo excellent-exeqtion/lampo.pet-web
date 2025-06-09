@@ -651,6 +651,10 @@
     }
 
     .category_container{
+        grid-template-columns: 'repeat(2, 1fr)';
+    }
+
+    .nav_links{
         display: 'block';
     }
 }

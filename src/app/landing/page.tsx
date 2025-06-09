@@ -11,7 +11,7 @@ import styles from "./landing.module.css";
 
 export default function LandingPage() {
     return (
-        <div className={styles.landing_wrapper}>
+        <div className={styles.landing_wrapper} style={{ overflowX: 'hidden' }}>
             <Navbar />
             <main className="no-select">
                 <Hero />

@@ -1484,6 +1484,37 @@ export async function POST(req: Request) {
 }
  
 ----- Archivo: route.ts ----- 
+// src/app/api/validar-matricula/route.ts
+
+import { NextRequest, NextResponse } from 'next/server';
+import ComvezcolRepository from '@/repos/comvezcol.repository'; // Importa el nuevo repositorio
+
+export async function POST(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const { matricula } = body as { matricula?: string };
+
+        if (!matricula || typeof matricula !== 'string') {
+            return NextResponse.json({ message: 'El campo "matricula" es requerido.' }, { status: 400 });
+        }
+
+        // Llama al método del repositorio
+        const { data, error } = await ComvezcolRepository.validate(matricula);
+
+        if (error) {
+            // El repositorio ya nos da el mensaje y el status adecuado
+            return NextResponse.json({ message: error.message }, { status: error.status });
+        }
+
+        return NextResponse.json(data, { status: 200 });
+
+    } catch (e) {
+        // Captura errores inesperados que no sean del repositorio
+        console.error("Error inesperado en el handler:", e);
+        return NextResponse.json({ message: 'Error interno del servidor.' }, { status: 500 });
+    }
+} 
+----- Archivo: route.ts ----- 
 // src/app/api/vet-access/validate/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { PetCodeRepository, PetRepository, VeterinaryAccessRepository } from "@/repos/index";
@@ -1528,12 +1559,15 @@ export async function GET(req: NextRequest) {
 }
  
 ----- Archivo: route.ts ----- 
-// src/app/api/veterinarians/[id]/route.ts
+// src/app/api/vet/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import VeterinarianRepository from '@/repos/veterinarian.repository';
-import { getWithErrorHandling } from '@/services/apiService';
+import { getWithErrorHandling, withValidationAndErrorHandling } from '@/services/apiService';
 import { QueryParamError, RepositoryError } from '@/types/lib';
 import { cookies } from "next/headers";
+import { VeterinarianType } from '@/types/index';
+import { VeterinarianTypeSchema } from '@/schemas/validationSchemas';
+import { createServerClient } from '@/lib/auth';
 
 export async function GET(
     req: NextRequest,
@@ -1559,7 +1593,52 @@ export async function GET(
         }
     );
 }
- 
+
+
+export async function PUT(
+    req: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
+    const options = {
+        cookies: await cookies()
+    }
+    const serverClient = await createServerClient(options.cookies);
+
+    return withValidationAndErrorHandling(
+        'PUT',
+        req,
+        VeterinarianTypeSchema, // Usamos el schema existente para validar el payload completo
+        async (vetData: VeterinarianType) => {
+            const { id } = await context.params;
+
+            // Verificación de seguridad: el usuario logueado solo puede modificar su propio perfil.
+            const { data: { user } } = await serverClient.getUser();
+            if (!user || user.id !== id) {
+                return NextResponse.json({ success: false, message: 'No autorizado para modificar este perfil.' }, { status: 403 });
+            }
+
+            // Aseguramos que el vet_id del payload sea el correcto
+            vetData.vet_id = id;
+
+            try {
+                const { error } = await VeterinarianRepository.update(vetData, options);
+
+                if (error) {
+                    throw new RepositoryError(`Error actualizando veterinario: ${error.message}`);
+                }
+
+                // Devolvemos el objeto actualizado para que el frontend pueda usarlo
+                return NextResponse.json({ success: true, veterinarian: vetData }, { status: 200 });
+
+            } catch (err) {
+                if (err instanceof Error) {
+                    throw new RepositoryError(err.message);
+                }
+                throw new RepositoryError('Error desconocido al actualizar el veterinario');
+            }
+        }
+    );
+} 
 ----- Archivo: layout.tsx ----- 
 // app/pages/auth/verify/layout.tsx
 export default function AuthVerifyLayout({ children }: { children: React.ReactNode }) {
@@ -3182,7 +3261,7 @@ import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
 
 export default function HomePage() {
-  const { isOwner, isVet } = useRoleContext();
+  const { isOwner, isVet, isVetWithSession } = useRoleContext();
   const { setShowVetPetCodeModal, setShowAddPetModal, setShowEditPetModal } = useUI();
   const { storedPet } = useStorageContext();
   const { isLoading: isLoadingSession } = useSessionContext();
@@ -3309,6 +3388,14 @@ export default function HomePage() {
               href={storedPet.id ? `/pages/vet/consultation/${storedPet.id}` : ''}
               title="Agregar Consulta"
               desc="Puedes registrar nuevas consultas médicas para tus pacientes directamente desde aquí."
+            />
+          }
+          {isVetWithSession &&
+            <FeatureLink
+              icon={<FaCog />}
+              href="/pages/vet/settings"
+              title="Configuración de Veterinario"
+              desc="Actualiza tus datos de perfil profesional que se usan en las historias clínicas."
             />
           }
         </ul>
@@ -6013,6 +6100,165 @@ export default function ConsultationPage() {
     );
 } 
 ----- Archivo: page.tsx ----- 
+// RUTA: src/app/pages/vet/settings/page.tsx
+"use client";
+
+import React, { useState, useEffect, FormEvent } from 'react';
+import { FaCog, FaSpinner } from 'react-icons/fa';
+import { Title, Loading } from '@/components/index';
+import { useVetContext } from '@/context/VetContext';
+import { VeterinarianType } from '@/types/index';
+import { putFetch } from '@/app/api';
+
+export default function VetSettingsPage() {
+    const { vet, loading: loadingVet, refresh: refreshVet } = useVetContext();
+    const [vetInfo, setVetInfo] = useState<Partial<VeterinarianType>>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (vet) {
+            setVetInfo(vet);
+        }
+    }, [vet]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setVetInfo(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setError(null);
+        setSuccessMessage(null);
+
+        if (!vetInfo.vet_id) {
+            setError("No se puede identificar al veterinario.");
+            setIsSubmitting(false);
+            return;
+        }
+
+        try {
+            const response = await putFetch(`/api/vet/${vetInfo.vet_id}`, undefined, vetInfo);
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Error al actualizar los datos.');
+            }
+
+            setSuccessMessage('¡Datos actualizados correctamente!');
+            await refreshVet(); // Refrescar el contexto con los nuevos datos
+
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (loadingVet) {
+        return <Loading />;
+    }
+
+    if (!vet) {
+        return <p>No se pudo cargar la información del veterinario.</p>;
+    }
+
+    return (
+        <main style={{ padding: '2rem' }}>
+            <Title icon={<FaCog />} title="Configuración de Perfil de Veterinario" />
+            <p>Aquí puedes actualizar tu información profesional que se mostrará en las historias clínicas.</p>
+
+            <form onSubmit={handleSubmit} style={{ marginTop: '2rem', maxWidth: '700px' }}>
+                <fieldset disabled={isSubmitting}>
+                    <div className="grid">
+                        <label htmlFor="first_name">
+                            Nombre
+                            <input
+                                type="text"
+                                id="first_name"
+                                name="first_name"
+                                value={vetInfo.first_name || ''}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </label>
+                        <label htmlFor="last_name">
+                            Apellido
+                            <input
+                                type="text"
+                                id="last_name"
+                                name="last_name"
+                                value={vetInfo.last_name || ''}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <label htmlFor="email">
+                        Email (no se puede cambiar)
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={vetInfo.email || ''}
+                            readOnly
+                            disabled
+                        />
+                    </label>
+
+                    <div className="grid">
+                        <label htmlFor="registration">
+                            Matrícula Profesional
+                            <input
+                                type="text"
+                                id="registration"
+                                name="registration"
+                                value={vetInfo.registration || ''}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </label>
+                        <label htmlFor="clinic_name">
+                            Nombre de la Clínica/Hospital
+                            <input
+                                type="text"
+                                id="clinic_name"
+                                name="clinic_name"
+                                value={vetInfo.clinic_name || ''}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <label htmlFor="city">
+                        Ciudad
+                        <input
+                            type="text"
+                            id="city"
+                            name="city"
+                            value={vetInfo.city || ''}
+                            onChange={handleInputChange}
+                            required
+                        />
+                    </label>
+
+                    {error && <p role="alert" style={{ color: "var(--pico-form-element-invalid-active-border-color, red)" }}>{error}</p>}
+                    {successMessage && <p role="status" style={{ color: "var(--pico-color-green-500, green)" }}>{successMessage}</p>}
+
+                    <button type="submit" aria-busy={isSubmitting}>
+                        {isSubmitting ? <FaSpinner className="animate-spin" /> : 'Guardar Cambios'}
+                    </button>
+                </fieldset>
+            </form>
+        </main>
+    );
+} 
+----- Archivo: page.tsx ----- 
 // app/pages/vet/[code]/page.tsx
 "use client";
 import { useEffect, useState } from "react";
@@ -6216,6 +6462,85 @@ export default function VetAccessPage() {
   );
 }
  
+----- Archivo: page.tsx ----- 
+// components/ValidadorProfesional.js
+"use client";
+import { ProfessionalData } from '@/types/index';
+import { useState } from 'react';
+
+export default function ValidadorProfesional() {
+  const [matricula, setMatricula] = useState('');
+  const [profesional, setProfesional] = useState<ProfessionalData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleValidation = async (e: any) => {
+    e.preventDefault();
+    if (!matricula) return;
+
+    setIsLoading(true);
+    setError(null);
+    setProfesional(null);
+
+    try {
+      const response = await fetch('/api/vet/validar-matricula', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ matricula }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error en la validación.');
+      }
+
+      setProfesional(data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', maxWidth: '600px', margin: 'auto', padding: '20px' }}>
+      <h2>Validación de Matrícula Profesional COMVEZCOL</h2>
+      <form onSubmit={handleValidation}>
+        <input
+          type="text"
+          value={matricula}
+          onChange={(e) => setMatricula(e.target.value)}
+          placeholder="Ingrese el número de matrícula"
+          style={{ padding: '10px', width: '70%', marginRight: '10px' }}
+        />
+        <button type="submit" disabled={isLoading} style={{ padding: '10px' }}>
+          {isLoading ? 'Validando...' : 'Validar'}
+        </button>
+      </form>
+
+      {error && <p style={{ color: 'red', marginTop: '20px' }}>Error: {error}</p>}
+
+      {profesional && (
+        <div style={{ marginTop: '20px', border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
+          <h3>Resultados de la Búsqueda</h3>
+          <img src={profesional.foto} alt="Foto del profesional" style={{ width: '150px', borderRadius: '50%', float: 'right' }} />
+          <p><strong>Nombres:</strong> {profesional.nombres}</p>
+          <p><strong>Apellidos:</strong> {profesional.apellidos}</p>
+          <p><strong>Matrícula No.:</strong> {profesional.numeroMatricula}</p>
+          <p><strong>Título Obtenido:</strong> {profesional.tituloObtenido}</p>
+          <p><strong>Universidad:</strong> {profesional.universidad}</p>
+          <p><strong>Acta de Grado:</strong> {profesional.actaGrado}</p>
+          <p><strong>Estado:</strong> <span style={{ color: 'green', fontWeight: 'bold' }}>{profesional.estado}</span></p>
+        </div>
+      )}
+    </div>
+  );
+} 
 ----- Archivo: page.tsx ----- 
 // app/vet-access/register/page.tsx
 "use client";
@@ -7593,7 +7918,7 @@ export default function SideBar() {
     const [menuItems, setMenuItems] = useState<MenuType[]>([]);
     const router = useRouter();
     const { setShowEditPetModal } = useUI();
-    const { isOwner, isVet } = useRoleContext();
+    const { isOwner, isVet, isVetWithSession } = useRoleContext();
 
     const menuData = (show: boolean): MenuType[] => [
         { label: "Inicio", icon: <FaHome />, url: "/pages/home", show: true },
@@ -7607,7 +7932,8 @@ export default function SideBar() {
         { label: "Lab. de exámenes", icon: <FaFlask />, url: "/pages/pet/lab-tests", show },
         //TODO: modal para actualizar el plan
         //{ label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner },
-        { label: "Configuraciones", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },
+        { label: "Configuración", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },
+        { label: "Configuración", icon: <FaCog />, url: "/pages/vet/settings", show: isVetWithSession },
         { label: 'Editar Mascota', icon: <FaPencil />, url: "", showModal: setShowEditPetModal, show: isOwner && show },
         { label: "Agregar Consulta", icon: <FaPlusCircle />, url: `/pages/vet/consultation/${storage.storedPet.id}`, show: isVet && show },
     ];
@@ -7615,7 +7941,7 @@ export default function SideBar() {
         const menu = menuData(storage.storedPet.id != "");
         setMenuItems(menu);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storage.storedPet, storage.storedOwnerPets, session, storage.storedVetAccess, setShowEditPetModal]);
+    }, [storage.storedPet, storage.storedOwnerPets, session, storage.storedVetAccess, setShowEditPetModal, isVetWithSession]);
 
     const goToLogin = () => {
         storage.setStoredVetAccess(Empty.VetAccess());
@@ -11788,6 +12114,75 @@ export default class BasicDataRepository {
   }
 }
  
+----- Archivo: comvezcol.repository.ts ----- 
+// src/repository/comvezcol.repository.ts
+
+import axios, { AxiosResponse } from 'axios';
+import * as cheerio from 'cheerio';
+import type { CheerioAPI } from 'cheerio';
+import type { RepositoryResponse } from '@/types/lib'; // Asumo que tienes un tipo como este
+import type { ProfessionalData } from '@/types/index'; // Asumo que moverías la interfaz a un archivo central de tipos
+
+// Mueve la interfaz a tu archivo de tipos (ej: src/types/index.ts)
+// export interface ProfessionalData { ... }
+
+const dataMapping: Record<string, keyof Omit<ProfessionalData, 'foto' | 'estado' | 'matriculaBuscada'>> = {
+    'Nombre': 'nombres',
+    'Apellidos': 'apellidos',
+    'Titulo Obtenido': 'tituloObtenido',
+    'Universidad': 'universidad',
+    'Matricula No.': 'numeroMatricula',
+    'Acta de grado No.': 'actaGrado',
+};
+
+class ComvezcolRepository {
+    private static BASE_URL = 'https://administrador.consejoapp.com.co';
+
+    public static async validate(matricula: string): Promise<RepositoryResponse<ProfessionalData>> {
+        const SEARCH_ACTION_URL = `${this.BASE_URL}/index.php/consultas/profesionalesS`;
+
+        try {
+            const searchResponse: AxiosResponse<string> = await axios.post(SEARCH_ACTION_URL, { matricula }, {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            });
+
+            const $resultsPage: CheerioAPI = cheerio.load(searchResponse.data);
+            const detailLink = $resultsPage('table.table a.btn-success').attr('href');
+
+            if (!detailLink) {
+                return { data: null, error: { message: `No se encontró profesional con matrícula ${matricula}.`, status: 404 } };
+            }
+
+            const detailResponse = await axios.get(detailLink);
+            const $detailPage = cheerio.load(detailResponse.data);
+
+            const professionalData: Partial<ProfessionalData> = {};
+            const fotoSrc = $detailPage('.col-sm-12.col-lg-4 img').attr('src');
+            if (fotoSrc) {
+                professionalData.foto = fotoSrc.startsWith('http') ? fotoSrc : `${this.BASE_URL}${fotoSrc}`;
+            }
+
+            $detailPage('.table-bordered tbody tr').each((_, element) => {
+                const th = $detailPage(element).find('th').text().trim();
+                const td = $detailPage(element).find('td').text().trim();
+                const key = dataMapping[th];
+                if (key) professionalData[key] = td;
+            });
+
+            professionalData.estado = Object.keys(professionalData).length > 2 ? 'Habilitado' : 'Desconocido';
+            professionalData.matriculaBuscada = matricula;
+
+            return { data: professionalData as ProfessionalData, error: null };
+
+        } catch (error) {
+            console.error(`Error en el scraping para la matrícula ${matricula}:`, error);
+            const message = error instanceof Error ? error.message : 'Error interno del servidor';
+            return { data: null, error: { message, status: 500 } };
+        }
+    }
+}
+
+export default ComvezcolRepository; 
 ----- Archivo: condition.repository.ts ----- 
 // src/repositories/condition.repository.ts
 import { dbClient } from '@/lib/auth';
@@ -14771,6 +15166,18 @@ export interface CreateSubscriptionType {
     discountApplied: number;
 }
 
+export interface ProfessionalData {
+    foto: string;
+    nombres: string;
+    apellidos: string;
+    tituloObtenido: string;
+    universidad: string;
+    numeroMatricula: string;
+    actaGrado: string;
+    estado: 'Habilitado' | 'Desconocido'; // Usamos tipos literales para mayor precisión
+    matriculaBuscada: string;
+}
+
 export enum PetStep {
     Name = 0,
     BasicData = 1,
@@ -14981,6 +15388,13 @@ export interface FormRepository<T> {
 export interface RepositoryOptions {
   cookies?: ReadonlyRequestCookies
 }
+
+export interface ReposError {
+  message: string;
+  status: number;
+}
+
+export type RepositoryResponse<T> = | { data: T; error: null } | { data: null; error: ReposError };
 
 export interface LogInType {
   email: string;

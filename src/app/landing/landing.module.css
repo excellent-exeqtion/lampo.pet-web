@@ -649,4 +649,8 @@
     .info_contact {
         padding: 0 0.5rem;
     }
+
+    .category_container{
+        display: 'block';
+    }
 }

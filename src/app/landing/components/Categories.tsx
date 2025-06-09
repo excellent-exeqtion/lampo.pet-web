@@ -30,15 +30,15 @@ export default function Categories() {
             <div className={styles.heading_container}>
                 <h2>Categorías</h2>
             </div>
-            <div className={styles.category_container} style={{ gridTemplateColumns: "repeat(4, 1fr)"}}>
-            {categories.map((cat) => (
-                <div key={cat.name} className={styles.category_box}>
-                    <img src={cat.image} alt={cat.name} width={150} />
-                    <h3><b>{cat.name}</b></h3>
-                    <p>{cat.description}</p>
-                </div>
-            ))}
-        </div>
+            <div className={styles.category_container}>
+                {categories.map((cat) => (
+                    <div key={cat.name} className={styles.category_box}>
+                        <img src={cat.image} alt={cat.name} width={150} />
+                        <h3><b>{cat.name}</b></h3>
+                        <p>{cat.description}</p>
+                    </div>
+                ))}
+            </div>
         </section >
     );
 }

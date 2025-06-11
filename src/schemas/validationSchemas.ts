@@ -25,6 +25,8 @@ export const OwnerDataTypeSchema = z.object({
   last_name: z.string(),
   phone: z.string(),
   address: z.string(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
   city: z.string(),
   country: z.string(),
   email: z.string(),

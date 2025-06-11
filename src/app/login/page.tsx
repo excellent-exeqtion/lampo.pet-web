@@ -11,8 +11,22 @@ import ModalComponent from "@/components/lib/modal";
 import { authClient } from "@/lib/auth";
 import { useSessionContext } from "@/context/SessionProvider";
 import { useTranslation } from "react-i18next";
+import dynamic from "next/dynamic";
+import { CountryCodeInput } from "@/components/index";
+import { Country, City } from 'country-state-city';
+import type { ICountry, ICity } from 'country-state-city';
+import { v4 as uuidv4 } from 'uuid';
+
+// Importamos el MapPicker de forma dinámica
+const MapPicker = dynamic(() => import('@/components/forms/MapPicker'), {
+  ssr: false,
+  loading: () => <p>Cargando mapa...</p>
+});
 
 export default function LoginPage() {
+
+  const BOGOTA_COORDS = { lat: 4.60971, lng: -74.08175 };
+
   const router = useRouter();
   const { db: session, setSession } = useSessionContext();
   const { t: translate } = useTranslation('errors');
@@ -38,10 +52,70 @@ export default function LoginPage() {
     last_name: "",
     phone: "",
     address: "",
-    city: "",
-    country: "",
-    email: "" // Se llenará desde el campo de email común
+    city: "Bogotá",
+    country: "CO",
+    email: "", // Se llenará desde el campo de email común
+    latitude: BOGOTA_COORDS.lat,
+    longitude: BOGOTA_COORDS.lng,
   });
+
+  const [phone, setPhone] = useState<string | undefined>("+57");
+  const [countries, setCountries] = useState<ICountry[]>([]);
+  const [cities, setCities] = useState<ICity[]>([]);
+
+  // Cargar lista de países al montar
+  useEffect(() => {
+    setCountries(Country.getAllCountries());
+  }, []);
+
+  // Actualizar lista de ciudades cuando cambia el país
+  useEffect(() => {
+    if (ownerInfo.country) {
+      setCities(City.getCitiesOfCountry(ownerInfo.country) || []);
+    }
+  }, [ownerInfo.country]);
+
+  useEffect(() => {
+    if (!ownerInfo.address) return;
+
+    const handler = setTimeout(async () => {
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(ownerInfo.address || '')}&format=json&limit=1`);
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
+          setOwnerInfo(prev => ({ ...prev, latitude: parseFloat(lat), longitude: parseFloat(lon) }));
+        }
+      } catch (e) {
+        console.error("Error de geocodificación:", e);
+      }
+    }, 1000); // Debounce de 1 segundo para no hacer llamadas en cada tecleo
+
+    return () => clearTimeout(handler);
+  }, [ownerInfo.address]);
+
+  // Geocodificación Inversa (Coordenadas -> Ciudad/País)
+  useEffect(() => {
+    if (!ownerInfo.latitude || !ownerInfo.longitude) return;
+    const fetchLocationData = async () => {
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${ownerInfo.latitude}&lon=${ownerInfo.longitude}&format=json&accept-language=es`);
+        const data = await response.json();
+        if (data && data.address) {
+          const countryCode = data.address.country_code.toUpperCase();
+          setOwnerInfo(prev => ({ ...prev, country: countryCode }));
+
+          const cityName = data.address.city || data.address.town || data.address.village;
+          if (cityName) {
+            setOwnerInfo(prev => ({ ...prev, city: cityName  }));
+          }
+        }
+      } catch (e) {
+        console.error("Error de geocodificación inversa:", e);
+      }
+    };
+    fetchLocationData();
+  }, [ownerInfo.latitude, ownerInfo.longitude]);
 
   // Redirigir si ya hay sesión
   useEffect(() => {
@@ -79,7 +153,8 @@ export default function LoginPage() {
             body: JSON.stringify({
               ...ownerInfo,
               owner_id: ownerId,
-              email // Asegúrate que el email del owner sea el mismo del auth
+              phone: phone,
+              email
             }),
           });
           if (!response.ok) {
@@ -203,33 +278,52 @@ export default function LoginPage() {
           </div>
 
           {isRegistering && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-              {/* Campos de OwnerInfo */}
-              <label htmlFor="name">
-                Nombre
-                <input id="name" type="text" autoComplete="given-name" value={ownerInfo.name || ""} onChange={e => setOwnerInfo({ ...ownerInfo, name: e.target.value })} required />
-              </label>
-              <label htmlFor="lastname">
-                Apellido
-                <input id="lastname" type="text" autoComplete="family-name" value={ownerInfo.last_name || ""} onChange={e => setOwnerInfo({ ...ownerInfo, last_name: e.target.value })} required />
-              </label>
-              <label htmlFor="phone">
-                Teléfono
-                <input id="phone" type="tel" autoComplete="tel" value={ownerInfo.phone || ""} onChange={e => setOwnerInfo({ ...ownerInfo, phone: e.target.value })} required />
-              </label>
-              <label htmlFor="address">
-                Dirección
-                <input id="address" type="text" autoComplete="address-line1" value={ownerInfo.address || ""} onChange={e => setOwnerInfo({ ...ownerInfo, address: e.target.value })} required />
-              </label>
-              <label htmlFor="city">
-                Ciudad
-                <input id="city" type="text" autoComplete="address-level2" value={ownerInfo.city || ""} onChange={e => setOwnerInfo({ ...ownerInfo, city: e.target.value })} required />
-              </label>
-              <label htmlFor="country">
-                País
-                <input id="country" type="text" autoComplete="country-name" value={ownerInfo.country || ""} onChange={e => setOwnerInfo({ ...ownerInfo, country: e.target.value })} required />
-              </label>
-            </div>
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                {/* Campos de OwnerInfo */}
+                <label htmlFor="name">
+                  Nombre
+                  <input id="name" type="text" autoComplete="given-name" value={ownerInfo.name || ""} onChange={e => setOwnerInfo({ ...ownerInfo, name: e.target.value })} required />
+                </label>
+                <label htmlFor="lastname">
+                  Apellido
+                  <input id="lastname" type="text" autoComplete="family-name" value={ownerInfo.last_name || ""} onChange={e => setOwnerInfo({ ...ownerInfo, last_name: e.target.value })} required />
+                </label>
+                <label htmlFor="phone">
+                  Teléfono
+                  <CountryCodeInput value={phone} onChange={setPhone} />
+                </label>
+                <label htmlFor="country">
+                  País
+                  <select id="country" value={ownerInfo.country || ''} onChange={e => setOwnerInfo({ ...ownerInfo, country: e.target.value })} required>
+                    <option value="" disabled>Selecciona...</option>
+                    {countries.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
+                  </select>
+                </label>
+
+                {/* Fila 3 */}
+                <label htmlFor="city">
+                  Ciudad
+                  <input list="cities-list" id="city" type="text" value={ownerInfo.city || ""} onChange={e => setOwnerInfo({ ...ownerInfo, city: e.target.value })} required disabled={!ownerInfo.country} />
+                  <datalist id="cities-list">
+                    {cities.map(c => <option key={uuidv4()} value={c.name} />)}
+                  </datalist>
+                </label>
+                <label htmlFor="address">
+                  Dirección
+                  <input id="address" type="text" value={ownerInfo.address || ""} onChange={e => setOwnerInfo({ ...ownerInfo, address: e.target.value })} required />
+                </label>
+              </div>
+
+              {/* Mapa */}
+              <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                <small>Haz clic en el mapa o arrastra el marcador para ajustar tu ubicación.</small>
+                <MapPicker
+                  coords={{ lat: ownerInfo.latitude!, lng: ownerInfo.longitude! }}
+                  onCoordsChange={({ lat, lng }) => setOwnerInfo(prev => ({ ...prev, latitude: lat, longitude: lng }))}
+                />
+              </div>
+            </>
           )}
 
           <label htmlFor="email">
@@ -300,6 +394,6 @@ export default function LoginPage() {
           </p>
         )}
       </article>
-    </main>
+    </main >
   );
 }

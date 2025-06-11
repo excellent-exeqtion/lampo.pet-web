@@ -23,4 +23,10 @@ export { default as RemoveItem } from "./lib/removeItem";
 export { default as Steps } from "./lib/steps";
 export { default as Title } from "./lib/title";
 
+// views
 export { default as ConsultationDetailView } from './consultations/ConsultationDetailView';
+
+// forms
+export { default as CountryCodeInput } from "./forms/CountryCodeInput";
+export { default as CountryCitySelector } from "./forms/CountryCitySelector";
+export { default as MapPicker } from "./forms/MapPicker";

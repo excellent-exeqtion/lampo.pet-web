@@ -1,16 +1,26 @@
 // app/pages/owner/settings/page.tsx
 
 "use client";
-import { Title } from "@/components/index";
+import { CountryCodeInput, Loading, Title } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch, putFetch } from "@/app/api";
 import type { OwnerDataType, PetType } from "@/types/index";
-import React, { FormEvent, useEffect, useState } from "react";
+import React, { FormEvent, useEffect, useRef, useState } from "react";
 import { FaCog, FaExclamationTriangle } from "react-icons/fa";
 import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
 import { Empty } from "@/data/index";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { Country, City } from 'country-state-city';
+import type { ICountry, ICity } from 'country-state-city';
+import { v4 as uuidv4 } from 'uuid';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
+
+const MapPicker = dynamic(() => import('@/components/forms/MapPicker'), {
+  ssr: false,
+  loading: () => <p>Cargando mapa...</p>
+});
 
 export default function SettingsPage() {
   const { isMobile } = useDeviceDetect();
@@ -19,6 +29,8 @@ export default function SettingsPage() {
   const storage = useStorageContext();
   const userId = session?.db?.user.id;
   const userEmail = session?.db?.user.email;
+
+  const BOGOTA_COORDS = { lat: 4.60971, lng: -74.08175 };
 
   const [ownerInfo, setOwnerInfo] = useState<Partial<OwnerDataType>>({
     name: "",
@@ -29,11 +41,16 @@ export default function SettingsPage() {
     country: "",
     email: ""
   });
+  const [phone, setPhone] = useState<string | undefined>();
+  const [countries, setCountries] = useState<ICountry[]>([]);
+  const [cities, setCities] = useState<ICity[]>([]);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   // asumo que en tu contexto tienes la mascota seleccionada:
   const pet: PetType | null = storage.storedPet;
+
+  const prevAddressRef = useRef<string | undefined>('');
 
   const [loadLoading, setLoadLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +67,9 @@ export default function SettingsPage() {
           if (res.ok) {
             storage.setStoredOwnerData(json);
             setOwnerInfo(json);
+            const phoneNumber = parsePhoneNumberFromString(json.phone || '');
+            setPhone(phoneNumber ? phoneNumber.formatInternational() : json.phone);
+            setPhone(json.phone || undefined);
           } else {
             console.error("Error al obtener owner:", json.error);
             setError("No se pudo cargar la información del dueño.");
@@ -73,6 +93,61 @@ export default function SettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, session]);
 
+  // Cargar listas de países y ciudades
+  useEffect(() => {
+    setCountries(Country.getAllCountries());
+  }, []);
+
+  useEffect(() => {
+    if (ownerInfo.country) {
+      setCities(City.getCitiesOfCountry(ownerInfo.country) || []);
+    }
+  }, [ownerInfo.country]);
+
+  // Geocodificación (Dirección -> Coordenadas)
+  useEffect(() => {
+    if (loadLoading || !ownerInfo.address) return;
+
+    if (ownerInfo.address === prevAddressRef.current) {
+      return;
+    }
+    const handler = setTimeout(async () => {
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(ownerInfo.address || '')}&format=json&limit=1`);
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
+          setOwnerInfo(prev => ({ ...prev, latitude: parseFloat(lat), longitude: parseFloat(lon) }));
+        }
+      } catch (e) {
+        console.error("Error de geocodificación:", e);
+      }
+    }, 1000); // Debounce de 1 segundo para no hacer llamadas en cada tecleo
+
+    prevAddressRef.current = ownerInfo.address;
+    return () => clearTimeout(handler);
+  }, [ownerInfo.address, loadLoading]);
+
+  // Geocodificación Inversa (Coordenadas -> Ciudad/País)
+  useEffect(() => {
+    if (!ownerInfo.latitude || !ownerInfo.longitude) return;
+    const fetchLocationData = async () => {
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${ownerInfo.latitude}&lon=${ownerInfo.longitude}&format=json&accept-language=es`);
+        const data = await response.json();
+        if (data && data.address) {
+          const countryCode = data.address.country_code.toUpperCase();
+          const cityName = data.address.city || data.address.town || data.address.village;
+          setOwnerInfo(prev => ({ ...prev, country: countryCode, city: cityName }));
+        }
+      } catch (e) {
+        console.error("Error de geocodificación inversa:", e);
+      }
+    };
+    const timer = setTimeout(fetchLocationData, 500);
+    return () => clearTimeout(timer);
+  }, [ownerInfo.latitude, ownerInfo.longitude]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -89,8 +164,10 @@ export default function SettingsPage() {
           owner_id: userId,
           name: ownerInfo.name || "",
           last_name: ownerInfo.last_name || "",
-          phone: ownerInfo.phone || "",
+          phone: phone!,
           address: ownerInfo.address || "",
+          latitude: ownerInfo.latitude,
+          longitude: ownerInfo.longitude,
           city: ownerInfo.city || "",
           country: ownerInfo.country || "",
           email: userEmail
@@ -138,100 +215,89 @@ export default function SettingsPage() {
     <main style={{ padding: isMobile ? "4rem 1rem 2rem" : "2rem", fontSize: "0.9rem", marginTop: isMobile ? "3.5rem" : "0" }}>
       <section style={{ marginBottom: "2rem" }}>
         <Title icon={<FaCog />} title="Configuración del dueño" />
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "grid", gap: "1rem" }}
-        >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <label htmlFor="name">
-              Nombre
-              <input
-                id="name"
-                type="text"
-                autoComplete="given-name"
-                disabled={loadLoading}
-                value={ownerInfo.name || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, name: e.target.value })}
-                required
+        {loadLoading ? <Loading /> : (
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "grid", gap: "1rem" }}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <label htmlFor="name">
+                Nombre
+                <input
+                  id="name"
+                  type="text"
+                  autoComplete="given-name"
+                  disabled={loadLoading}
+                  value={ownerInfo.name || ""}
+                  onChange={e => setOwnerInfo({ ...ownerInfo, name: e.target.value })}
+                  required
+                />
+              </label>
+
+              <label htmlFor="lastname">
+                Apellido
+                <input
+                  id="lastname"
+                  type="text"
+                  autoComplete="family-name"
+                  disabled={loadLoading}
+                  value={ownerInfo.last_name || ""}
+                  onChange={e => setOwnerInfo({ ...ownerInfo, last_name: e.target.value })}
+                  required
+                />
+              </label>
+            </div>
+
+            {/* Fila 2: País y Ciudad */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <label htmlFor="country">
+                País
+                <select id="country" value={ownerInfo.country || ''} onChange={e => setOwnerInfo({ ...ownerInfo, city: '', country: e.target.value })} required>
+                  <option value="" disabled>Selecciona...</option>
+                  {countries.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
+                </select>
+              </label>
+              <label htmlFor="city">
+                Ciudad
+                <input list="cities-list" id="city" type="text" value={ownerInfo.city || ""} onChange={e => setOwnerInfo({ ...ownerInfo, city: e.target.value })} required disabled={!ownerInfo.country} />
+                <datalist id="cities-list">
+                  {cities.map(c => <option key={uuidv4()} value={c.name} />)}
+                </datalist>
+              </label>
+            </div>
+
+            {/* Fila 3: Teléfono y Dirección */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <label htmlFor="phone">
+                Teléfono
+                <CountryCodeInput value={phone} onChange={setPhone} />
+              </label>
+              <label htmlFor="address">
+                Dirección
+                <input id="address" type="text" value={ownerInfo.address || ""} onChange={e => setOwnerInfo({ ...ownerInfo, address: e.target.value })} required />
+              </label>
+            </div>
+
+            {/* Fila 4: Mapa */}
+            <div>
+              <label>Ubicación en el mapa</label>
+              <small style={{ display: 'block', marginBottom: '0.5rem' }}>Haz clic o arrastra el marcador para ajustar la ubicación.</small>
+              <MapPicker
+                coords={{ lat: ownerInfo.latitude || BOGOTA_COORDS.lat, lng: ownerInfo.longitude || BOGOTA_COORDS.lng }}
+                onCoordsChange={({ lat, lng }) => setOwnerInfo(prev => ({ ...prev, latitude: lat, longitude: lng }))}
               />
-            </label>
+            </div>
 
-            <label htmlFor="lastname">
-              Apellido
-              <input
-                id="lastname"
-                type="text"
-                autoComplete="family-name"
-                disabled={loadLoading}
-                value={ownerInfo.last_name || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, last_name: e.target.value })}
-                required
-              />
-            </label>
+            <button type="submit" disabled={loadLoading}>
+              Guardar cambios
+            </button>
 
-            <label htmlFor="phone">
-              Teléfono
-              <input
-                id="phone"
-                type="tel"
-                autoComplete="tel"
-                disabled={loadLoading}
-                value={ownerInfo.phone || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, phone: e.target.value })}
-                required
-              />
-            </label>
-
-            <label htmlFor="address">
-              Dirección
-              <input
-                id="address"
-                type="text"
-                disabled={loadLoading}
-                autoComplete="address-line1"
-                value={ownerInfo.address || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, address: e.target.value })}
-                required
-              />
-            </label>
-
-            <label htmlFor="city">
-              Ciudad
-              <input
-                id="city"
-                type="text"
-                disabled={loadLoading}
-                autoComplete="address-level2"
-                value={ownerInfo.city || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, city: e.target.value })}
-                required
-              />
-            </label>
-
-            <label htmlFor="country">
-              País
-              <input
-                id="country"
-                type="text"
-                disabled={loadLoading}
-                autoComplete="country-name"
-                value={ownerInfo.country || ""}
-                onChange={e => setOwnerInfo({ ...ownerInfo, country: e.target.value })}
-                required
-              />
-            </label>
-          </div>
-
-          <button type="submit">
-            Guardar cambios
-          </button>
-
-          {error && (
-            <p style={{ color: formFailed ? "red" : "green" }}>{error}</p>
-          )}
-        </form>
+            {error && (
+              <p style={{ color: formFailed ? "var(--primary-red)" : "var(--primary-green)" }}>{error}</p>
+            )}
+          </form>
+        )}
       </section>
-
 
       {/* ——— Sección Danger Zone para eliminar mascota ——— */}
       {pet && storage.storedPet.id && (
@@ -251,7 +317,7 @@ export default function SettingsPage() {
               color: "var(--primary-red)",
             }}
           >
-            <FaExclamationTriangle /> Danger Zone
+            <FaExclamationTriangle /> Zona de peligro
           </h3>
           <p>Eliminar permanentemente la mascota seleccionada.</p>
           <button

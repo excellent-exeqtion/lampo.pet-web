@@ -128,11 +128,11 @@
 
   * {
     -webkit-user-select: none !important;
-    -khtml-user-select: none  !important;
-    -moz-user-select: -moz-none  !important;
-    -o-user-select: none  !important;
-    user-select: none  !important;
-    box-sizing: border-box  !important;
+    -khtml-user-select: none !important;
+    -moz-user-select: -moz-none !important;
+    -o-user-select: none !important;
+    user-select: none !important;
+    box-sizing: border-box !important;
   }
 
   body {
@@ -184,4 +184,36 @@
     user-select: none !important;
     /* Standard syntax */
   }
+}
+
+.city-suggestion-item:hover {
+  background-color: var(--primary-skin);
+}
+
+/* 1. Fix for the marker icon's blue background */
+.leaflet-marker-icon {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* 2. Fix for zoom control alignment and styling */
+.leaflet-control-zoom a {
+  color: var(--pico-primary) !important;
+  background-color: var(--primary-inverse) !important;
+  border-bottom: 1px solid var(--primary-lightgray) !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: var(--primary-darkerskin) !important;
+}
+
+/* 3. Ensure the map container itself is not affected by global styles */
+.leaflet-container {
+  font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif !important; /* Use Leaflet's default font */
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65); /* Optional: add a subtle shadow to the map */
 }

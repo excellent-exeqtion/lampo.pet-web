@@ -1,5 +1,5 @@
 // src/repositories/veterinaryAccess.repository.ts
-import { dbClient } from "@/lib/auth";
+import { createBrowserClient, dbClient } from "@/lib/auth";
 import { RepositoryOptions } from "@/types/lib";
 import { VeterinaryAccessType } from "../types";
 import PetCodeRepository from "./petCode.repository";
@@ -9,8 +9,8 @@ export default class VeterinaryAccessRepository {
     static async create(access: Omit<
         VeterinaryAccessType,
         "id" | "created_at"
-    >, options: RepositoryOptions): Promise<VeterinaryAccessType> {
-        const { data, error } = await dbClient(options)
+    >, options: RepositoryOptions | undefined = undefined): Promise<VeterinaryAccessType> {
+        const { data, error } = await (options? dbClient(options): createBrowserClient())
             .from("veterinary_accesses")
             .insert(access)
             .select("*")

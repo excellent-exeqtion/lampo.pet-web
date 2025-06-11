@@ -83,13 +83,38 @@ export default function VetSettingsPage() {
                                 required
                             />
                         </label>
-                        <label htmlFor="last_name">
-                            Apellido
+                        <label htmlFor="first_last_name">
+                            Primer Apellido
                             <input
                                 type="text"
-                                id="last_name"
-                                name="last_name"
-                                value={vetInfo.last_name || ''}
+                                id="first_last_name"
+                                name="first_last_name"
+                                value={vetInfo.first_last_name || ''}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <div className="grid">
+                        <label htmlFor="second_last_name">
+                            Segundo Apellido
+                            <input
+                                type="text"
+                                id="second_last_name"
+                                name="second_last_name"
+                                value={vetInfo.second_last_name || ''}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </label>
+                        <label htmlFor="identification">
+                            Identificación
+                            <input
+                                type="text"
+                                id="identification"
+                                name="identification"
+                                value={vetInfo.identification || ''}
                                 onChange={handleInputChange}
                                 required
                             />

@@ -1,18 +1,22 @@
 // app/components/modals/VeterinaryModal.tsx
 "use client";
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { useRouter } from "next/navigation";
 import { veterinaryStyles } from "../../styles/veterinary";
 import ModalComponent from "../lib/modal";
 import { postFetch, getFetch } from "@/app/api";
 import { useStorageContext } from "@/context/StorageProvider";
-import { useUI } from "@/context/UIProvider";
 
+interface VeterinaryModalProps {
+  setShowModal: Dispatch<SetStateAction<boolean>>;
+}
 
-export default function VeterinaryModal() {
+export default function VeterinaryModal({ setShowModal }: VeterinaryModalProps) {
   const [code, setCode] = useState("");
   const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [firstLastName, setFirstLastName] = useState("");
+  const [secondLastName, setSecondLastName] = useState("");
+  const [identification, setIdentification] = useState("");
   const [registration, setRegistration] = useState("");
   const [clinicName, setClinicName] = useState("");
   const [city, setCity] = useState("");
@@ -20,12 +24,10 @@ export default function VeterinaryModal() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const storage = useStorageContext();
-  const { setShowVetModal } = useUI();
-
   const handleSubmit = async () => {
     setError("");
     const sanitizedCode = code.replaceAll(" ", "").toUpperCase();
-    if (![sanitizedCode, firstName, lastName, registration, clinicName, city].every(Boolean)) {
+    if (![sanitizedCode, firstName, firstLastName, secondLastName, identification, registration, clinicName, city].every(Boolean)) {
       setError("Por favor completa todos los campos.");
       return;
     }
@@ -38,7 +40,9 @@ export default function VeterinaryModal() {
         {
           code: sanitizedCode,
           firstName,
-          lastName,
+          firstLastName,
+          secondLastName,
+          identification,
           registration,
           clinicName,
           city
@@ -54,7 +58,10 @@ export default function VeterinaryModal() {
         if (!petResponse.ok) {
           setError("No se encontró la mascota.");
         }
+        console.log('petResponse', petResponse)
         const petData = await petResponse.json();
+
+        console.log('petData', petData)
         storage.setStoredPet(petData);
         storage.setStoredOwnerPets([]);
 
@@ -63,15 +70,18 @@ export default function VeterinaryModal() {
           pet_id: petData.id,
           pet_code_id: codeData.pet_code,
           vet_first_name: codeData.firstName,
-          vet_last_name: codeData.lastName,
+          vet_first_last_name: codeData.firstLastName,
+          vet_second_last_name: codeData.secondLastName,
+          identification: codeData.identification,
           professional_registration: codeData.registration,
           clinic_name: codeData.clinicName,
           city: codeData.city
         });
-        setShowVetModal(false);
+        setShowModal(false);
         router.push(`/pages/vet/consultation/${petData.id}`);
       }
-    } catch {
+    } catch (error) {
+      console.log(error);
       setError("Ocurrió un error inesperado.");
     } finally {
       setLoading(false);
@@ -80,7 +90,7 @@ export default function VeterinaryModal() {
 
   return (
     <ModalComponent title="Soy médico veterinario" description="Aquí puedes revisar el historial completo, modificarlo y agregar entradas
-        a la historia de la mascota" setShowModal={setShowVetModal} maxWidth="1000px">
+        a la historia de la mascota" setShowModal={setShowModal} maxWidth="1000px">
 
       <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         <div>
@@ -95,13 +105,35 @@ export default function VeterinaryModal() {
         </div>
 
         <div>
-          <h4 className="label">Apellido</h4>
+          <h4 className="label">Primer Apellido</h4>
           <input
             className="input"
             type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            placeholder="Apellido"
+            value={firstLastName}
+            onChange={(e) => setFirstLastName(e.target.value)}
+            placeholder="Primer Apellido"
+          />
+        </div>
+
+        <div>
+          <h4 className="label">Segundo Apellido</h4>
+          <input
+            className="input"
+            type="text"
+            value={secondLastName}
+            onChange={(e) => setSecondLastName(e.target.value)}
+            placeholder="Segundo Apellido"
+          />
+        </div>
+
+        <div>
+          <h4 className="label">Identificación</h4>
+          <input
+            className="input"
+            type="text"
+            value={identification}
+            onChange={(e) => setIdentification(e.target.value)}
+            placeholder="Identificación"
           />
         </div>
 

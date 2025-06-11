@@ -8,12 +8,16 @@ import { geistMono, geistSans } from "@/styles/geist";
 import { ClientAppProvider } from "../components";
 import { usePathname } from "next/navigation";
 import { SessionProvider } from "@/context/SessionProvider";
-import '../i18n';
+import '../lib/i18n';
+import { StorageProvider } from "@/context/StorageProvider";
+import { RoleProvider } from "@/context/RoleProvider";
+import { VetProvider } from "@/context/VetContext";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const noClientAppProviderRoutes = ["/", "/login", "/vet-access", "/pages/auth/verify"];
   const shouldUseClientAppProvider = !noClientAppProviderRoutes.includes(pathname);
+  
 
   return (
     <html lang="es" data-theme="light" className="no-select">
@@ -23,15 +27,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <style>{tooltipStyles}</style>
         <SessionProvider>
-          {shouldUseClientAppProvider ? (
-            <ClientAppProvider>
-              {children}
-            </ClientAppProvider>
-          ) : (
-            <>
-              {children}
-            </>
-          )}
+          <StorageProvider>
+            <RoleProvider>
+              <VetProvider>
+                {shouldUseClientAppProvider ? (
+                  <ClientAppProvider>
+                    {children}
+                  </ClientAppProvider>
+                ) : (
+                  <>
+                    {children}
+                  </>
+                )}
+
+              </VetProvider>
+            </RoleProvider>
+          </StorageProvider>
         </SessionProvider>
       </body>
     </html >

@@ -92,7 +92,9 @@ export interface VeterinaryAccessType {
     pet_id: string;
     pet_code_id: string;
     vet_first_name: string;
-    vet_last_name: string;
+    vet_first_last_name: string;
+    vet_second_last_name: string;
+    identification: string;
     professional_registration: string;
     clinic_name: string;
     city: string;
@@ -101,7 +103,9 @@ export interface VeterinaryAccessType {
 export interface VeterinarianType {
     vet_id: string;
     first_name: string;
-    last_name: string;
+    first_last_name: string;
+    second_last_name: string;
+    identification: string;
     email: string;
     registration: string;
     clinic_name: string;

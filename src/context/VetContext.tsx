@@ -25,7 +25,7 @@ export function VetProvider({ children }: VetProviderProps) {
     const session = useSessionContext();
     const [vet, setVet] = useState<VeterinarianType | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-    const { isVetWithSession } = useRoleContext();
+    const { isVetWithSession, isVetWithoutSession } = useRoleContext();
     //const { setShowVetPetCodeModal } = useUI();
     const storage = useStorageContext();
 
@@ -49,7 +49,7 @@ export function VetProvider({ children }: VetProviderProps) {
                         setVet(data);
                     }
                 }
-                else{
+                else {
                     setVet(storage.storedVetData);
                 }
                 //TODO: check if we want to open directly the modal to ask for the code.
@@ -57,6 +57,20 @@ export function VetProvider({ children }: VetProviderProps) {
                     setShowVetPetCodeModal(true);
                 }*/
             }
+            else if (isVetWithoutSession) {
+                setVet({
+                    vet_id: '',
+                    first_name: storage.storedVetAccess.vet_first_name,
+                    first_last_name: storage.storedVetAccess.vet_first_last_name,
+                    second_last_name: storage.storedVetAccess.vet_second_last_name,
+                    identification: storage.storedVetAccess.identification,
+                    email: '',
+                    registration: storage.storedVetAccess.professional_registration,
+                    clinic_name: storage.storedVetAccess.clinic_name,
+                    city: storage.storedVetAccess.city
+                })
+            }
+
         } catch (error) {
             console.error(error);
             setVet(null);
@@ -81,6 +95,7 @@ export function VetProvider({ children }: VetProviderProps) {
 export function useVetContext(): VetContextType {
     const context = useContext(VetContext);
     if (!context) {
+        console.log('entro aqui');
         throw new Error("useVetContext debe usarse dentro de un VetProvider");
     }
     return context;

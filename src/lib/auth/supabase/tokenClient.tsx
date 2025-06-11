@@ -7,7 +7,7 @@ export function getClientWithToken(options: RepositoryOptions) {
     return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        (options.cookies) ? {
+        (options.cookies && !Cookies.isVetAccessFromCookie(options.cookies)) ? {
             global: { headers: { Authorization: `Bearer ${Cookies.getAccessTokenFromCookie(options.cookies)}` } }
         } : {}
     );

@@ -1,25 +1,22 @@
 // app/api/vet/use-code/route.ts
 import { NextResponse } from "next/server";
 import { PetCodeRepository, VeterinaryAccessRepository } from "@/repos/index";
-import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
-  const options = {
-    cookies: await cookies()
-  }
 
   try {
     const {
       code,
       firstName,
-      lastName,
+      firstLastName,
+      secondLastName,
+      identification,
       registration,
       clinicName,
       city,
     } = await req.json();
-
     // 1) Obtener y validar código
-    const data = await PetCodeRepository.find(code, options);
+    const data = await PetCodeRepository.find(code);
     if (!data) {
       return NextResponse.json({ error: "Código inválido" }, { status: 404 });
     }
@@ -30,23 +27,33 @@ export async function POST(req: Request) {
     if (data.expires_at < now) {
       return NextResponse.json({ error: "Código expirado" }, { status: 410 });
     }
-
     // 2) Marcar como usado
-    await PetCodeRepository.markUsed(code, options);
+    await PetCodeRepository.markUsed(code);
 
     // 3) Registrar acceso veterinario
     const vetAccess = await VeterinaryAccessRepository.create({
       pet_id: data.pet_id,
       pet_code_id: data.id,
       vet_first_name: firstName,
-      vet_last_name: lastName,
+      vet_first_last_name: firstLastName,
+      vet_second_last_name: secondLastName,
+      identification: identification,
       professional_registration: registration,
       clinic_name: clinicName,
       city,
-    }, options);
+    });
 
     // 4) Devolver petId
-    return NextResponse.json({ success: true, pet_id: data.pet_id, pet_code: data.id, vet_access: vetAccess.id });
+    const response = NextResponse.json({ success: true, pet_id: data.pet_id, pet_code: data.id, vet_access: vetAccess.id });
+
+    // Establecemos una cookie con el acceso temporal
+    response.cookies.set('lampo-vet-access', JSON.stringify({ petId: data.pet_id }), {
+      path: '/',
+      httpOnly: true, // La cookie no es accesible desde JS en el cliente
+      sameSite: 'lax',
+      maxAge: 3600, // La sesión temporal dura 1 hora
+    });
+    return response;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return NextResponse.json(

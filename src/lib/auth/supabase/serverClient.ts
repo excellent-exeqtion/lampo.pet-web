@@ -1,6 +1,5 @@
 // lib/auth/supabase/serverClient.ts
 import { createServerClient as supabaseCreateServerClient, type CookieOptions } from '@supabase/ssr';
-import { User } from '@supabase/supabase-js';
 import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 // Cliente Supabase para Server Components, API Routes y Middleware
@@ -39,10 +38,4 @@ export async function createServerClient(cookieStore: ReadonlyRequestCookies) {
       }
     }
   )).auth;
-}
-
-export async function getUser(cookieStore: ReadonlyRequestCookies): Promise<User | null> {
-  const supabase = await createServerClient(cookieStore);
-  const { data: { user } } = await supabase.getUser();
-  return user as User;
 }

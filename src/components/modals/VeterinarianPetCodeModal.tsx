@@ -37,7 +37,9 @@ export default function VeterinarianPetCodeModal() {
             const vetPayload = {
                 code: sanitizedCode,
                 firstName: vet.first_name,
-                lastName: vet.last_name,
+                firstLastName: vet.first_last_name,
+                secondLastName: vet.second_last_name,
+                identification: vet.identification,
                 registration: vet.registration,
                 clinicName: vet.clinic_name,
                 city: vet.city
@@ -61,7 +63,9 @@ export default function VeterinarianPetCodeModal() {
                         pet_id: petData.id,
                         pet_code_id: data.pet_code,
                         vet_first_name: vet.first_name,
-                        vet_last_name: vet.last_name,
+                        vet_first_last_name: vet.first_last_name,
+                        vet_second_last_name: vet.second_last_name,
+                        identification: vet.identification,
                         professional_registration: vet.registration,
                         clinic_name: vet.clinic_name,
                         city: vet.city
@@ -91,7 +95,9 @@ export default function VeterinarianPetCodeModal() {
             >
                 {/* Inputs ocultos con datos del veterinario */}
                 <input type="hidden" name="firstName" value={vet.first_name} />
-                <input type="hidden" name="lastName" value={vet.last_name} />
+                <input type="hidden" name="firstLastName" value={vet.first_last_name} />
+                <input type="hidden" name="secondLastName" value={vet.second_last_name} />
+                <input type="hidden" name="identification" value={vet.identification} />
                 <input type="hidden" name="registration" value={vet.registration} />
                 <input type="hidden" name="clinicName" value={vet.clinic_name} />
                 <input type="hidden" name="city" value={vet.city} />

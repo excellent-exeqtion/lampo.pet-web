@@ -1,14 +1,14 @@
 // src/repositories/petCode.repository.ts
-import { dbClient } from "@/lib/auth";
+import { createBrowserClient, dbClient } from "@/lib/auth";
 import { PetCodeType } from "@/types/index";
 import { RepositoryOptions } from "@/types/lib";
 import { Random } from "@/utils/index";
 
 export default class PetCodeRepository {
   /** Busca un código activo */
-  static async find(code: string, options: RepositoryOptions): Promise<PetCodeType | null> {
+  static async find(code: string, options: RepositoryOptions | undefined = undefined): Promise<PetCodeType | null> {
     //TODO: Review  removal of .overrideTypes<PetCodeType[], { merge: false }>();
-    const { data, error } = await dbClient(options)
+    const { data, error } = await (options? dbClient(options): createBrowserClient())
       .from("pet_codes")
       .select("*")
       .eq("code", code);
@@ -42,8 +42,8 @@ export default class PetCodeRepository {
   }
 
   /** Marca un código como usado */
-  static async markUsed(code: string, options: RepositoryOptions): Promise<void> {
-    const { error } = await dbClient(options)
+  static async markUsed(code: string): Promise<void> {
+    const { error } = await createBrowserClient()
       .from("pet_codes")
       .update({ used: true })
       .eq("code", code);

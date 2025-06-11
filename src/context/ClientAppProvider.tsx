@@ -7,7 +7,6 @@ import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { usePathname } from "next/navigation";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
 import { useSessionContext } from "./SessionProvider";
-import { useRoleContext } from "./RoleProvider";
 
 interface Props {
     children: React.ReactNode;
@@ -19,7 +18,6 @@ export default function ClientAppProvider({ children }: Props) {
     const { isMobile, isDesktop } = useDeviceDetect(); 
     const { isLoading: isSessionLoading } = useSessionContext();
     const pathname = usePathname();
-    const { isVetWithoutUserSession } = useRoleContext();
 
     // 2. Determinar si la ruta actual es una ruta pública/especial que no usa el layout principal.
     const isAuthRoute = pathname === "/login" ||
@@ -37,11 +35,6 @@ export default function ClientAppProvider({ children }: Props) {
                 {children}
             </AppContextProvider>
         );
-    }
-
-    const isVetUserNow = isVetWithoutUserSession;
-    if (isVetUserNow) {
-        return null;
     }
 
     const gridCols = isMobile ? "1fr" : "300px 1fr";

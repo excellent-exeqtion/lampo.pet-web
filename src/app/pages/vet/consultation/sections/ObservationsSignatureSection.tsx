@@ -31,7 +31,7 @@ export function ObservationsSignatureSection({
             <div className="grid">
                 <label>
                     Nombre MV o MVZ Tratante
-                    <input type="text" value={`${vetData?.vet_first_name || ''} ${vetData?.vet_last_name || ''}`} readOnly disabled/>
+                    <input type="text" value={`${vetData?.vet_first_name || ''} ${vetData?.vet_first_last_name || ''}`} readOnly disabled/>
                 </label>
                 <label>
                     Matrícula Profesional

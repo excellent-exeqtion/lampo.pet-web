@@ -110,6 +110,7 @@ export function useAppStorage() {
 
   const resetSession = () => {
     resetPet();
+    setStoredVetData(Empty.VetData());
     setStoredPetCode(Empty.PetCode());
     setStoredVetAccess(Empty.VetAccess());
     setStoredOwnerData(Empty.OwnerData());

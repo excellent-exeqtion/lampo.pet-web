@@ -34,6 +34,7 @@ export default function Bubbles() {
   const [showChangePetBubble, setShowChangePetBubble] = useState(false);
   const { isOwner, isVet } = useRoleContext();
 
+
   const storage = useStorageContext();
 
   const { setShowFeedbackModal,
@@ -155,7 +156,7 @@ export default function Bubbles() {
 
       {/* Modals */}
       {showChangePetModal && <ChangePetModal />}
-      {showVetModal && <VeterinaryModal />}
+      {showVetModal && <VeterinaryModal setShowModal={setShowVetModal}/>}
       {showCodeModal && <PetCodeModal />}
       {showFeedbackModal && <FeedbackModal />}
       {showAddPetModal && <AddPetModal />}

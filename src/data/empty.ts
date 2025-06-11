@@ -142,7 +142,9 @@ export function VetAccess(): VeterinaryAccessType {
         pet_id: '',
         pet_code_id: '',
         vet_first_name: '',
-        vet_last_name: '',
+        vet_first_last_name: '',
+        vet_second_last_name: '',
+        identification: '',
         professional_registration: '',
         clinic_name: '',
         city: ''
@@ -153,7 +155,9 @@ export function VetData(): VeterinarianType {
     return {
         vet_id: '',
         first_name: '',
-        last_name: '',
+        first_last_name: '',
+        second_last_name: '',
+        identification: '',
         email: '',
         registration: '',
         clinic_name: '',

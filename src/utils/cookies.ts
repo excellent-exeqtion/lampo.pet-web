@@ -14,6 +14,12 @@ export function getAccessTokenFromCookie(cookies: ReadonlyRequestCookies) {
   // Ahora decodifica a string y parsea JSON
   const jsonStr = Buffer.from(base64, 'base64').toString('utf-8');
   const json = JSON.parse(jsonStr);
-  console.log('json.access_token', json.access_token)
-  return json.access_token;  // <-- SOLO ESTA PARTE VA EN EL HEADER
+  return json.access_token;
+}
+
+export function isVetAccessFromCookie(cookies: ReadonlyRequestCookies): boolean {
+  const cookieName = 'lampo-vet-access';
+  const cookieValue = cookies.get(cookieName)?.value;
+  if (!cookieValue) return false;
+  return true;
 }

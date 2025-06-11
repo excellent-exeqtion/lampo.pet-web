@@ -38,7 +38,7 @@ export default function VetAccessPage() {
        * y hacer el POST a VeterinaryAccessRepository.create  
        */}
       {showVetModal && (
-        <VeterinaryModal />
+        <VeterinaryModal setShowModal={setShowVetModal} />
       )}
     </main>
   );

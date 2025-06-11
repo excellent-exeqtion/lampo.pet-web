@@ -3,7 +3,9 @@
 create table if not exists veterinarians (
   vet_id uuid primary key,
   first_name text not null,
-  last_name text not null,
+  first_last_name text not null,
+  second_last_name text not null,
+  identification text not null,
   email text not null,
   registration text not null,
   clinic_name text not null,

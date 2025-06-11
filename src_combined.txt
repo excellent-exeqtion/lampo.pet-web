@@ -1,45 +1,102 @@
------ Archivo: i18n.ts ----- 
-// src/i18n.ts
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-
-import es from '../public/locales/es/errors.json';
-
-i18n
-    .use(initReactI18next)
-    .init({
-        resources: {
-            es: { errors: es },
-        },
-        lng: 'es',
-        fallbackLng: 'es',
-        interpolation: { escapeValue: false },
-    });
-
-export default i18n;
- 
 ----- Archivo: middleware.ts ----- 
 // middleware.ts
-import { type NextRequest } from 'next/server';
-import { updateSession } from './lib/auth'; // O la ruta correcta a tu index.ts de lib/auth
+import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient, updateSession } from '@/lib/auth';
+import { cookies } from 'next/headers';
+
+// Lista de rutas permitidas para veterinarios con acceso temporal
+const VET_GUEST_ALLOWED_PATHS = [
+    '/pages/pet/basic-data',
+    '/pages/pet/vaccines',
+    '/pages/pet/surgeries',
+    '/pages/pet/medicines',
+    '/pages/pet/conditions',
+    '/pages/pet/lab-tests',
+];
+
+// Helper para validar si la ruta actual está permitida
+function isVetGuestAllowedPath(pathname: string, petIdFromCookie: string): boolean {
+    // 1. Revisa las rutas estáticas
+    if (VET_GUEST_ALLOWED_PATHS.includes(pathname)) {
+        return true;
+    }
+    // 2. Revisa las rutas dinámicas, como la de consultas
+    const consultationMatch = pathname.match(/^\/pages\/pet\/consultations\/([^/]+)/);
+    if (consultationMatch) {
+        const petIdFromUrl = consultationMatch[1];
+        // Comprueba si el ID de mascota en la URL coincide con el de la cookie
+        return petIdFromUrl === petIdFromCookie;
+    }
+
+    // 3. Revisa la ruta para añadir una nueva consulta
+    const newConsultationMatch = pathname.match(/^\/pages\/vet\/consultation\/([^/]+)/);
+    if (newConsultationMatch) {
+        const petIdFromUrl = newConsultationMatch[1];
+        return petIdFromUrl === petIdFromCookie;
+    }
+
+    return false;
+}
+
 
 export async function middleware(request: NextRequest) {
-  // updateSession se encargará de refrescar la cookie de sesión de Supabase
-  // y también puede manejar redirecciones si no hay usuario (como lo tienes configurado)
-  return await updateSession(request);
+    const { pathname } = request.nextUrl;
+    const cookieStore = await cookies();
+
+    // Rutas públicas que no necesitan validación de sesión ni de cookie
+    const publicRoutes = ['/login', '/vet-access', '/pages/auth/verify', '/api/auth/logout'];
+    if (pathname === '/' || publicRoutes.some(route => pathname.startsWith(route))) {
+        return await updateSession(request);
+    }
+
+    const supabaseResponse = NextResponse.next({ request });
+    const supabase = await createServerClient(cookieStore);
+
+    const { data: { user } } = await supabase.getUser();
+
+    // Si hay un usuario con sesión, la lógica de Supabase se encargará
+    if (user) {
+        return supabaseResponse;
+    }
+
+    // Si NO hay usuario, revisamos la cookie de acceso temporal de veterinario
+    const vetAccessCookie = request.cookies.get('lampo-vet-access');
+    if (vetAccessCookie) {
+        try {
+            const { petId } = JSON.parse(vetAccessCookie.value);
+            if (petId && isVetGuestAllowedPath(pathname, petId)) {
+                // El veterinario sin sesión tiene acceso a esta ruta
+                return supabaseResponse;
+            }
+        } catch (error) {
+            // La cookie está malformada, la ignoramos y procedemos a redirigir
+            console.error("Error parsing vet access cookie:", error);
+        }
+    }
+
+    // Si no hay usuario y no hay acceso de veterinario válido para esta ruta, redirigimos al login
+    // Excluimos las API routes de esta redirección para no romper la app
+    if (!pathname.startsWith('/api/')) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/login';
+        return NextResponse.redirect(url);
+    }
+
+    // Para todas las demás rutas (principalmente API), dejamos que Supabase maneje la sesión
+    return supabaseResponse;
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+    matcher: [
+        /*
+         * Match all request paths except for the ones starting with:
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         * Feel free to modify this pattern to include more paths.
+         */
+        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    ],
 }; 
 ----- Archivo: layout.tsx ----- 
 // app/layout.tsx
@@ -52,12 +109,16 @@ import { geistMono, geistSans } from "@/styles/geist";
 import { ClientAppProvider } from "../components";
 import { usePathname } from "next/navigation";
 import { SessionProvider } from "@/context/SessionProvider";
-import '../i18n';
+import '../lib/i18n';
+import { StorageProvider } from "@/context/StorageProvider";
+import { RoleProvider } from "@/context/RoleProvider";
+import { VetProvider } from "@/context/VetContext";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const noClientAppProviderRoutes = ["/", "/login", "/vet-access", "/pages/auth/verify"];
   const shouldUseClientAppProvider = !noClientAppProviderRoutes.includes(pathname);
+  
 
   return (
     <html lang="es" data-theme="light" className="no-select">
@@ -67,15 +128,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <style>{tooltipStyles}</style>
         <SessionProvider>
-          {shouldUseClientAppProvider ? (
-            <ClientAppProvider>
-              {children}
-            </ClientAppProvider>
-          ) : (
-            <>
-              {children}
-            </>
-          )}
+          <StorageProvider>
+            <RoleProvider>
+              <VetProvider>
+                {shouldUseClientAppProvider ? (
+                  <ClientAppProvider>
+                    {children}
+                  </ClientAppProvider>
+                ) : (
+                  <>
+                    {children}
+                  </>
+                )}
+
+              </VetProvider>
+            </RoleProvider>
+          </StorageProvider>
         </SessionProvider>
       </body>
     </html >
@@ -493,6 +561,19 @@ async function methodFetch(method: string, url: string, params: ApiParams | unde
     })
 } 
 ----- Archivo: route.ts ----- 
+// src/app/api/auth/logout/route.ts
+import { NextResponse } from 'next/server';
+
+export async function POST() {
+    // Creamos una respuesta para poder manipular las cookies
+    const response = NextResponse.json({ success: true, message: 'Logout successful' });
+
+    // Eliminamos la cookie de acceso de veterinario
+    response.cookies.delete('lampo-vet-access');
+
+    return response;
+} 
+----- Archivo: route.ts ----- 
 // src/app/api/consultations/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { ConsultationRepository } from '@/repos/index';
@@ -834,8 +915,6 @@ export async function PUT(request: NextRequest) {
         const existing = await OwnerRepository.findById(ownerId, options);
         if (existing) {
             await OwnerRepository.update(payload, options);
-        } else {
-            await OwnerRepository.create(payload, options);
         }
 
         const saved = await OwnerRepository.findById(ownerId, options);
@@ -848,17 +927,16 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    const options = {
-        cookies: await cookies()
-    }
-
     return withValidationAndErrorHandling(
         'POST',
         req,
         OwnerDataTypeSchema,
         async (ownerData: OwnerDataType) => {
             try {
-                const { data, error } = await OwnerRepository.create(ownerData, options);
+                console.log('ownerData', ownerData);
+                const { data, error } = await OwnerRepository.create(ownerData);
+                console.log('data', data);
+                console.log('error', error);
                 if (error) {
                     throw new RepositoryError(`Error creating record: ${JSON.stringify(ownerData)}`);
                 }
@@ -1009,7 +1087,7 @@ export async function GET(
         async () => {
             const { petId } = await params;
             const data = await BasicDataRepository.findByPetId(petId, options);
-    console.log('findByPetId data', data);
+            console.log('findByPetId data', data);
             return NextResponse.json(data);
         });
 }
@@ -1428,25 +1506,22 @@ export async function PUT(
 // app/api/vet/use-code/route.ts
 import { NextResponse } from "next/server";
 import { PetCodeRepository, VeterinaryAccessRepository } from "@/repos/index";
-import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
-  const options = {
-    cookies: await cookies()
-  }
 
   try {
     const {
       code,
       firstName,
-      lastName,
+      firstLastName,
+      secondLastName,
+      identification,
       registration,
       clinicName,
       city,
     } = await req.json();
-
     // 1) Obtener y validar código
-    const data = await PetCodeRepository.find(code, options);
+    const data = await PetCodeRepository.find(code);
     if (!data) {
       return NextResponse.json({ error: "Código inválido" }, { status: 404 });
     }
@@ -1457,23 +1532,33 @@ export async function POST(req: Request) {
     if (data.expires_at < now) {
       return NextResponse.json({ error: "Código expirado" }, { status: 410 });
     }
-
     // 2) Marcar como usado
-    await PetCodeRepository.markUsed(code, options);
+    await PetCodeRepository.markUsed(code);
 
     // 3) Registrar acceso veterinario
     const vetAccess = await VeterinaryAccessRepository.create({
       pet_id: data.pet_id,
       pet_code_id: data.id,
       vet_first_name: firstName,
-      vet_last_name: lastName,
+      vet_first_last_name: firstLastName,
+      vet_second_last_name: secondLastName,
+      identification: identification,
       professional_registration: registration,
       clinic_name: clinicName,
       city,
-    }, options);
+    });
 
     // 4) Devolver petId
-    return NextResponse.json({ success: true, pet_id: data.pet_id, pet_code: data.id, vet_access: vetAccess.id });
+    const response = NextResponse.json({ success: true, pet_id: data.pet_id, pet_code: data.id, vet_access: vetAccess.id });
+
+    // Establecemos una cookie con el acceso temporal
+    response.cookies.set('lampo-vet-access', JSON.stringify({ petId: data.pet_id }), {
+      path: '/',
+      httpOnly: true, // La cookie no es accesible desde JS en el cliente
+      sameSite: 'lax',
+      maxAge: 3600, // La sesión temporal dura 1 hora
+    });
+    return response;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return NextResponse.json(
@@ -1774,7 +1859,7 @@ import styles from "./landing.module.css";
 
 export default function LandingPage() {
     return (
-        <div className={styles.landing_wrapper}>
+        <div className={styles.landing_wrapper} style={{ overflowX: 'hidden' }}>
             <Navbar />
             <main className="no-select">
                 <Hero />
@@ -2443,6 +2528,14 @@ export default function LandingPage() {
     .info_contact {
         padding: 0 0.5rem;
     }
+
+    .category_container{
+        grid-template-columns: 'repeat(2, 1fr)';
+    }
+
+    .nav_links{
+        display: 'block';
+    }
 } 
 ----- Archivo: About.tsx ----- 
 // app/landing/components/About.tsx
@@ -2751,15 +2844,15 @@ export default function Categories() {
             <div className={styles.heading_container}>
                 <h2>Categorías</h2>
             </div>
-            <div className={styles.category_container} style={{ gridTemplateColumns: "repeat(4, 1fr)"}}>
-            {categories.map((cat) => (
-                <div key={cat.name} className={styles.category_box}>
-                    <img src={cat.image} alt={cat.name} width={150} />
-                    <h3><b>{cat.name}</b></h3>
-                    <p>{cat.description}</p>
-                </div>
-            ))}
-        </div>
+            <div className={styles.category_container}>
+                {categories.map((cat) => (
+                    <div key={cat.name} className={styles.category_box}>
+                        <img src={cat.image} alt={cat.name} width={150} />
+                        <h3><b>{cat.name}</b></h3>
+                        <p>{cat.description}</p>
+                    </div>
+                ))}
+            </div>
         </section >
     );
 }
@@ -3001,6 +3094,7 @@ export default function LoginPage() {
             }),
           });
           if (!response.ok) {
+            console.log('response', response);
             const errorData = await response.json();
             setError(t(errorData.message) || "Error creando el perfil del dueño.");
             // Considerar un rollback o manejo de error si el perfil no se crea después del auth.
@@ -5600,7 +5694,7 @@ export function ObservationsSignatureSection({
             <div className="grid">
                 <label>
                     Nombre MV o MVZ Tratante
-                    <input type="text" value={`${vetData?.vet_first_name || ''} ${vetData?.vet_last_name || ''}`} readOnly disabled/>
+                    <input type="text" value={`${vetData?.vet_first_name || ''} ${vetData?.vet_first_last_name || ''}`} readOnly disabled/>
                 </label>
                 <label>
                     Matrícula Profesional
@@ -5987,6 +6081,7 @@ import { FaClipboardList } from "react-icons/fa";
 import { ConsultationForm } from "../ConsultationForm";
 
 export default function ConsultationPage() {
+    console.log('entro aqui')
     const router = useRouter();
     const params = useParams();
     const petId = params.petId as string;
@@ -5995,12 +6090,14 @@ export default function ConsultationPage() {
     const { storedPet, storedVetAccess, setStoredPet } = useStorageContext();
     const { vet: veterinarianData } = useVetContext(); // Datos del veterinario logueado
 
+    console.log('entro aqui')
     const [pet, setPet] = useState<PetType | null>(storedPet.id === petId ? storedPet : null);
     const [loadingPet, setLoadingPet] = useState<boolean>(!pet);
     const [errorPet, setErrorPet] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState<boolean>(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
+    console.log('entro aqui')
     useEffect(() => {
         if (!petId) {
             setErrorPet("ID de mascota no encontrado en la ruta.");
@@ -6032,6 +6129,7 @@ export default function ConsultationPage() {
         }
     }, [petId, storedPet, setStoredPet]);
 
+    console.log('entro aqui')
     const handleFormSubmit = async (formData: CreateConsultationPayload) => {
         setSubmitting(true);
         setSubmitError(null);
@@ -6080,9 +6178,11 @@ export default function ConsultationPage() {
     };
 
     if (loadingPet) return <Loading />;
+    console.log('entro aqui')
     if (errorPet) return <DataNotFound message={errorPet} />;
+    console.log('entro aqui')
     if (!pet) return <DataNotFound message="Mascota no encontrada." />;
-
+    console.log('entro aqui')
     return (
         <main style={{ padding: "2rem" }}>
             <Title icon={<FaClipboardList />} title={`Nueva Consulta para ${pet.name}`} />
@@ -6185,13 +6285,38 @@ export default function VetSettingsPage() {
                                 required
                             />
                         </label>
-                        <label htmlFor="last_name">
-                            Apellido
+                        <label htmlFor="first_last_name">
+                            Primer Apellido
                             <input
                                 type="text"
-                                id="last_name"
-                                name="last_name"
-                                value={vetInfo.last_name || ''}
+                                id="first_last_name"
+                                name="first_last_name"
+                                value={vetInfo.first_last_name || ''}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <div className="grid">
+                        <label htmlFor="second_last_name">
+                            Segundo Apellido
+                            <input
+                                type="text"
+                                id="second_last_name"
+                                name="second_last_name"
+                                value={vetInfo.second_last_name || ''}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </label>
+                        <label htmlFor="identification">
+                            Identificación
+                            <input
+                                type="text"
+                                id="identification"
+                                name="identification"
+                                value={vetInfo.identification || ''}
                                 onChange={handleInputChange}
                                 required
                             />
@@ -6456,7 +6581,7 @@ export default function VetAccessPage() {
        * y hacer el POST a VeterinaryAccessRepository.create  
        */}
       {showVetModal && (
-        <VeterinaryModal />
+        <VeterinaryModal setShowModal={setShowVetModal} />
       )}
     </main>
   );
@@ -9229,6 +9354,7 @@ export default function Bubbles() {
   const [showChangePetBubble, setShowChangePetBubble] = useState(false);
   const { isOwner, isVet } = useRoleContext();
 
+
   const storage = useStorageContext();
 
   const { setShowFeedbackModal,
@@ -9350,7 +9476,7 @@ export default function Bubbles() {
 
       {/* Modals */}
       {showChangePetModal && <ChangePetModal />}
-      {showVetModal && <VeterinaryModal />}
+      {showVetModal && <VeterinaryModal setShowModal={setShowVetModal}/>}
       {showCodeModal && <PetCodeModal />}
       {showFeedbackModal && <FeedbackModal />}
       {showAddPetModal && <AddPetModal />}
@@ -9899,7 +10025,9 @@ export default function VeterinarianPetCodeModal() {
             const vetPayload = {
                 code: sanitizedCode,
                 firstName: vet.first_name,
-                lastName: vet.last_name,
+                firstLastName: vet.first_last_name,
+                secondLastName: vet.second_last_name,
+                identification: vet.identification,
                 registration: vet.registration,
                 clinicName: vet.clinic_name,
                 city: vet.city
@@ -9923,7 +10051,9 @@ export default function VeterinarianPetCodeModal() {
                         pet_id: petData.id,
                         pet_code_id: data.pet_code,
                         vet_first_name: vet.first_name,
-                        vet_last_name: vet.last_name,
+                        vet_first_last_name: vet.first_last_name,
+                        vet_second_last_name: vet.second_last_name,
+                        identification: vet.identification,
                         professional_registration: vet.registration,
                         clinic_name: vet.clinic_name,
                         city: vet.city
@@ -9953,7 +10083,9 @@ export default function VeterinarianPetCodeModal() {
             >
                 {/* Inputs ocultos con datos del veterinario */}
                 <input type="hidden" name="firstName" value={vet.first_name} />
-                <input type="hidden" name="lastName" value={vet.last_name} />
+                <input type="hidden" name="firstLastName" value={vet.first_last_name} />
+                <input type="hidden" name="secondLastName" value={vet.second_last_name} />
+                <input type="hidden" name="identification" value={vet.identification} />
                 <input type="hidden" name="registration" value={vet.registration} />
                 <input type="hidden" name="clinicName" value={vet.clinic_name} />
                 <input type="hidden" name="city" value={vet.city} />
@@ -9988,19 +10120,23 @@ export default function VeterinarianPetCodeModal() {
 ----- Archivo: VeterinaryModal.tsx ----- 
 // app/components/modals/VeterinaryModal.tsx
 "use client";
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { useRouter } from "next/navigation";
 import { veterinaryStyles } from "../../styles/veterinary";
 import ModalComponent from "../lib/modal";
 import { postFetch, getFetch } from "@/app/api";
 import { useStorageContext } from "@/context/StorageProvider";
-import { useUI } from "@/context/UIProvider";
 
+interface VeterinaryModalProps {
+  setShowModal: Dispatch<SetStateAction<boolean>>;
+}
 
-export default function VeterinaryModal() {
+export default function VeterinaryModal({ setShowModal }: VeterinaryModalProps) {
   const [code, setCode] = useState("");
   const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [firstLastName, setFirstLastName] = useState("");
+  const [secondLastName, setSecondLastName] = useState("");
+  const [identification, setIdentification] = useState("");
   const [registration, setRegistration] = useState("");
   const [clinicName, setClinicName] = useState("");
   const [city, setCity] = useState("");
@@ -10008,12 +10144,10 @@ export default function VeterinaryModal() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const storage = useStorageContext();
-  const { setShowVetModal } = useUI();
-
   const handleSubmit = async () => {
     setError("");
     const sanitizedCode = code.replaceAll(" ", "").toUpperCase();
-    if (![sanitizedCode, firstName, lastName, registration, clinicName, city].every(Boolean)) {
+    if (![sanitizedCode, firstName, firstLastName, secondLastName, identification, registration, clinicName, city].every(Boolean)) {
       setError("Por favor completa todos los campos.");
       return;
     }
@@ -10026,7 +10160,9 @@ export default function VeterinaryModal() {
         {
           code: sanitizedCode,
           firstName,
-          lastName,
+          firstLastName,
+          secondLastName,
+          identification,
           registration,
           clinicName,
           city
@@ -10042,7 +10178,10 @@ export default function VeterinaryModal() {
         if (!petResponse.ok) {
           setError("No se encontró la mascota.");
         }
+        console.log('petResponse', petResponse)
         const petData = await petResponse.json();
+
+        console.log('petData', petData)
         storage.setStoredPet(petData);
         storage.setStoredOwnerPets([]);
 
@@ -10051,15 +10190,18 @@ export default function VeterinaryModal() {
           pet_id: petData.id,
           pet_code_id: codeData.pet_code,
           vet_first_name: codeData.firstName,
-          vet_last_name: codeData.lastName,
+          vet_first_last_name: codeData.firstLastName,
+          vet_second_last_name: codeData.secondLastName,
+          identification: codeData.identification,
           professional_registration: codeData.registration,
           clinic_name: codeData.clinicName,
           city: codeData.city
         });
-        setShowVetModal(false);
+        setShowModal(false);
         router.push(`/pages/vet/consultation/${petData.id}`);
       }
-    } catch {
+    } catch (error) {
+      console.log(error);
       setError("Ocurrió un error inesperado.");
     } finally {
       setLoading(false);
@@ -10068,7 +10210,7 @@ export default function VeterinaryModal() {
 
   return (
     <ModalComponent title="Soy médico veterinario" description="Aquí puedes revisar el historial completo, modificarlo y agregar entradas
-        a la historia de la mascota" setShowModal={setShowVetModal} maxWidth="1000px">
+        a la historia de la mascota" setShowModal={setShowModal} maxWidth="1000px">
 
       <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         <div>
@@ -10083,13 +10225,35 @@ export default function VeterinaryModal() {
         </div>
 
         <div>
-          <h4 className="label">Apellido</h4>
+          <h4 className="label">Primer Apellido</h4>
           <input
             className="input"
             type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            placeholder="Apellido"
+            value={firstLastName}
+            onChange={(e) => setFirstLastName(e.target.value)}
+            placeholder="Primer Apellido"
+          />
+        </div>
+
+        <div>
+          <h4 className="label">Segundo Apellido</h4>
+          <input
+            className="input"
+            type="text"
+            value={secondLastName}
+            onChange={(e) => setSecondLastName(e.target.value)}
+            placeholder="Segundo Apellido"
+          />
+        </div>
+
+        <div>
+          <h4 className="label">Identificación</h4>
+          <input
+            className="input"
+            type="text"
+            value={identification}
+            onChange={(e) => setIdentification(e.target.value)}
+            placeholder="Identificación"
           />
         </div>
 
@@ -10161,26 +10325,17 @@ export default function VeterinaryModal() {
 
 import { UIProvider } from "./UIProvider";
 import { OwnerSessionProvider } from "./OwnerSessionProvider";
-import { VetProvider } from "./VetContext";
-import { RoleProvider } from "./RoleProvider";
-import { StorageProvider } from "./StorageProvider";
 import { PlanProvider } from "./PlanProvider";
 
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
   return (
-    <StorageProvider>
-      <RoleProvider>
-        <UIProvider>
-          <PlanProvider>
-            <OwnerSessionProvider>
-              <VetProvider>
-                {children}
-              </VetProvider>
-            </OwnerSessionProvider>
-          </PlanProvider>
-        </UIProvider>
-      </RoleProvider>
-    </StorageProvider>
+    <UIProvider>
+      <PlanProvider>
+        <OwnerSessionProvider>
+            {children}
+        </OwnerSessionProvider>
+      </PlanProvider>
+    </UIProvider>
   );
 }
  
@@ -10499,7 +10654,7 @@ export function VetProvider({ children }: VetProviderProps) {
     const session = useSessionContext();
     const [vet, setVet] = useState<VeterinarianType | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-    const { isVetWithSession } = useRoleContext();
+    const { isVetWithSession, isVetWithoutSession } = useRoleContext();
     //const { setShowVetPetCodeModal } = useUI();
     const storage = useStorageContext();
 
@@ -10523,7 +10678,7 @@ export function VetProvider({ children }: VetProviderProps) {
                         setVet(data);
                     }
                 }
-                else{
+                else {
                     setVet(storage.storedVetData);
                 }
                 //TODO: check if we want to open directly the modal to ask for the code.
@@ -10531,6 +10686,20 @@ export function VetProvider({ children }: VetProviderProps) {
                     setShowVetPetCodeModal(true);
                 }*/
             }
+            else if (isVetWithoutSession) {
+                setVet({
+                    vet_id: '',
+                    first_name: storage.storedVetAccess.vet_first_name,
+                    first_last_name: storage.storedVetAccess.vet_first_last_name,
+                    second_last_name: storage.storedVetAccess.vet_second_last_name,
+                    identification: storage.storedVetAccess.identification,
+                    email: '',
+                    registration: storage.storedVetAccess.professional_registration,
+                    clinic_name: storage.storedVetAccess.clinic_name,
+                    city: storage.storedVetAccess.city
+                })
+            }
+
         } catch (error) {
             console.error(error);
             setVet(null);
@@ -10555,6 +10724,7 @@ export function VetProvider({ children }: VetProviderProps) {
 export function useVetContext(): VetContextType {
     const context = useContext(VetContext);
     if (!context) {
+        console.log('entro aqui');
         throw new Error("useVetContext debe usarse dentro de un VetProvider");
     }
     return context;
@@ -10704,7 +10874,9 @@ export function VetAccess(): VeterinaryAccessType {
         pet_id: '',
         pet_code_id: '',
         vet_first_name: '',
-        vet_last_name: '',
+        vet_first_last_name: '',
+        vet_second_last_name: '',
+        identification: '',
         professional_registration: '',
         clinic_name: '',
         city: ''
@@ -10715,7 +10887,9 @@ export function VetData(): VeterinarianType {
     return {
         vet_id: '',
         first_name: '',
-        last_name: '',
+        first_last_name: '',
+        second_last_name: '',
+        identification: '',
         email: '',
         registration: '',
         clinic_name: '',
@@ -11099,6 +11273,7 @@ export function useAppStorage() {
 
   const resetSession = () => {
     resetPet();
+    setStoredVetData(Empty.VetData());
     setStoredPetCode(Empty.PetCode());
     setStoredVetAccess(Empty.VetAccess());
     setStoredOwnerData(Empty.OwnerData());
@@ -11139,62 +11314,96 @@ export function useAppStorage() {
   } as StorageContextType;
 } 
 ----- Archivo: useAuthRedirect.ts ----- 
-// src/hooks/useAuthRedirect.ts
+// RUTA: src/hooks/useAuthRedirect.ts
 "use client";
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSessionContext } from "@/context/SessionProvider";
-import { useStorageContext } from "@/context/StorageProvider"; // Para storedVetAccess si es relevante aquí
-import { useRoleContext } from "@/context/RoleProvider"; // Para la lógica de roles
+import { useStorageContext } from "@/context/StorageProvider";
+import { useRoleContext } from "@/context/RoleProvider";
+
+// ----- Lógica de rutas permitidas para Vet sin sesión (sincronizada con el middleware) -----
+const VET_GUEST_ALLOWED_PATHS = [
+    '/pages/pet/basic-data',
+    '/pages/pet/vaccines',
+    '/pages/pet/surgeries',
+    '/pages/pet/medicines',
+    '/pages/pet/conditions',
+    '/pages/pet/lab-tests',
+];
+
+function isVetGuestAllowedPath(pathname: string, petId: string): boolean {
+    if (VET_GUEST_ALLOWED_PATHS.includes(pathname)) {
+        return true;
+    }
+    const consultationMatch = pathname.match(/^\/pages\/pet\/consultations\/([^/]+)/);
+    if (consultationMatch && consultationMatch[1] === petId) {
+        return true;
+    }
+    const newConsultationMatch = pathname.match(/^\/pages\/vet\/consultation\/([^/]+)/);
+    if (newConsultationMatch && newConsultationMatch[1] === petId) {
+        return true;
+    }
+    return false;
+}
+// ----- Fin de la lógica de rutas -----
+
 
 export default function useAuthRedirect() {
     const router = useRouter();
     const pathname = usePathname();
-    const { db: session, isLoading: isSessionLoading } = useSessionContext(); // Obtener isLoading
-    const { storedVetAccess } = useStorageContext(); // Aunque su uso directo aquí podría disminuir
+    const { db: session, isLoading: isSessionLoading } = useSessionContext();
+    const { storedVetAccess } = useStorageContext();
     const { isVetWithoutUserSession } = useRoleContext();
 
     useEffect(() => {
-        // 1. No hacer nada si la sesión aún está cargando
+        // 1. No hacer nada mientras la sesión está cargando
         if (isSessionLoading) {
             return;
         }
 
-        // 2. Definición de rutas especiales
-        const isLoginRoute = pathname === "/login";
-        const isLandingRoute = pathname === "/";
-        const isVerifyAuthRoute = pathname.startsWith("/pages/auth/verify"); // Ruta de verificación de email
-        const isCallbackAuthRoute = pathname.startsWith("/auth/callback"); // Ruta de callback de Supabase (OTP)
-        const isPublicRoute = isLoginRoute || isVerifyAuthRoute || isCallbackAuthRoute; // Rutas que no requieren sesión
-        const isVetAccessUIRoute = pathname.startsWith("/vet-access"); // Rutas UI para acceso veterinario sin cuenta
+        // 2. Lógica de redirección si HAY una sesión de usuario
+        if (session) {
+            if (pathname === "/login") {
+                router.replace("/pages/home");
+            }
+            return; // Si hay sesión, el resto de la lógica no aplica
+        }
 
-        if(isLandingRoute){
-            console.log('landing')
+        // 3. Lógica de redirección si NO HAY sesión de usuario
+        // 3.1. Verificar si es un veterinario invitado (acceso por código)
+        if (isVetWithoutUserSession) {
+            const petId = storedVetAccess?.pet_id;
+            // Si el veterinario tiene un petId de acceso y la ruta está permitida, no hacemos nada.
+            if (petId && isVetGuestAllowedPath(pathname, petId)) {
+                return;
+            }
+
+            // Si está en la página de acceso de veterinario, tampoco hacemos nada.
+            if (pathname.startsWith('/vet-access')) {
+                return;
+            }
+
+            // Para cualquier otra ruta no permitida, lo redirigimos a la página de acceso.
+            router.replace('/vet-access');
             return;
         }
-        // 3. Lógica de Redirección
-        if (session) {
-            // ----- HAY SESIÓN -----
-            if (isLoginRoute) {
-                router.replace("/pages/home");
-                return;
-            }
 
-        } else {
-            // ----- NO HAY SESIÓN -----
-            if (isVetWithoutUserSession && !isVetAccessUIRoute && !isPublicRoute) {
-                router.replace("/vet-access");
-                return;
-            }
+        // 3.2. Si es un usuario anónimo normal (no es un vet invitado)
+        const isGenerallyPublicRoute =
+            pathname === "/" ||
+            pathname === "/login" ||
+            pathname.startsWith("/vet-access") ||
+            pathname.startsWith("/pages/auth/verify") ||
+            pathname.startsWith("/auth/callback");
 
-            if (!isPublicRoute && !isVetAccessUIRoute) {
-                router.replace("/login");
-                return;
-            }
+        if (!isGenerallyPublicRoute) {
+            console.log('send to login from useAuthRedirect')
+            router.replace("/login");
         }
 
-    }, [session, isSessionLoading, pathname, router, storedVetAccess, isVetWithoutUserSession]); // Añadir storedVetAccess e isVetWithoutUserSession si son cruciales para la lógica de redirección inmediata.
+    }, [session, isSessionLoading, pathname, router, storedVetAccess, isVetWithoutUserSession]);
 } 
 ----- Archivo: useDeviceDetect.ts ----- 
 // hooks/useDeviceDetect.ts
@@ -11802,6 +12011,26 @@ export function useSession(): {
 
   return { session, setSession: setAppSession, isLoading };
 } 
+----- Archivo: i18n.ts ----- 
+// src/i18n.ts
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+import es from '../../public/locales/es/errors.json';
+
+i18n
+    .use(initReactI18next)
+    .init({
+        resources: {
+            es: { errors: es },
+        },
+        lng: 'es',
+        fallbackLng: 'es',
+        interpolation: { escapeValue: false },
+    });
+
+export default i18n;
+ 
 ----- Archivo: index.ts ----- 
 // lib/auth/index.ts
 import { SupabaseAuthClient } from "./supabase/authClient";
@@ -11812,6 +12041,7 @@ import { getClientWithToken as getSupabaseClientWithToken } from "./supabase/tok
 import { createServerClient as createSupabaseServerClient } from "./supabase/serverClient";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { RepositoryOptions } from "@/types/lib";
+import { createBrowserClient as SupabaseCreateBrowserClient } from "./supabase/browserClient";
 
 export type SignInResponse = { data?: { session: AuthSession; user: AuthUser } | null; error?: AuthError | null };
 export type SignUpResponse = { data: { user: AuthUser | null, /* session?: AuthSession | null */ }; error: AuthError | null }; // session es opcional en signup
@@ -11862,15 +12092,17 @@ const dbClientImpl = (options: RepositoryOptions): any => {
     return supabaseClient;
 };;
 
-export { dbClientImpl as dbClient }; 
+export { dbClientImpl as dbClient };
+
+export { SupabaseCreateBrowserClient as createBrowserClient } 
 ----- Archivo: authClient.ts ----- 
 // lib/auth/supabase/authClient.ts
 import type { BrowserAuthClient, AuthSession, SignInResponse, SignUpResponse, ResetPasswordResponse, AuthUser } from "..";
-import { supabase } from "./browserClient";
+import { createBrowserClient } from "./browserClient";
 
 export class SupabaseAuthClient implements BrowserAuthClient {
     async getSession(): Promise<AuthSession | null> {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await createBrowserClient().auth.getSession();
         if (error) {
             console.error("Error getting session:", error);
             return null;
@@ -11881,14 +12113,14 @@ export class SupabaseAuthClient implements BrowserAuthClient {
     onAuthStateChange(
         cb: (event: string, session: AuthSession | null) => void
     ): { data: { unsubscribe(): void } } {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = createBrowserClient().auth.onAuthStateChange((event, session) => {
             cb(event, session as AuthSession | null);
         });
         return { data: { unsubscribe: () => subscription.unsubscribe() } };
     }
 
     async signIn(email: string, password: string): Promise<SignInResponse> {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await createBrowserClient().auth.signInWithPassword({ email, password });
         if (error) {
             return { error };
         }
@@ -11898,21 +12130,21 @@ export class SupabaseAuthClient implements BrowserAuthClient {
     }
 
     async signOut(): Promise<void> {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await createBrowserClient().auth.signOut();
         if (error) {
             console.error("Error signing out:", error);
         }
     }
 
     async resetPassword(email: string): Promise<ResetPasswordResponse> {
-        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        const { data, error } = await createBrowserClient().auth.resetPasswordForEmail(email, {
             // TODO: redirectTo: 'tu-url-de-reset-password-si-es-diferente-a-la-configurada-en-supabase'
         });
         return { data, error };
     }
 
     async signUp(email: string, password: string, role = 'owner'): Promise<SignUpResponse> {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await createBrowserClient().auth.signUp({
             email,
             password,
             options: {
@@ -11926,14 +12158,14 @@ export class SupabaseAuthClient implements BrowserAuthClient {
     }
 
     async setSession(session: { access_token: string; refresh_token: string }): Promise<void> {
-        const { error } = await supabase.auth.setSession(session);
+        const { error } = await createBrowserClient().auth.setSession(session);
         if (error) {
             console.error("Error setting session:", error);
         }
     }
 
     async inviteUser(email: string): Promise<void> {
-        await supabase.auth.admin.inviteUserByEmail(email)
+        await createBrowserClient().auth.admin.inviteUserByEmail(email)
     }
 } 
 ----- Archivo: middleware.ts ----- 
@@ -11983,7 +12215,9 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/login') &&
     !request.nextUrl.pathname.startsWith('/auth') &&
     request.nextUrl.pathname !== "/" &&
-    !request.nextUrl.pathname.startsWith('/api/owners')
+    !request.nextUrl.pathname.startsWith('/api/owners') &&
+    !request.nextUrl.pathname.startsWith('/vet-access') &&
+    !request.nextUrl.pathname.startsWith('/api/vet/use-code')
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
@@ -12009,7 +12243,6 @@ export async function updateSession(request: NextRequest) {
 ----- Archivo: serverClient.ts ----- 
 // lib/auth/supabase/serverClient.ts
 import { createServerClient as supabaseCreateServerClient, type CookieOptions } from '@supabase/ssr';
-import { User } from '@supabase/supabase-js';
 import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 // Cliente Supabase para Server Components, API Routes y Middleware
@@ -12048,28 +12281,24 @@ export async function createServerClient(cookieStore: ReadonlyRequestCookies) {
       }
     }
   )).auth;
-}
-
-export async function getUser(cookieStore: ReadonlyRequestCookies): Promise<User | null> {
-  const supabase = await createServerClient(cookieStore);
-  const { data: { user } } = await supabase.getUser();
-  return user;
 } 
 ----- Archivo: browserClient.tsx ----- 
 // lib/auth/supabase/browserClient.ts
-import { createBrowserClient } from '@supabase/ssr';
+import { createBrowserClient as SupabaseCreateBrowserClient } from '@supabase/ssr';
 
-export const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { // Añadir opciones explícitas
-    auth: {
-      persistSession: true, // Forzar la persistencia, aunque es el default
-      autoRefreshToken: true, // Default, bueno tenerlo explícito
-      // detectSessionInUrl: true, // Default, para manejar tokens en hash de URL
+export function createBrowserClient() {
+  return SupabaseCreateBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { // Añadir opciones explícitas
+      auth: {
+        persistSession: true, // Forzar la persistencia, aunque es el default
+        autoRefreshToken: true, // Default, bueno tenerlo explícito
+        // detectSessionInUrl: true, // Default, para manejar tokens en hash de URL
+      }
     }
-  }
-); 
+  );
+} 
 ----- Archivo: tokenClient.tsx ----- 
 // lib/auth/supabase/tokenClient.ts
 import { RepositoryOptions } from "@/types/lib";
@@ -12080,7 +12309,7 @@ export function getClientWithToken(options: RepositoryOptions) {
     return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        (options.cookies) ? {
+        (options.cookies && !Cookies.isVetAccessFromCookie(options.cookies)) ? {
             global: { headers: { Authorization: `Bearer ${Cookies.getAccessTokenFromCookie(options.cookies)}` } }
         } : {}
     );
@@ -12734,13 +12963,13 @@ export default class MedicineRepository implements FormRepository<MedicineDataTy
  
 ----- Archivo: owner.repository.ts ----- 
 // src/repositories/owner.repository.ts
-import { dbClient } from '@/lib/auth';
+import { createBrowserClient, dbClient } from '@/lib/auth';
 import type { OwnerDataType } from '@/types/index';
 import { RepositoryOptions } from '@/types/lib';
 
 export default class OwnerRepository {
-    static async create(owner: OwnerDataType, options: RepositoryOptions) {
-        return dbClient(options).from('owners').insert(owner);
+    static async create(owner: OwnerDataType) {
+        return createBrowserClient().from('owners').insert(owner);
     }
 
     static async findById(owner_id: string, options: RepositoryOptions): Promise<OwnerDataType | null> {
@@ -12873,16 +13102,16 @@ export default class PetRepository {
 } 
 ----- Archivo: petCode.repository.ts ----- 
 // src/repositories/petCode.repository.ts
-import { dbClient } from "@/lib/auth";
+import { createBrowserClient, dbClient } from "@/lib/auth";
 import { PetCodeType } from "@/types/index";
 import { RepositoryOptions } from "@/types/lib";
 import { Random } from "@/utils/index";
 
 export default class PetCodeRepository {
   /** Busca un código activo */
-  static async find(code: string, options: RepositoryOptions): Promise<PetCodeType | null> {
+  static async find(code: string, options: RepositoryOptions | undefined = undefined): Promise<PetCodeType | null> {
     //TODO: Review  removal of .overrideTypes<PetCodeType[], { merge: false }>();
-    const { data, error } = await dbClient(options)
+    const { data, error } = await (options? dbClient(options): createBrowserClient())
       .from("pet_codes")
       .select("*")
       .eq("code", code);
@@ -12916,8 +13145,8 @@ export default class PetCodeRepository {
   }
 
   /** Marca un código como usado */
-  static async markUsed(code: string, options: RepositoryOptions): Promise<void> {
-    const { error } = await dbClient(options)
+  static async markUsed(code: string): Promise<void> {
+    const { error } = await createBrowserClient()
       .from("pet_codes")
       .update({ used: true })
       .eq("code", code);
@@ -13235,7 +13464,7 @@ export default class VeterinarianRepository {
  
 ----- Archivo: veterinaryAccess.repository.ts ----- 
 // src/repositories/veterinaryAccess.repository.ts
-import { dbClient } from "@/lib/auth";
+import { createBrowserClient, dbClient } from "@/lib/auth";
 import { RepositoryOptions } from "@/types/lib";
 import { VeterinaryAccessType } from "../types";
 import PetCodeRepository from "./petCode.repository";
@@ -13245,8 +13474,8 @@ export default class VeterinaryAccessRepository {
     static async create(access: Omit<
         VeterinaryAccessType,
         "id" | "created_at"
-    >, options: RepositoryOptions): Promise<VeterinaryAccessType> {
-        const { data, error } = await dbClient(options)
+    >, options: RepositoryOptions | undefined = undefined): Promise<VeterinaryAccessType> {
+        const { data, error } = await (options? dbClient(options): createBrowserClient())
             .from("veterinary_accesses")
             .insert(access)
             .select("*")
@@ -13404,7 +13633,9 @@ export const VeterinaryAccessTypeSchema = z.object({
   pet_id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   pet_code_id: z.string(),
   vet_first_name: z.string(),
-  vet_last_name: z.string(),
+  vet_first_last_name: z.string(),
+  vet_second_last_name: z.string(),
+  identification: z.string(),
   professional_registration: z.string(),
   clinic_name: z.string(),
   city: z.string(),
@@ -13415,7 +13646,9 @@ export const VeterinaryAccessTypeSchema = z.object({
 export const VeterinarianTypeSchema = z.object({
   vet_id: z.string().uuid(),
   first_name: z.string(),
-  last_name: z.string(),
+  first_last_name: z.string(),
+  second_last_name: z.string(),
+  identification: z.string(),
   email: z.string().email(),
   registration: z.string(),
   clinic_name: z.string(),
@@ -13829,6 +14062,8 @@ import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.share
 export const handleLogout = async (storage: StorageContextType, router: AppRouterInstance): Promise<void> => {
   try {
     storage.resetSession();
+    // Llamamos a nuestro nuevo endpoint de logout
+    await fetch('/api/auth/logout', { method: 'POST' });
     await authClient.signOut();
   } catch (error) {
     console.error("Error during sign out in authService:", error);
@@ -14842,7 +15077,9 @@ INSERT INTO lab_tests(pet_id, name, type, date, result) VALUES
 create table if not exists veterinarians (
   vet_id uuid primary key,
   first_name text not null,
-  last_name text not null,
+  first_last_name text not null,
+  second_last_name text not null,
+  identification text not null,
   email text not null,
   registration text not null,
   clinic_name text not null,
@@ -14869,10 +15106,12 @@ create trigger trg_veterinarians_updated_at
 -- Crear entidad para registrar accesos de veterinarios
 create table if not exists veterinary_accesses (
   id uuid primary key default gen_random_uuid(),
-  pet_id uuid not null references pets(id) on delete cascade,
-  pet_code_id uuid not null references pet_codes(id),
+  pet_id varchar(4) not null references pets(id) on delete cascade,
+  pet_code_id uuid not null,
   vet_first_name text not null,
-  vet_last_name text not null,
+  vet_first_last_name text not null,
+  vet_second_last_name text not null,
+  identification text not null,
   professional_registration text not null,
   clinic_name text not null,
   city text not null,
@@ -14880,7 +15119,7 @@ create table if not exists veterinary_accesses (
 );
 
 -- Índice para optimizar búsquedas por código
-create index if not exists idx_vet_accesses_code on veterinary_accesses(code); 
+create index if not exists idx_vet_accesses_code on veterinary_accesses(pet_code_id); 
 ----- Archivo: geist.ts ----- 
 import { Geist, Geist_Mono } from "next/font/google";
 
@@ -15101,7 +15340,9 @@ export interface VeterinaryAccessType {
     pet_id: string;
     pet_code_id: string;
     vet_first_name: string;
-    vet_last_name: string;
+    vet_first_last_name: string;
+    vet_second_last_name: string;
+    identification: string;
     professional_registration: string;
     clinic_name: string;
     city: string;
@@ -15110,7 +15351,9 @@ export interface VeterinaryAccessType {
 export interface VeterinarianType {
     vet_id: string;
     first_name: string;
-    last_name: string;
+    first_last_name: string;
+    second_last_name: string;
+    identification: string;
     email: string;
     registration: string;
     clinic_name: string;
@@ -15445,19 +15688,26 @@ export class AuthExceptionError extends Error { }
 import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 export function getAccessTokenFromCookie(cookies: ReadonlyRequestCookies) {
-    const projectRef = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_REF;
-    const cookieName = `sb-${projectRef}-auth-token`;
-    const cookieValue = cookies.get(cookieName)?.value;
-    if (!cookieValue) return null;
+  const projectRef = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_REF;
+  const cookieName = `sb-${projectRef}-auth-token`;
+  const cookieValue = cookies.get(cookieName)?.value;
+  if (!cookieValue) return null;
 
   // Decodifica base64url a base64
-  const base64 = cookieValue.replace("base64-","").replace(/-/g, '+').replace(/_/g, '/')
+  const base64 = cookieValue.replace("base64-", "").replace(/-/g, '+').replace(/_/g, '/')
     + '='.repeat((4 - cookieValue.length % 4) % 4);
 
   // Ahora decodifica a string y parsea JSON
   const jsonStr = Buffer.from(base64, 'base64').toString('utf-8');
   const json = JSON.parse(jsonStr);
-  return json.access_token;  // <-- SOLO ESTA PARTE VA EN EL HEADER
+  return json.access_token;
+}
+
+export function isVetAccessFromCookie(cookies: ReadonlyRequestCookies): boolean {
+  const cookieName = 'lampo-vet-access';
+  const cookieValue = cookies.get(cookieName)?.value;
+  if (!cookieValue) return false;
+  return true;
 } 
 ----- Archivo: currency.ts ----- 
 

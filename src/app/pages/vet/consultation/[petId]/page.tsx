@@ -21,14 +21,12 @@ export default function ConsultationPage() {
     const { storedPet, storedVetAccess, setStoredPet } = useStorageContext();
     const { vet: veterinarianData } = useVetContext(); // Datos del veterinario logueado
 
-    console.log('entro aqui')
     const [pet, setPet] = useState<PetType | null>(storedPet.id === petId ? storedPet : null);
     const [loadingPet, setLoadingPet] = useState<boolean>(!pet);
     const [errorPet, setErrorPet] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState<boolean>(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
-    console.log('entro aqui')
     useEffect(() => {
         if (!petId) {
             setErrorPet("ID de mascota no encontrado en la ruta.");
@@ -109,11 +107,8 @@ export default function ConsultationPage() {
     };
 
     if (loadingPet) return <Loading />;
-    console.log('entro aqui')
     if (errorPet) return <DataNotFound message={errorPet} />;
-    console.log('entro aqui')
     if (!pet) return <DataNotFound message="Mascota no encontrada." />;
-    console.log('entro aqui')
     return (
         <main style={{ padding: "2rem" }}>
             <Title icon={<FaClipboardList />} title={`Nueva Consulta para ${pet.name}`} />

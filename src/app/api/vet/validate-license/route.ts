@@ -1,5 +1,4 @@
-// src/app/api/validar-matricula/route.ts
-
+// src/app/api/vet/validate-license/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import ComvezcolRepository from '@/repos/comvezcol.repository'; // Importa el nuevo repositorio
 

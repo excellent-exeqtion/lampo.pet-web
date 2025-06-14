@@ -106,6 +106,9 @@ export interface VeterinaryAccessType {
     professional_registration: string;
     clinic_name: string;
     city: string;
+    is_validated?: boolean;
+    validated_first_name?: string;
+    validated_last_name?: string;
 }
 
 export interface VeterinarianType {
@@ -118,6 +121,9 @@ export interface VeterinarianType {
     registration: string;
     clinic_name: string;
     city: string;
+    is_validated?: boolean;
+    validated_first_name?: string;
+    validated_last_name?: string;
 }
 
 export interface FeatureType {
@@ -301,6 +307,4 @@ export interface ConsultationType {
 export type CreateConsultationPayload = Omit<ConsultationType, 'id' | 'created_at' | 'updated_at' | 'procedures' | 'medications' | 'files'> & {
     procedures?: Array<Omit<ConsultationProcedureType, 'id' | 'consultation_id' | 'created_at'>>;
     medications?: Array<Omit<ConsultationMedicationType, 'id' | 'consultation_id' | 'created_at'>>;
-    // Los archivos se manejarán con un endpoint separado después de crear la consulta,
-    // o podrías tener un array de `File` objects aquí si tu API lo maneja en un solo paso.
 };

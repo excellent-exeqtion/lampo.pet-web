@@ -1,25 +1,48 @@
 // app/vet-access/register/page.tsx
 "use client";
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useEffect, useState } from "react";
 import "@picocss/pico";
 import { useRouter } from "next/navigation";
 import ModalComponent from "@/components/lib/modal";
 import { postFetch } from "@/app/api";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { authClient } from "@/lib/auth";
+import Link from "next/link";
+import { Country, City } from 'country-state-city';
+import type { ICountry, ICity } from 'country-state-city';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function VetRegisterPage() {
   const router = useRouter();
 
   // Estados del formulario
   const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [firstLastName, setFirstLastName] = useState("");
+  const [secondLastName, setSecondLastName] = useState("");
+  const [identification, setIdentification] = useState("");
   const [registration, setRegistration] = useState("");
   const [clinicName, setClinicName] = useState("");
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("Bogotá");
+  const [country, setCountry] = useState("CO");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const [countries, setCountries] = useState<ICountry[]>([]);
+  const [cities, setCities] = useState<ICity[]>([]);
+
+
+  // Cargar lista de países al montar
+  useEffect(() => {
+    setCountries(Country.getAllCountries());
+  }, []);
+
+  // Actualizar lista de ciudades cuando cambia el país
+  useEffect(() => {
+    if (country) {
+      setCities(City.getCitiesOfCountry(country) || []);
+    }
+  }, [country]);
 
   // Estados UI
   const [loading, setLoading] = useState(false);
@@ -31,7 +54,7 @@ export default function VetRegisterPage() {
     setError("");
 
     // Validación básica
-    if (![firstName, lastName, registration, clinicName, city, email, password].every(Boolean)) {
+    if (![firstName, firstLastName, secondLastName, identification, registration, clinicName, city, email, password].every(Boolean)) {
       setError("Por favor completa todos los campos.");
       return;
     }
@@ -54,7 +77,9 @@ export default function VetRegisterPage() {
         const profileRes = await postFetch("/api/vet", undefined, {
           vet_id: vetId,
           first_name: firstName,
-          last_name: lastName,
+          first_last_name: firstLastName,
+          second_last_name: secondLastName,
+          identification: identification,
           registration,
           clinic_name: clinicName,
           city,
@@ -86,7 +111,7 @@ export default function VetRegisterPage() {
       >
         <button
           className="contrast"
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/login")}
           style={{ width: "100%", marginTop: "1rem" }}
         >
           Ya confirmé, continuar
@@ -119,11 +144,29 @@ export default function VetRegisterPage() {
             />
           </label>
           <label>
-            Apellido
+            Primer Apellido
             <input
               type="text"
-              value={lastName}
-              onChange={e => setLastName(e.target.value)}
+              value={firstLastName}
+              onChange={e => setFirstLastName(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Segundo Apellido
+            <input
+              type="text"
+              value={secondLastName}
+              onChange={e => setSecondLastName(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Identificación
+            <input
+              type="text"
+              value={identification}
+              onChange={e => setIdentification(e.target.value)}
               required
             />
           </label>
@@ -145,14 +188,21 @@ export default function VetRegisterPage() {
               required
             />
           </label>
-          <label>
+          <label htmlFor="country">
+            País
+            <select id="country" value={country} onChange={e => setCountry(e.target.value)} required>
+              <option value="" disabled>Selecciona...</option>
+              {countries.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
+            </select>
+          </label>
+
+          {/* Fila 3 */}
+          <label htmlFor="city">
             Ciudad
-            <input
-              type="text"
-              value={city}
-              onChange={e => setCity(e.target.value)}
-              required
-            />
+            <input list="cities-list" id="city" type="text" value={city || ""} onChange={e => setCity(e.target.value)} required disabled={!country} />
+            <datalist id="cities-list">
+              {cities.map(c => <option key={uuidv4()} value={c.name} />)}
+            </datalist>
           </label>
         </div>
 
@@ -202,6 +252,10 @@ export default function VetRegisterPage() {
         >
           {loading ? "Registrando..." : "Registrarme"}
         </button>
+
+        <Link href="/login" className="primary">
+          Iniciar sesión
+        </Link>
       </form>
     </main>
   );

@@ -21,19 +21,31 @@ const dataMapping: Record<string, keyof Omit<ProfessionalData, 'foto' | 'estado'
 class ComvezcolRepository {
     private static BASE_URL = 'https://administrador.consejoapp.com.co';
 
-    public static async validate(matricula: string): Promise<RepositoryResponse<ProfessionalData>> {
+    public static async validate(matricula: string, apellido: string, apellido2: string): Promise<RepositoryResponse<ProfessionalData>> {
         const SEARCH_ACTION_URL = `${this.BASE_URL}/index.php/consultas/profesionalesS`;
 
         try {
-            const searchResponse: AxiosResponse<string> = await axios.post(SEARCH_ACTION_URL, { matricula }, {
+            const searchResponse: AxiosResponse<string> = await axios.post(SEARCH_ACTION_URL, { matricula, apellido, apellido2 }, {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             });
 
             const $resultsPage: CheerioAPI = cheerio.load(searchResponse.data);
-            const detailLink = $resultsPage('table.table a.btn-success').attr('href');
+            let detailLink = $resultsPage('table.table a.btn-success').attr('href');
 
             if (!detailLink) {
-                return { data: null, error: { message: `No se encontró profesional con matrícula ${matricula}.`, status: 404 } };
+
+                const SEARCH_ACTION_URL_EXT = `${this.BASE_URL}/index.php/consultas/profesionalesSE`;
+
+                const searchResponseExt: AxiosResponse<string> = await axios.post(SEARCH_ACTION_URL_EXT, { matricula, apellido, apellido2 }, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                });
+
+                const $resultsPageExt: CheerioAPI = cheerio.load(searchResponseExt.data);
+                detailLink = $resultsPageExt('table.table a.btn-success').attr('href');
+                if (!detailLink) {
+
+                    return { data: null, error: { message: `No se encontró profesional con matrícula ${matricula}.`, status: 404 } };
+                }
             }
 
             const detailResponse = await axios.get(detailLink);

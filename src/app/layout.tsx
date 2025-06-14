@@ -15,7 +15,7 @@ import { VetProvider } from "@/context/VetContext";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const noClientAppProviderRoutes = ["/", "/login", "/vet-access", "/pages/auth/verify"];
+  const noClientAppProviderRoutes = ["/", "/login", "/vet-access", "/vet-access/register", "/pages/auth/verify"];
   const shouldUseClientAppProvider = !noClientAppProviderRoutes.includes(pathname);
   
 

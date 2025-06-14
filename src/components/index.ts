@@ -36,3 +36,6 @@ export { default as MapPicker } from "./forms/MapPicker";
 export { default as AlertModal } from "./modals/AlertModal";
 export { default as ConfirmModal } from "./modals/ConfirmModal";
 export { default as VeterinarianPetCodeModal } from "./modals/VeterinarianPetCodeModal";
+
+//translate
+export { default as I18nInit } from "./i18n";

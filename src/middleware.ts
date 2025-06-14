@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
     const cookieStore = await cookies();
 
     // Rutas públicas que no necesitan validación de sesión ni de cookie
-    const publicRoutes = ['/login', '/vet-access', '/pages/auth/verify', '/api/auth/logout'];
+    const publicRoutes = ['/login', '/vet-access', '/pages/auth/verify', '/api/auth/logout', '_not-found'];
     if (pathname === '/' || publicRoutes.some(route => pathname.startsWith(route))) {
         return await updateSession(request);
     }

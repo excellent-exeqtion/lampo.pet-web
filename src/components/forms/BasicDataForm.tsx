@@ -265,7 +265,18 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
               />
             )}
           </div>
-          {/* ... (Tipo de mascota, Género, Peso, Raza sin cambios) ... */}
+          <div>
+            <label htmlFor="chip_number">Número de Chip (Opcional)</label>
+            <input
+              id="chip_number"
+              type="text"
+              placeholder="Ej: 981..."
+              className="w-full"
+              value={formData.chip_number || ''}
+              disabled={loadLoading}
+              onChange={e => setFormData({ ...formData, chip_number: e.target.value })}
+            />
+          </div>
           <div>
             <label htmlFor="coat_type">Tipo de pelaje</label>
             <select

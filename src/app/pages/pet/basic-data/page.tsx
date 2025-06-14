@@ -79,6 +79,7 @@ export default function BasicDataPage() {
     if (!petData) return;
     setBasicDataItems([
       { label: "Tipo de mascota", show: true, value: petData.pet_type },
+      { label: "Número de Chip", show: true, value: petData.chip_number || 'No tiene' },
       { label: "Edad", show: true, value: Dates.calculateAge(storage.storedPet.birth_date) },
       { label: "Género", show: true, value: petData.gender },
       { label: "Peso", show: true, value: petData.weight },
@@ -143,4 +144,3 @@ export default function BasicDataPage() {
     </main>
   );
 }
-

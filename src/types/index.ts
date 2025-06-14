@@ -1,8 +1,10 @@
+// src/types/index.ts
+
 export interface PetType {
     id: string;
     name: string;
     image?: string | null;
-    birth_date?: Date | null; 
+    birth_date?: Date | null;
     owner_id: string;
 }
 export interface PetCodeType {
@@ -30,6 +32,7 @@ export interface BasicDataType {
     gender: string;
     weight: string;
     race: string;
+    chip_number?: string | null;
     coat_type: string;
     color: string;
     has_allergies: boolean;

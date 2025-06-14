@@ -23,6 +23,7 @@
       "@/components/*": ["./src/components/*"],
       "@/context/*": ["./src/context/*"],
       "@/lib/*": ["./src/lib/*"],
+      "@/config/*": ["./src/config/*"],
       "@/data/*": ["./src/data/*"],
       "@/styles/*": ["./src/styles/*"],
       "@/app/*": ["./src/app/*"],

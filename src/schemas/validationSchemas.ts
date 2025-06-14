@@ -1,5 +1,9 @@
 // src/schemas/validationSchemas.ts
 import { z } from 'zod';
+import { chipPrefixes } from '@/config/petChipConfig';
+
+// Construimos la Regex dinámicamente
+const chipRegex = new RegExp(`^(${chipPrefixes.join('|')})[0-9]{12}$`);
 
 // PetType
 export const PetTypeSchema = z.object({
@@ -40,6 +44,7 @@ export const BasicDataTypeSchema = z.object({
   gender: z.string(),
   weight: z.string(),
   race: z.string(),
+  chip_number: z.string().regex(chipRegex, "Número de chip inválido").optional().nullable(),
   coat_type: z.string(),
   color: z.string(),
   has_allergies: z.boolean(),

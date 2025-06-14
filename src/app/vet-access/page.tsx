@@ -1,32 +1,32 @@
 // app/vet-access/page.tsx
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import VeterinaryModal from "@/components/modals/VeterinaryModal";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useRoleContext } from "@/context/RoleProvider";
 import { VeterinarianPetCodeModal } from "@/components/index";
 
-export default function VetAccessPage() {
+function VetAccessContent() {
   const [showVetModal, setShowVetModal] = useState(false);
   const [showVetCodeModal, setShowVetCodeModal] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isVetWithSession } = useRoleContext();
 
-  const codeFromUrl = searchParams.get('code');
+  const codeFromUrl = searchParams.get("code");
 
   useEffect(() => {
     if (isVetWithSession) {
       if (codeFromUrl) {
         setShowVetCodeModal(true);
       } else {
-        router.replace('/pages/home');
+        router.replace("/pages/home");
       }
       return;
     }
 
-    if(!isVetWithSession && codeFromUrl){
+    if (!isVetWithSession && codeFromUrl) {
       setShowVetModal(true);
     }
   }, [codeFromUrl, isVetWithSession, router]);
@@ -34,7 +34,12 @@ export default function VetAccessPage() {
   if (isVetWithSession) {
     return (
       <>
-        {showVetCodeModal && <VeterinarianPetCodeModal initialCode={codeFromUrl || undefined} setShowVetPetCodeModal={setShowVetCodeModal} />}
+        {showVetCodeModal && (
+          <VeterinarianPetCodeModal
+            initialCode={codeFromUrl || undefined}
+            setShowVetPetCodeModal={setShowVetCodeModal}
+          />
+        )}
       </>
     );
   }
@@ -51,10 +56,7 @@ export default function VetAccessPage() {
         className="grid"
         style={{ gridTemplateColumns: "1fr", gap: "1rem", margin: "2rem 0" }}
       >
-        <button
-          className="contrast"
-          onClick={() => setShowVetModal(true)}
-        >
+        <button className="contrast" onClick={() => setShowVetModal(true)}>
           Ingresar sin registrarse
         </button>
 
@@ -73,7 +75,14 @@ export default function VetAccessPage() {
           initialCode={codeFromUrl || undefined}
         />
       )}
-
     </main>
+  );
+}
+
+export default function VetAccessPage() {
+  return (
+    <Suspense fallback={<div>Cargando acceso veterinario...</div>}>
+      <VetAccessContent />
+    </Suspense>
   );
 }

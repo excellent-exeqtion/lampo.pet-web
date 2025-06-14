@@ -35,3 +35,4 @@ export { default as MapPicker } from "./forms/MapPicker";
 //modals
 export { default as AlertModal } from "./modals/AlertModal";
 export { default as ConfirmModal } from "./modals/ConfirmModal";
+export { default as VeterinarianPetCodeModal } from "./modals/VeterinarianPetCodeModal";

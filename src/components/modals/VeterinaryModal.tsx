@@ -9,10 +9,11 @@ import { useStorageContext } from "@/context/StorageProvider";
 
 interface VeterinaryModalProps {
   setShowModal: Dispatch<SetStateAction<boolean>>;
+  initialCode?: string;
 }
 
-export default function VeterinaryModal({ setShowModal }: VeterinaryModalProps) {
-  const [code, setCode] = useState("");
+export default function VeterinaryModal({ setShowModal, initialCode }: VeterinaryModalProps) {
+  const [code, setCode] = useState(initialCode || "");
   const [firstName, setFirstName] = useState("");
   const [firstLastName, setFirstLastName] = useState("");
   const [secondLastName, setSecondLastName] = useState("");

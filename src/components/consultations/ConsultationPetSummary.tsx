@@ -27,7 +27,7 @@ export default function ConsultationPetSummary({ basicData, vaccines, medicines,
     if (!basicData) return null;
 
     return (
-        <details style={{ marginBottom: '2rem' }}>
+        <details style={{ marginBottom: '2rem' }} open>
             <summary role="button" className="outline">Resumen de la Mascota</summary>
             <div style={{ padding: '1rem', border: '1px solid var(--pico-secondary)', borderRadius: '4px', marginTop: '0.5rem' }}>
                 <SummaryItem icon={<FaExclamationTriangle />} label="Alergias" value={basicData.has_allergies ? 'Sí' : 'No'} />

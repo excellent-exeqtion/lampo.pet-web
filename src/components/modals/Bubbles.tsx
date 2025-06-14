@@ -161,7 +161,7 @@ export default function Bubbles() {
       {showFeedbackModal && <FeedbackModal />}
       {showAddPetModal && <AddPetModal />}
       {showEditPetModal && <AddPetModal editPet={storage.storedPet} />}
-      {showVetPetCodeModal && <VeterinarianPetCodeModal />}
+      {showVetPetCodeModal && <VeterinarianPetCodeModal setShowVetPetCodeModal={setShowVetPetCodeModal}/>}
       {showPlanModal && <PlanSelectModal />}
       {showInviteUserModal && <InviteUserModal />}
       {showMissingPetModal && <MissingPetModal />}

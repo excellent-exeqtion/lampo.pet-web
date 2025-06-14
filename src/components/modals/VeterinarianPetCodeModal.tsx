@@ -1,26 +1,37 @@
 // src/components/modals/VeterinarianPetCodeModal.tsx
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ModalComponent from "../lib/modal";
 import { postFetch, getFetch } from "@/app/api";
 import { useStorageContext } from "@/context/StorageProvider";
 import { useVetContext } from "@/context/VetContext";
-import { useUI } from "@/context/UIProvider";
 
-export default function VeterinarianPetCodeModal() {
+interface VeterinarianPetCodeModalProps {
+    initialCode?: string;
+    setShowVetPetCodeModal: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export default function VeterinarianPetCodeModal({ initialCode, setShowVetPetCodeModal }: VeterinarianPetCodeModalProps) {
     const router = useRouter();
     const { vet } = useVetContext();
-    const { setShowVetPetCodeModal } = useUI();
 
     const storage = useStorageContext();
 
-    const [code, setCode] = useState("");
+    const [code, setCode] = useState(initialCode || "");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        // Si se provee un código inicial y tenemos los datos del veterinario, intentamos el acceso automáticamente.
+        if (initialCode && vet) {
+            handleSubmit();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialCode, vet]);
+
     if (!vet) {
-        return;
+        return null; // O un spinner si prefieres esperar a que el contexto del vet cargue.
     }
 
     const handleSubmit = async () => {
@@ -33,7 +44,6 @@ export default function VeterinarianPetCodeModal() {
         setLoading(true);
 
         try {
-            // Envío de código junto con datos ocultos del veterinario
             const vetPayload = {
                 code: sanitizedCode,
                 firstName: vet.first_name,
@@ -50,7 +60,6 @@ export default function VeterinarianPetCodeModal() {
             if (!res.ok || data.error) {
                 setError(data.error || "Código inválido o expirado.");
             } else {
-                // Obtener datos de la mascota y almacenar
                 const petRes = await getFetch(`/api/pets/${data.pet_id}`);
                 if (!petRes.ok) {
                     setError("No se encontró la mascota.");
@@ -102,7 +111,6 @@ export default function VeterinarianPetCodeModal() {
                 <input type="hidden" name="clinicName" value={vet.clinic_name} />
                 <input type="hidden" name="city" value={vet.city} />
 
-                {/* Input visible para el código */}
                 <label className="label">
                     Código de la mascota
                     <input
@@ -112,15 +120,17 @@ export default function VeterinarianPetCodeModal() {
                         onChange={(e) => setCode(e.target.value)}
                         placeholder="e.g. U8Y499"
                         required
+                        autoFocus
                     />
                 </label>
 
-                {error && <p className="error">{error}</p>}
+                {error && <p className="error" style={{ color: 'var(--pico-color-red-500)' }}>{error}</p>}
 
                 <button
                     type="submit"
                     className="submit-btn"
                     disabled={loading}
+                    aria-busy={loading}
                 >
                     {loading ? "Validando..." : "Acceder"}
                 </button>

@@ -1,7 +1,7 @@
 // app/components/modals/PetCodeModal.tsx
 "use client";
 import React, { useState } from "react";
-import { FaShareAlt, FaCopy } from "react-icons/fa";
+import { FaShareAlt, FaCopy, FaWhatsapp } from "react-icons/fa";
 import ModalComponent from "../lib/modal";
 import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
@@ -51,6 +51,15 @@ export default function PetCodeModal() {
       setTimeout(() => setCopied(false), 2000);
     });
   };
+
+  const handleWhatsAppShare = () => {
+    const petName = storage.storedPet.name;
+    const accessUrl = `${window.location.origin}/vet-access?code=${code}`;
+    const message = `Hola, este es el código de acceso para ver la historia clínica de ${petName} en Lampo: *${code}*.\n\nPuedes acceder directamente usando este enlace:\n${accessUrl}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
 
   return (
     <ModalComponent title="Generar código" setShowModal={setShowCodeModal}>
@@ -106,7 +115,7 @@ export default function PetCodeModal() {
               }}
               title="Copiar código"
             >
-              <FaCopy size={20} color={copied ? "green" : "var(--pico-primary)"} />
+              <FaCopy size={20} color={copied ? "var(--primary-green)" : "var(--pico-primary)"} />
             </button>
           </div>
 
@@ -119,6 +128,24 @@ export default function PetCodeModal() {
           <p style={{ fontSize: "0.8rem" }}>
             Este código es único para cada mascota. Compártelo con tu médico veterinario para brindarle acceso al historial.
           </p>
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button
+              onClick={handleWhatsAppShare}
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                backgroundColor: 'var(--whastapp)',
+                borderColor: 'transparent',
+                color: 'white'
+              }}
+            >
+              <FaWhatsapp size={20} /> Compartir por WhatsApp
+            </button>
+          </div>
 
         </>
       )}

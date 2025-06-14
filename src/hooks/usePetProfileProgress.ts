@@ -5,6 +5,7 @@ import { useMemo } from "react";
 
 export function usePetProfileProgress() {
     const {
+        storedPet,
         storedBasicData,
         storedVaccineData,
         storedMedicineData,
@@ -35,6 +36,7 @@ export function usePetProfileProgress() {
         };
 
         return {
+            pet: (storedPet.id) ? true : false,
             basicData: isComplete(PetStep.BasicData),
             vaccines: isComplete(PetStep.Vaccines),
             medicines: isComplete(PetStep.Medicines),

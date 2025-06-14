@@ -45,6 +45,7 @@ export default function HomePage() {
               href=""
               title="Agregar Mascota"
               desc="Registra una nueva mascota en tu perfil y comienza a gestionar su información clínica desde un solo lugar."
+              isComplete={progress.pet}
             />
           }
           {isOwner &&

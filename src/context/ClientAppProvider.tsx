@@ -23,7 +23,9 @@ export default function ClientAppProvider({ children }: Props) {
     const isAuthRoute = pathname === "/login" ||
         pathname.startsWith("/auth/callback") ||
         pathname.startsWith("/landing") ||
-        pathname.startsWith("/pages/auth/verify");
+        pathname.startsWith("/pages/auth/verify") ||
+        pathname.startsWith("/vet-access/register") ||
+        pathname.startsWith("/_not-found");
 
     if (isSessionLoading) {
         return <Loading />; // Loader fullscreen o centrado

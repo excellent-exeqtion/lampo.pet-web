@@ -1,6 +1,7 @@
 // middleware.ts
 import { NextResponse, type NextRequest } from 'next/server';
-import { createServerClient, updateSession } from '@/lib/auth';
+// Cambiamos la ruta de importación a nuestro nuevo archivo seguro para el servidor
+import { createServerClient, updateSession } from '@/lib/auth/server';
 import { cookies } from 'next/headers';
 
 // Lista de rutas permitidas para veterinarios con acceso temporal
@@ -43,7 +44,7 @@ export async function middleware(request: NextRequest) {
     const cookieStore = await cookies();
 
     // Rutas públicas que no necesitan validación de sesión ni de cookie
-    const publicRoutes = ['/login', '/vet-access', '/pages/auth/verify', '/api/auth/logout', '_not-found'];
+    const publicRoutes = ['/login', '/vet-access', '/pages/auth/verify', '/api/auth/logout'];
     if (pathname === '/' || publicRoutes.some(route => pathname.startsWith(route))) {
         return await updateSession(request);
     }
@@ -51,7 +52,7 @@ export async function middleware(request: NextRequest) {
     const supabaseResponse = NextResponse.next({ request });
     const supabase = await createServerClient(cookieStore);
 
-    const { data: { user } } = await supabase.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
     // Si hay un usuario con sesión, la lógica de Supabase se encargará
     if (user) {

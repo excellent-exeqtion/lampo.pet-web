@@ -20,7 +20,6 @@ export async function GET(
         async () => {
             const { petId } = await params;
             const data = await BasicDataRepository.findByPetId(petId, options);
-            console.log('findByPetId data', data);
             return NextResponse.json(data);
         });
 }

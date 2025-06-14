@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import {
     FaBars,
     FaCalendar,
-    FaCloudSun,
+    FaStethoscope,
     FaCog,
     FaCut,
     FaFlask,
@@ -49,8 +49,8 @@ export default function SideBar() {
         { label: "Vacunas", icon: <FaSyringe />, url: "/pages/pet/vaccines", show },
         { label: "Cirugías", icon: <FaCut />, url: "/pages/pet/surgeries", show },
         { label: "Medicinas", icon: <FaPills />, url: "/pages/pet/medicines", show },
-        { label: "Condiciones especiales", icon: <FaCloudSun />, url: "/pages/pet/conditions", show },
-        { label: "Lab. de exámenes", icon: <FaFlask />, url: "/pages/pet/lab-tests", show },
+        { label: "Condiciones especiales", icon: <FaStethoscope  />, url: "/pages/pet/conditions", show },
+        { label: "Exámenes laboratorio", icon: <FaFlask />, url: "/pages/pet/lab-tests", show },
         //TODO: modal para actualizar el plan
         //{ label: "Mejora tu plan", icon: <FaRocket />, url: "/pages/owner/upgrade", show: isOwner },
         { label: "Configuración", icon: <FaCog />, url: "/pages/owner/settings", show: isOwner },

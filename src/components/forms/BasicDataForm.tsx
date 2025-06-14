@@ -3,7 +3,7 @@ import React, { useState, useEffect, Dispatch } from 'react';
 import { InitialBasicDataType, PetStep as PetStep, PetType, type BasicDataType } from '@/types/index';
 import { ApiError, StepsStateType, StepStateEnum } from '@/types/lib';
 import { Dates, Steps } from '@/utils/index';
-import { petTypes, genders, weightUnits, breedOptions, foodOptions, weightConditionOptions, sizeOptions } from '@/data/petdata';
+import { petTypes, genders, weightUnits, breedOptions, foodOptions, weightConditionOptions, sizeOptions, coatTypes, colorOptions } from '@/data/petdata';
 import { Empty } from '@/data/index';
 import { useDeviceDetect } from '@/hooks/useDeviceDetect';
 import { postFetch } from '@/app/api';
@@ -18,7 +18,7 @@ interface BasicDataFormProps {
   onNext: () => void;
   stepStates: StepsStateType[];
   setStepStates: Dispatch<React.SetStateAction<StepsStateType[]>>;
-    setShowModal: Dispatch<React.SetStateAction<boolean>>;
+  setShowModal: Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function BasicDataForm({ pet, basicData, setBasicData, onNext, onBack, stepStates, setStepStates, setShowModal }: BasicDataFormProps) {
@@ -61,7 +61,6 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
   const { isMobile, isDesktop, isTablet } = useDeviceDetect();
   const storage = useStorageContext();
 
-  // Estilo común de grid: en móvil siempre 2 columnas, en desktop auto-ajusta
   const sectionGridStyle: React.CSSProperties = {
     display: "grid",
     gap: "1rem",
@@ -69,14 +68,11 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
       ? "repeat(2, 1fr)"
       : "repeat(4, 1fr)"
   };
-  // Estilo común de grid: en móvil siempre 2 columnas, en desktop auto-ajusta
   const tabletSectionGridStyle: React.CSSProperties = {
     display: "grid",
     gap: "1rem",
     gridTemplateColumns: "repeat(2, 1fr)"
   };
-
-
 
   useEffect(() => {
     if (JSON.stringify(savedData) != JSON.stringify(formData) && !stateEq(StepStateEnum.NotInitialize) && loadLoading == false) {
@@ -161,7 +157,6 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
 
   return (
     <StepsComponent onBack={onBack} onNext={handleSubmit} submitLoading={submitLoading} loadLoading={loadLoading} step={step} totalSteps={stepStates.length} error={error} setShowModal={setShowModal}>
-      {/* Sección: Información básica */}
       <fieldset>
         <legend><b>Información básica</b></legend>
         <div style={sectionGridStyle}>
@@ -270,10 +265,36 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
               />
             )}
           </div>
+          {/* ... (Tipo de mascota, Género, Peso, Raza sin cambios) ... */}
+          <div>
+            <label htmlFor="coat_type">Tipo de pelaje</label>
+            <select
+              id="coat_type"
+              className="w-full"
+              value={formData.coat_type}
+              disabled={loadLoading}
+              onChange={e => setFormData({ ...formData, coat_type: e.target.value })}
+            >
+              <option value="" disabled>Selecciona tipo de pelaje</option>
+              {coatTypes.map(type => <option key={type} value={type}>{type}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="color">Color principal</label>
+            <select
+              id="color"
+              className="w-full"
+              value={formData.color}
+              disabled={loadLoading}
+              onChange={e => setFormData({ ...formData, color: e.target.value })}
+            >
+              <option value="" disabled>Selecciona un color</option>
+              {colorOptions.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
         </div>
       </fieldset>
 
-      {/* Sección: Alimentación y entorno */}
       <fieldset>
         <legend><b>Alimentación y entorno</b></legend>
         <div style={sectionGridStyle}>
@@ -365,7 +386,6 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
         </div>
       </fieldset>
 
-      {/* Sección: Vacunación y procedimientos */}
       <fieldset>
         <legend><b>Vacunación y procedimientos</b></legend>
         <div style={isTablet ? tabletSectionGridStyle : sectionGridStyle}>
@@ -384,15 +404,15 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
           {isDesktop &&
             <>
               <div>
-                <label className="flex items-center gap-2" htmlFor="is_castrated">
+                <label className="flex items-center gap-2" htmlFor="is_sterilized">
                   <input
-                    id="is_castrated"
+                    id="is_sterilized"
                     type="checkbox"
-                    checked={formData.is_castrated}
-                    onChange={e => setFormData({ ...formData, is_castrated: e.target.checked })}
+                    checked={formData.is_sterilized}
+                    onChange={e => setFormData({ ...formData, is_sterilized: e.target.checked })}
                     disabled={loadLoading}
                   />
-                  Castrado
+                  Esterilizado
                 </label>
               </div>
               <div>
@@ -444,15 +464,15 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
           {!isDesktop &&
             <>
               <div>
-                <label className="flex items-center gap-2" htmlFor="is_castrated">
+                <label className="flex items-center gap-2" htmlFor="is_sterilized">
                   <input
-                    id="is_castrated"
+                    id="is_sterilized"
                     type="checkbox"
-                    checked={formData.is_castrated}
-                    onChange={e => setFormData({ ...formData, is_castrated: e.target.checked })}
+                    checked={formData.is_sterilized}
+                    onChange={e => setFormData({ ...formData, is_sterilized: e.target.checked })}
                     disabled={loadLoading}
                   />
-                  Castrado
+                  Esterilizado
                 </label>
               </div>
               <div>
@@ -470,15 +490,15 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
             </>
           }
           <div>
-            {formData.is_castrated && (
+            {formData.is_sterilized && (
               <div>
-                <label htmlFor="castration_date">Fecha de castración</label>
+                <label htmlFor="sterilization_date">Fecha de esterilización</label>
                 <input
-                  id="castration_date"
+                  id="sterilization_date"
                   type="date"
                   className="w-full"
-                  value={formData.castration_date ? Dates.format(formData.castration_date) : ''}
-                  onChange={e => setFormData({ ...formData, castration_date: e.target.valueAsDate || undefined })}
+                  value={formData.sterilization_date ? Dates.format(formData.sterilization_date) : ''}
+                  onChange={e => setFormData({ ...formData, sterilization_date: e.target.valueAsDate || undefined })}
                   disabled={loadLoading}
                 />
               </div>
@@ -502,7 +522,6 @@ export default function BasicDataForm({ pet, basicData, setBasicData, onNext, on
         </div>
       </fieldset>
 
-      {/* Sección: Otros datos */}
       <fieldset>
         <legend><b>Otros datos</b></legend>
         <div style={sectionGridStyle}>

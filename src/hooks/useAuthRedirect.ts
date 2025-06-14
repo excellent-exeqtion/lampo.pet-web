@@ -83,7 +83,6 @@ export default function useAuthRedirect() {
             pathname.startsWith("/auth/callback");
 
         if (!isGenerallyPublicRoute) {
-            console.log('send to login from useAuthRedirect')
             router.replace("/login");
         }
 

@@ -1,8 +1,7 @@
 // src/components/forms/consultation/ConsultationForm.tsx
-import React, { useState } from 'react';
-import type { PetType, CreateConsultationPayload, ConsultationProcedureType, ConsultationMedicationType, ConsultationFileType } from '@/types/index';
-// import { Empty } from '@/data/index'; // Ya no se usa directamente aquí para inicializar
-
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import type { PetType, CreateConsultationPayload, ConsultationProcedureType, ConsultationMedicationType, BasicDataType, OwnerDataType } from '@/types/index';
+// ... (imports de secciones)
 import { IdentitySection } from './sections/IdentitySection';
 import { OwnerPetSection } from './sections/OwnerPetSection';
 import { AnamnesisSection } from './sections/AnamnesisSection';
@@ -17,12 +16,15 @@ import { useStorageContext } from '@/context/StorageProvider';
 
 interface ConsultationFormProps {
     pet: PetType;
+    owner: OwnerDataType | null;
+    basicData: BasicDataType | null;
     onSubmit: (formData: CreateConsultationPayload) => Promise<void>;
     isSubmitting: boolean;
 }
 
-export function ConsultationForm({ pet, onSubmit, isSubmitting }: ConsultationFormProps) {
-    const { storedOwnerData, storedVetAccess } = useStorageContext();
+// Usamos forwardRef para exponer la función de subida de archivos
+export const ConsultationForm = forwardRef(({ pet, owner, basicData, onSubmit, isSubmitting }: ConsultationFormProps, ref) => {
+    const { storedVetAccess } = useStorageContext();
 
     const [formData, setFormData] = useState<Partial<CreateConsultationPayload>>(() => {
         const today = new Date();
@@ -31,18 +33,13 @@ export function ConsultationForm({ pet, onSubmit, isSubmitting }: ConsultationFo
             consultation_time: today.toTimeString().split(' ')[0].substring(0, 5),
             procedures: [],
             medications: [],
-            // Inicializar otros campos como null o string vacío según corresponda
-            // para evitar que sean 'undefined' si el componente de sección espera un valor controlado.
             institution_name: '',
             hc_number: '',
-            reason_for_consultation: '', // Campo requerido
+            reason_for_consultation: '',
             current_diet: '',
-            // ... (inicializa todos los demás campos que usan los componentes de sección)
-            presumptive_diagnosis: '', // Campo requerido
-            therapeutic_plan: '',    // Campo requerido
-            // ...etc.
+            presumptive_diagnosis: '',
+            therapeutic_plan: '',
         };
-        // Inicializar todos los campos esperados por las secciones para evitar errores de "uncontrolled to controlled"
         const allExpectedFields: Array<keyof CreateConsultationPayload> = [
             'institution_name', 'hc_number', 'consultation_date', 'consultation_time',
             'reason_for_consultation', 'current_diet', 'previous_illnesses', 'previous_surgeries',
@@ -59,21 +56,45 @@ export function ConsultationForm({ pet, onSubmit, isSubmitting }: ConsultationFo
             'presumptive_diagnosis', 'definitive_diagnosis', 'therapeutic_plan', 'prognosis',
             'evolution_notes', 'general_observations', 'signature_confirmation'
         ];
-
         allExpectedFields.forEach(field => {
             if (!(field in initialFormData)) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (initialFormData as any)[field] = null; // o '' según el tipo esperado por el input
+                (initialFormData as any)[field] = null;
             }
         });
         return initialFormData;
     });
 
-    const [uploadedFiles, setUploadedFiles] = useState<ConsultationFileType[]>([]);
+    const [stagedFiles, setStagedFiles] = useState<File[]>([]);
 
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-    ) => {
+    useImperativeHandle(ref, () => ({
+        async triggerFileUploads(consultationId: string) {
+            if (stagedFiles.length === 0) return;
+
+            const uploadPromises = stagedFiles.map(file => {
+                const formDataApi = new FormData();
+                formDataApi.append('file', file);
+                formDataApi.append('petId', pet.id);
+                return fetch(`/api/consultations/${consultationId}/files`, {
+                    method: 'POST',
+                    body: formDataApi,
+                });
+            });
+
+            const results = await Promise.allSettled(uploadPromises);
+
+            results.forEach((result, index) => {
+                if (result.status === 'rejected') {
+                    console.error(`Error subiendo archivo ${stagedFiles[index].name}:`, result.reason);
+                    // Aquí podrías notificar al usuario sobre los archivos que fallaron
+                }
+            });
+            setStagedFiles([]); // Limpiar archivos en espera
+        }
+    }));
+
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         let processedValue: string | number | boolean | null = value;
 
@@ -81,14 +102,12 @@ export function ConsultationForm({ pet, onSubmit, isSubmitting }: ConsultationFo
             processedValue = (e.target as HTMLInputElement).checked;
         } else if (type === 'number') {
             if (value === '') {
-                processedValue = null; // Enviar null si el campo numérico está vacío
+                processedValue = null;
             } else {
                 const num = parseFloat(value);
-                processedValue = isNaN(num) ? null : num; // null si no es un número válido
+                processedValue = isNaN(num) ? null : num;
             }
         }
-        // Para inputs de fecha y tiempo, el valor ya es un string en el formato correcto
-
         setFormData(prev => ({ ...prev, [name]: processedValue }));
     };
 
@@ -100,15 +119,19 @@ export function ConsultationForm({ pet, onSubmit, isSubmitting }: ConsultationFo
         }));
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+    const handleBasicDataChange = (field: keyof BasicDataType, value: any) => {
+        // Esta función podría usarse si actualizamos `basicData` en tiempo real
+        // Por simplicidad, el campo de peso lo manejará el `OwnerPetSection` directamente
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const finalPayload = { ...formData };
-        // Asegurarse de que los campos requeridos tengan valor
-        if (!finalPayload.reason_for_consultation || !finalPayload.presumptive_diagnosis || !finalPayload.therapeutic_plan) {
+        if (!formData.reason_for_consultation || !formData.presumptive_diagnosis || !formData.therapeutic_plan) {
             alert("Por favor, complete todos los campos obligatorios: Motivo de Consulta, Diagnóstico Presuntivo y Plan Terapéutico.");
             return;
         }
-        onSubmit(finalPayload as CreateConsultationPayload);
+        onSubmit(formData as CreateConsultationPayload);
     };
 
     const handleProceduresChange = (updatedProcedures: Array<Omit<ConsultationProcedureType, 'id' | 'consultation_id' | 'created_at'>>) => {
@@ -119,158 +142,70 @@ export function ConsultationForm({ pet, onSubmit, isSubmitting }: ConsultationFo
         setFormData(prev => ({ ...prev, medications: updatedMedications }));
     };
 
-    const handleFilesUpdate = (newFiles: ConsultationFileType[]) => {
-        // Esta función podría no ser necesaria si los archivos se manejan enteramente
-        // dentro de ComplementaryExamsSection hasta el momento del submit general,
-        // o si la subida ocurre después de crear la consulta.
-        // Por ahora, actualizamos un estado local si es necesario.
-        setUploadedFiles(prevFiles => {
-            const updated = [...prevFiles];
-            newFiles.forEach(nf => {
-                if (!updated.find(ef => ef.id === nf.id)) {
-                    updated.push(nf);
-                }
-            });
-            return updated;
-        });
-    };
+    const [openSection, setOpenSection] = useState<string | null>('identity');
 
     const handleToggleSection = (event: React.MouseEvent<HTMLElement>, sectionName: string) => {
-        event.preventDefault(); // Prevenir el toggle nativo del <details>
-        setOpenSection(prevOpenSection =>
-            prevOpenSection === sectionName ? null : sectionName
-        );
+        event.preventDefault();
+        setOpenSection(prevOpenSection => prevOpenSection === sectionName ? null : sectionName);
     };
-
-    // Para controlar qué sección está abierta por defecto (opcional)
-    const [openSection, setOpenSection] = useState<string | null>('identity'); // Abre la primera por defecto
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4 pico-form" style={{ marginTop: '2rem' }}>
-
             <details open={openSection === 'identity'}>
-                <summary
-                    role="button"
-                    className="secondary outline"
-                    onClick={(e) => handleToggleSection(e, 'identity')}
-                >
-                    1. Identificación
-                </summary>
-                {openSection === 'identity' && ( // Renderizar contenido solo si está abierto
-                    <IdentitySection vetData={storedVetAccess} formData={formData} handleChange={handleChange} />
-                )}
+                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'identity')}>1. Identificación</summary>
+                {openSection === 'identity' && <IdentitySection vetData={storedVetAccess} formData={formData} handleChange={handleChange} />}
             </details>
 
             <details open={openSection === 'ownerPet'}>
-                <summary
-                    role="button"
-                    className="secondary outline"
-                    onClick={(e) => handleToggleSection(e, 'ownerPet')}
-                >
-                    2. Datos Propietario y Reseña Mascota
-                </summary>
-                {openSection === 'ownerPet' && (
-                    <OwnerPetSection owner={storedOwnerData} pet={pet} />
-                )}
+                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'ownerPet')}>2. Datos Propietario y Reseña Mascota</summary>
+                {openSection === 'ownerPet' && <OwnerPetSection owner={owner} pet={pet} basicPetData={basicData} onBasicDataChange={handleBasicDataChange} />}
             </details>
 
-            {/* Repetir el patrón para todas las demás secciones */}
-            {/* Ejemplo para Anamnesis: */}
             <details open={openSection === 'anamnesis'}>
-                <summary
-                    role="button"
-                    className="secondary outline"
-                    onClick={(e) => handleToggleSection(e, 'anamnesis')}
-                >
-                    3. Anamnesis
-                </summary>
-                {openSection === 'anamnesis' && (
-                    <AnamnesisSection formData={formData} handleChange={handleChange} handleNumericChange={handleNumericChange} />
-                )}
+                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'anamnesis')}>3. Anamnesis</summary>
+                {openSection === 'anamnesis' && <AnamnesisSection formData={formData} handleChange={handleChange} handleNumericChange={handleNumericChange} basicData={basicData} />}
             </details>
-
 
             <details open={openSection === 'physicalExam'}>
-                <summary
-                    role="button"
-                    className="secondary outline"
-                    onClick={(e) => handleToggleSection(e, 'physicalExam')}
-                >
-                    4. Exámenes físicos
-                </summary>
-                <PhysicalExamSection formData={formData} handleChange={handleChange} handleNumericChange={handleNumericChange} />
+                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'physicalExam')}>4. Exámenes físicos</summary>
+                {openSection === 'physicalExam' && <PhysicalExamSection formData={formData} handleChange={handleChange} handleNumericChange={handleNumericChange} />}
             </details>
 
             <details open={openSection === 'procedures'}>
-                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'procedures')}>
-                    5. Procedimientos en Consulta
-                </summary>
-                {openSection === 'procedures' && (
-                    <ProceduresSection procedures={formData.procedures || []} onChange={handleProceduresChange} />
-                )}
+                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'procedures')}>5. Procedimientos en Consulta</summary>
+                {openSection === 'procedures' && <ProceduresSection procedures={formData.procedures || []} onChange={handleProceduresChange} />}
             </details>
 
             <details open={openSection === 'medications'}>
-                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'medications')}>
-                    6. Medicamentos en Consulta
-                </summary>
-                {openSection === 'medications' && (
-                    <MedicationsSection medications={formData.medications || []} onChange={handleMedicationsChange} />
-                )}
+                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'medications')}>6. Medicamentos en Consulta</summary>
+                {openSection === 'medications' && <MedicationsSection medications={formData.medications || []} onChange={handleMedicationsChange} />}
             </details>
 
             <details open={openSection === 'diagnosticApproach'}>
-                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'diagnosticApproach')}>
-                    7. Abordaje Diagnóstico
-                </summary>
-                {openSection === 'diagnosticApproach' && (
-                    <DiagnosticApproachSection formData={formData} handleChange={handleChange} />
-                )}
+                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'diagnosticApproach')}>7. Abordaje Diagnóstico</summary>
+                {openSection === 'diagnosticApproach' && <DiagnosticApproachSection formData={formData} handleChange={handleChange} />}
             </details>
 
             <details open={openSection === 'complementaryExams'}>
-                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'complementaryExams')}>
-                    8. Exámenes Complementarios
-                </summary>
-                {openSection === 'complementaryExams' && (
-                    <ComplementaryExamsSection
-                        petId={pet.id}
-                        consultationId={""}
-                        formData={formData}
-                        handleChange={handleChange}
-                        onFilesUpdate={handleFilesUpdate} />
-                )}
-                {uploadedFiles.length > 0 && (
-                    <p>Archivos adjuntos: {uploadedFiles.length}</p>
-                )}
+                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'complementaryExams')}>8. Exámenes Complementarios</summary>
+                {openSection === 'complementaryExams' && <ComplementaryExamsSection formData={formData} handleChange={handleChange} setStagedFiles={setStagedFiles} />}
             </details>
 
             <details open={openSection === 'diagnosisPlan'}>
-                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'diagnosisPlan')}>
-                    9. Diagnóstico y Plan
-                </summary>
-                {openSection === 'diagnosisPlan' && (
-                    <DiagnosisPlanSection formData={formData} handleChange={handleChange} />
-                )}
+                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'diagnosisPlan')}>9. Diagnóstico y Plan</summary>
+                {openSection === 'diagnosisPlan' && <DiagnosisPlanSection formData={formData} handleChange={handleChange} />}
             </details>
 
             <details open={openSection === 'observations'}>
-                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'observations')}>
-                    10. Observaciones y Profesional
-                </summary>
-                {openSection === 'observations' && (
-                    <ObservationsSignatureSection
-                        formData={formData}
-                        handleChange={handleChange}
-                        vetData={storedVetAccess}
-                    />
-                )}
+                <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'observations')}>10. Observaciones y Profesional</summary>
+                {openSection === 'observations' && <ObservationsSignatureSection formData={formData} handleChange={handleChange} vetData={storedVetAccess} />}
             </details>
 
-
             <button type="submit" disabled={isSubmitting} aria-busy={isSubmitting} style={{ marginTop: '1.5rem' }}>
-                {isSubmitting ? 'Guardando Consulta...' : 'Guardar Consulta'}
+                {isSubmitting ? 'Guardando...' : 'Guardar Consulta'}
             </button>
         </form>
     );
-}
+});
+
+ConsultationForm.displayName = "ConsultationForm";

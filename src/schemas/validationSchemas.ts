@@ -6,6 +6,7 @@ export const PetTypeSchema = z.object({
   id: z.string().regex(new RegExp(/^[A-Za-z]\d{3}$/)),
   name: z.string(),
   image: z.string().nullable().optional(),
+  birth_date: z.string().optional(),
   owner_id: z.string(),
 });
 
@@ -39,6 +40,8 @@ export const BasicDataTypeSchema = z.object({
   gender: z.string(),
   weight: z.string(),
   race: z.string(),
+  coat_type: z.string(),
+  color: z.string(),
   has_allergies: z.boolean(),
   weight_condition: z.string(),
   size: z.string(),
@@ -47,8 +50,8 @@ export const BasicDataTypeSchema = z.object({
   has_vaccine: z.boolean(),
   last_vaccine_name: z.string().optional().nullable(),
   last_vaccine_date: z.string().optional().nullable(),
-  is_castrated: z.boolean(),
-  castration_date: z.string().optional().nullable(),
+  is_sterilized: z.boolean(),
+  sterilization_date: z.string().optional().nullable(),
   has_anti_flea: z.boolean(),
   anti_flea_date: z.string().optional().nullable(),
   uses_medicine: z.boolean(),

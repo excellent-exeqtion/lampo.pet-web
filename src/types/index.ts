@@ -2,6 +2,7 @@ export interface PetType {
     id: string;
     name: string;
     image?: string | null;
+    birth_date?: Date | null; 
     owner_id: string;
 }
 export interface PetCodeType {
@@ -29,6 +30,8 @@ export interface BasicDataType {
     gender: string;
     weight: string;
     race: string;
+    coat_type: string;
+    color: string;
     has_allergies: boolean;
     weight_condition: string;
     size: string;
@@ -37,8 +40,8 @@ export interface BasicDataType {
     has_vaccine: boolean;
     last_vaccine_name?: string;
     last_vaccine_date?: Date;
-    is_castrated: boolean;
-    castration_date?: Date;
+    is_sterilized: boolean;
+    sterilization_date?: Date;
     has_anti_flea: boolean;
     anti_flea_date?: Date;
     uses_medicine: boolean;

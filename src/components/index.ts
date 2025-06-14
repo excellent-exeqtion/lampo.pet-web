@@ -25,8 +25,13 @@ export { default as Title } from "./lib/title";
 
 // views
 export { default as ConsultationDetailView } from './consultations/ConsultationDetailView';
+export { default as ConsultationPetSummary } from './consultations/ConsultationPetSummary';
 
 // forms
 export { default as CountryCodeInput } from "./forms/CountryCodeInput";
 export { default as CountryCitySelector } from "./forms/CountryCitySelector";
 export { default as MapPicker } from "./forms/MapPicker";
+
+//modals
+export { default as AlertModal } from "./modals/AlertModal";
+export { default as ConfirmModal } from "./modals/ConfirmModal";

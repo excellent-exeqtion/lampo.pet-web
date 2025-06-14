@@ -3,7 +3,7 @@ import { PetType, PetCodeType, OwnerDataType, BasicDataType, VaccineDataType, Su
 import { ConditionRepository, LabTestRepository, MedicineRepository, SurgeryRepository, VaccineRepository } from "../repositories";
 import { BasicDataTypeSchema, ConditionDataTypeSchema, LabTestDataTypeSchema, MedicineDataTypeSchema, PetTypeSchema, SurgeryDataTypeSchema, VaccineDataTypeSchema } from "@/schemas/validationSchemas";
 
-export function Pet(): PetType { return { id: '', name: '', image: '', owner_id: '' } };
+export function Pet(): PetType { return { id: '', name: '', image: '', birth_date: undefined, owner_id: '' } };
 
 export function PetCode(): PetCodeType { return { id: '', pet_id: '', code: '', used: false, expires_at: '' } };
 
@@ -26,6 +26,8 @@ export function BasicData(): BasicDataType {
         gender: '',
         weight: '0 Kg',
         race: '',
+        coat_type: '',
+        color: '',
         has_allergies: false,
         weight_condition: '',
         size: '',
@@ -34,8 +36,8 @@ export function BasicData(): BasicDataType {
         has_vaccine: false,
         last_vaccine_name: undefined,
         last_vaccine_date: undefined,
-        is_castrated: false,
-        castration_date: undefined,
+        is_sterilized: false,
+        sterilization_date: undefined,
         has_anti_flea: false,
         anti_flea_date: undefined,
         uses_medicine: false,

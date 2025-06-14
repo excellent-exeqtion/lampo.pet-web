@@ -95,7 +95,6 @@ export function VetProvider({ children }: VetProviderProps) {
 export function useVetContext(): VetContextType {
     const context = useContext(VetContext);
     if (!context) {
-        console.log('entro aqui');
         throw new Error("useVetContext debe usarse dentro de un VetProvider");
     }
     return context;

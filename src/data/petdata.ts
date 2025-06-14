@@ -53,27 +53,27 @@ export const PetsData: PetType[] = [
 export const camusData: BasicDataType =
 {
   pet_id: 'A001', pet_type: 'Gato', gender: 'Macho', weight: '5.5 Kg', race: 'Mestizo', has_allergies: false,
-  weight_condition: 'Normal', size: 'Mediano', lives_with_others: false,
+  weight_condition: 'Normal', size: 'Mediano', lives_with_others: false, coat_type:'Largo', color: 'Gris',
   main_food: 'Taste the Wild', has_vaccine: true, last_vaccine_name: 'Parvigen', last_vaccine_date: new Date('2024-07-25'),
-  is_castrated: true, castration_date: new Date('2023-12-02'), has_anti_flea: true, anti_flea_date: new Date('2023-12-15'),
+  is_sterilized: true, sterilization_date: new Date('2023-12-02'), has_anti_flea: true, anti_flea_date: new Date('2023-12-15'),
   uses_medicine: false, special_condition: false
 }
 
 export const polarData: BasicDataType =
 {
   pet_id: 'A002', pet_type: 'Perro', gender: 'Macho', weight: '7 Kg', race: 'Criollo', has_allergies: false,
-  weight_condition: 'Normal', size: 'Mediano', lives_with_others: true,
+  weight_condition: 'Normal', size: 'Mediano', lives_with_others: true, coat_type:'Corto', color: 'Blanco',
   main_food: 'Pro Plan', has_vaccine: false,
-  is_castrated: true, castration_date: new Date('2023-06-30'), has_anti_flea: false,
+  is_sterilized: true, sterilization_date: new Date('2023-06-30'), has_anti_flea: false,
   uses_medicine: false, special_condition: false
 };
 
 export const tobyData: BasicDataType =
 {
   pet_id: 'A003', pet_type: 'Perro', gender: 'Macho', weight: '9 Kg', race: 'Criollo', has_allergies: true,
-  weight_condition: 'Normal', size: 'Mediano', lives_with_others: true,
+  weight_condition: 'Normal', size: 'Mediano', lives_with_others: true, coat_type:'Corto', color: 'Blanco',
   main_food: 'Vet Life', has_vaccine: false,
-  is_castrated: true, castration_date: new Date('2019-05-03'), has_anti_flea: false,
+  is_sterilized: true, sterilization_date: new Date('2019-05-03'), has_anti_flea: false,
   uses_medicine: false, special_condition: true
 };
 
@@ -136,3 +136,5 @@ export const foodOptions = [
 ];
 export const weightConditionOptions = ['Bajo peso', 'Peso ideal', 'Sobrepeso'];
 export const sizeOptions = ['Pequeño', 'Mediano', 'Grande', 'Extra Grande'];
+export const coatTypes = ['Corto', 'Largo', 'Rizado', 'Duro', 'Sin pelo', 'Otro'];
+export const colorOptions = ['Negro', 'Blanco', 'Marrón', 'Gris', 'Dorado', 'Atigrado', 'Bicolor', 'Tricolor', 'Merle', 'Otro'];

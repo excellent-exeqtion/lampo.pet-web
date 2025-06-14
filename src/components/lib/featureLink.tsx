@@ -1,6 +1,7 @@
-// src/components/lib/field.tsx
+// src/components/lib/featureLink.tsx
 import Link from "next/link";
 import React from "react";
+import { FaCheckCircle } from "react-icons/fa";
 
 interface FeatureLinkProps {
   icon: React.ReactNode;
@@ -8,11 +9,12 @@ interface FeatureLinkProps {
   title: string;
   desc: string;
   click?: () => void;
+  isComplete?: boolean;
 }
 
-export default function FeatureLink({ icon, href, title, desc, click }: FeatureLinkProps) {
+export default function FeatureLink({ icon, href, title, desc, click, isComplete = false }: FeatureLinkProps) {
   return (
-    <li style={{ marginBottom: "1.2rem" }}>
+    <li style={{ marginBottom: "1.2rem", position: 'relative' }}>
       <Link
         href={click ? '' : href}
         className="contrast"
@@ -27,8 +29,12 @@ export default function FeatureLink({ icon, href, title, desc, click }: FeatureL
           background: "var(--primary-inverse)",
           boxShadow: "0 1px 6px var(--primary-lighttransparent)",
           transition: "background 0.2s",
+          borderLeft: isComplete ? '5px solid var(--primary-green)' : '5px solid transparent'
         }}
       >
+        {isComplete && (
+          <FaCheckCircle style={{ color: 'var(--primary-green)', position: 'absolute', top: '0.5rem', right: '0.5rem' }} />
+        )}
         <span style={{ fontSize: 28, minWidth: 40 }}>{icon}</span>
         <span>
           <strong>{title}</strong>

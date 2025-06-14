@@ -58,10 +58,8 @@ export default function VeterinaryModal({ setShowModal }: VeterinaryModalProps) 
         if (!petResponse.ok) {
           setError("No se encontró la mascota.");
         }
-        console.log('petResponse', petResponse)
         const petData = await petResponse.json();
 
-        console.log('petData', petData)
         storage.setStoredPet(petData);
         storage.setStoredOwnerPets([]);
 

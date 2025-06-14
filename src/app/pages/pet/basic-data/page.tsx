@@ -10,6 +10,7 @@ import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { getFetch } from "@/app/api";
 import { useStorageContext } from "@/context/StorageProvider";
 import { Empty } from "@/data/index";
+import { Dates } from "@/utils/index";
 
 export default function BasicDataPage() {
   const { isMobile } = useDeviceDetect();
@@ -34,11 +35,11 @@ export default function BasicDataPage() {
         const basicData: BasicDataType = await resPet.json();
         const pet = Empty.BasicData();
         pet.pet_id = 'x';
-        if(!basicData){
+        if (!basicData) {
           setPetData(pet);
           storage.setStoredBasicData(pet);
         }
-        else{
+        else {
           setPetData(basicData);
           storage.setStoredBasicData(basicData);
         }
@@ -78,21 +79,24 @@ export default function BasicDataPage() {
     if (!petData) return;
     setBasicDataItems([
       { label: "Tipo de mascota", show: true, value: petData.pet_type },
+      { label: "Edad", show: true, value: Dates.calculateAge(storage.storedPet.birth_date) },
       { label: "Género", show: true, value: petData.gender },
       { label: "Peso", show: true, value: petData.weight },
       { label: "Raza", show: true, value: petData.race },
+      { label: "Tipo de pelaje", show: true, value: petData.coat_type },
+      { label: "Color", show: true, value: petData.color },
       { label: "Alergias", show: true, value: petData.has_allergies ? 'Si' : 'No' },
       { label: "Condición de peso", show: true, value: petData.weight_condition },
       { label: "Tamaño", show: true, value: petData.size },
       { label: "Vive con otros", show: true, value: petData.lives_with_others ? 'Si' : 'No' },
       { label: "Comida principal", show: true, value: petData.main_food },
       { label: "Última vacuna", show: true, value: petData.has_vaccine ? (`${petData.last_vaccine_name} (${format(petData.last_vaccine_date)})`) : 'No tiene vacunas' },
-      { label: "Castrado", show: true, value: petData.is_castrated ? (`Sí (${format(petData.castration_date)})`) : 'No' },
+      { label: "Esterilizado", show: true, value: petData.is_sterilized ? (`Sí (${format(petData.sterilization_date)})`) : 'No' },
       { label: "Antipulgas", show: true, value: petData.has_anti_flea ? (`Sí (${format(petData.anti_flea_date)})`) : 'No' },
       { label: "¿Usa medicina?", show: true, value: petData.uses_medicine ? 'Si' : 'No' },
       { label: "Condición especial", show: true, value: petData.special_condition ? 'Si' : 'No' },
     ]);
-  }, [petData]);
+  }, [petData, storage.storedPet.birth_date]);
 
 
   useEffect(() => {

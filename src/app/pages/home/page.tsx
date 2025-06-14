@@ -1,34 +1,26 @@
-// app/page.tsx
+// src/app/pages/home/page.tsx
 "use client";
 import React from "react";
 import {
-  FaCalendar,
-  FaUser,
-  FaSyringe,
-  FaCut,
-  FaPills,
-  FaCloudSun,
-  FaFlask,
-  FaCog,
-  FaPlusCircle,
+  FaCalendar, FaUser, FaSyringe, FaCut, FaPills, FaCloudSun,
+  FaFlask, FaCog, FaPlusCircle, FaPaw,
 } from "react-icons/fa";
-
 import {
-  FaPaw,
-  FaUserDoctor,
-  FaPencil,
+  FaUserDoctor, FaPencil,
 } from "react-icons/fa6";
 import { FeatureLink, Loading } from "@/components/index";
 import { useRoleContext } from "@/context/RoleProvider";
 import { useUI } from "@/context/UIProvider";
 import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
+import { usePetProfileProgress } from '@/hooks/usePetProfileProgress'; // IMPORTADO
 
 export default function HomePage() {
   const { isOwner, isVet, isVetWithSession } = useRoleContext();
   const { setShowVetPetCodeModal, setShowAddPetModal, setShowEditPetModal } = useUI();
   const { storedPet } = useStorageContext();
   const { isLoading: isLoadingSession } = useSessionContext();
+  const progress = usePetProfileProgress(); // USADO
 
   if (isLoadingSession) {
     return <Loading />;
@@ -78,6 +70,7 @@ export default function HomePage() {
               href="/pages/pet/basic-data"
               title="Datos básicos"
               desc="Consulta y edita los datos principales de cada mascota: nombre, raza, edad, propietario y más."
+              isComplete={progress.basicData}
             />
           }
           {isOwner &&
@@ -94,6 +87,7 @@ export default function HomePage() {
               href="/pages/pet/vaccines"
               title="Vacunas"
               desc="Lleva el control de las vacunas aplicadas, pendientes y genera recordatorios personalizados."
+              isComplete={progress.vaccines}
             />
           }
           {isOwner &&
@@ -102,6 +96,7 @@ export default function HomePage() {
               href="/pages/pet/surgeries"
               title="Cirugías"
               desc="Registra intervenciones quirúrgicas, fechas, veterinario responsable y notas relevantes."
+              isComplete={progress.surgeries}
             />
           }
           {isOwner &&
@@ -110,6 +105,7 @@ export default function HomePage() {
               href="/pages/pet/medicines"
               title="Medicinas"
               desc="Gestiona tratamientos, dosis, fechas y alertas de administración de medicamentos."
+              isComplete={progress.medicines}
             />
           }
           {isOwner &&
@@ -118,14 +114,16 @@ export default function HomePage() {
               href="/pages/pet/conditions"
               title="Condiciones especiales"
               desc="Anota alergias, condiciones crónicas u otros factores a tener en cuenta en el cuidado diario."
+              isComplete={progress.conditions}
             />
           }
           {isOwner &&
             <FeatureLink
               icon={<FaFlask />}
               href="/pages/pet/lab-tests"
-              title="Lab. de exámenes"
+              title="Exámenes de laboratorio"
               desc="Carga y consulta resultados de exámenes de laboratorio para mantener el historial clínico completo."
+              isComplete={progress.labTests}
             />
           }
           {isVet &&

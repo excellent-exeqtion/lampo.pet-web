@@ -6,7 +6,7 @@ import { generateUniquePetId } from '@/utils/random';
 import { PetStep, PetType } from '@/types/index';
 import { ApiError, StepsStateType, StepStateEnum } from '@/types/lib';
 import StepsComponent from '../lib/steps';
-import { Steps } from '@/utils/index';
+import { Dates, Steps } from '@/utils/index';
 import { Empty } from '@/data/index';
 import { CircularImage } from "@/components/index";
 import { getFetch, postFetch } from '@/app/api';
@@ -110,11 +110,11 @@ export default function PetNameForm({
     setSubmitLoading(true);
     try {
       if (!stateEq(StepStateEnum.Saved) || stateEq(StepStateEnum.Modified)) {
-        if(!pet.id && storage.storedOwnerPets.filter(p => p.name == pet.name).length > 0){
-            throw new ApiError('Ya tienes una mascota registrada con ese mismo nombre.');
+        if (!pet.id && storage.storedOwnerPets.filter(p => p.name == pet.name).length > 0) {
+          throw new ApiError('Ya tienes una mascota registrada con ese mismo nombre.');
         }
         const newId = pet.id || (await generateUniquePetId());
-        const newPet: PetType = { id: newId, name: pet.name, image: pet.image, owner_id: ownerId };
+        const newPet: PetType = { id: newId, name: pet.name, image: pet.image, birth_date: pet.birth_date, owner_id: ownerId };
         if (JSON.stringify(newPet) != JSON.stringify(pet)) {
           const response = await postFetch('/api/pets', undefined, newPet);
           const result = await response.json();
@@ -153,17 +153,29 @@ export default function PetNameForm({
       setShowModal={setShowModal}
     >
       <div style={{ display: 'grid', gap: '1rem', marginBottom: '30px' }}>
-        <label>
-          Nombre
-          <input
-            type="text"
-            value={pet.name}
-            disabled={loadLoading}
-            onChange={(e) => setPet({ ...pet, name: e.target.value })}
-            required
-          />
-        </label>
+        <div style={{display: 'flex', gap: '1rem' }}>
+          <label>
+            Nombre
+            <input
+              type="text"
+              value={pet.name}
+              disabled={loadLoading}
+              onChange={(e) => setPet({ ...pet, name: e.target.value })}
+              required
+            />
+          </label>
 
+          <label>
+            Fecha de Nacimiento
+            <input
+              type="date"
+              value={Dates.format(pet.birth_date)}
+              disabled={loadLoading}
+              onChange={(e) => setPet({ ...pet, birth_date: e.target.valueAsDate })}
+              required
+            />
+          </label>
+        </div>
         {pet.image ? (
           <CircularImage
             src={preview}

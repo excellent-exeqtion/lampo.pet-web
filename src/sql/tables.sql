@@ -14,25 +14,27 @@ CREATE TABLE owners (
 
 -- 3) Tabla de datos básicos de la mascota
 CREATE TABLE basic_data (
-  pet_id            TEXT      PRIMARY KEY REFERENCES pets(id) ON DELETE CASCADE,
-  pet_type          TEXT      NOT NULL,
-  gender            TEXT      NOT NULL,
-  weight            TEXT      NOT NULL,
-  race              TEXT      NOT NULL,
-  has_allergies     BOOLEAN   NOT NULL,
-  weight_condition  TEXT      NOT NULL,
-  size              TEXT      NOT NULL,
-  lives_with_others BOOLEAN   NOT NULL,
-  main_food         TEXT      NOT NULL,
-  has_vaccine       BOOLEAN   NOT NULL,
-  last_vaccine_name TEXT,
-  last_vaccine_date TIMESTAMP,
-  is_castrated      BOOLEAN   NOT NULL,
-  castration_date   TIMESTAMP,
-  has_anti_flea     BOOLEAN   NOT NULL,
-  anti_flea_date    TIMESTAMP,
-  uses_medicine     BOOLEAN   NOT NULL,
-  special_condition BOOLEAN   NOT NULL
+  pet_id              TEXT      PRIMARY KEY REFERENCES pets(id) ON DELETE CASCADE,
+  pet_type            TEXT      NOT NULL,
+  gender              TEXT      NOT NULL,
+  weight              TEXT      NOT NULL,
+  race                TEXT      NOT NULL,
+  coat_type           TEXT      NOT NULL,
+  color               TEXT      NOT NULL,
+  has_allergies       BOOLEAN   NOT NULL,
+  weight_condition    TEXT      NOT NULL,
+  size                TEXT      NOT NULL,
+  lives_with_others   BOOLEAN   NOT NULL,
+  main_food           TEXT      NOT NULL,
+  has_vaccine         BOOLEAN   NOT NULL,
+  last_vaccine_name   TEXT,
+  last_vaccine_date   TIMESTAMP,
+  is_sterilized       BOOLEAN   NOT NULL,
+  sterilization_date  TIMESTAMP,
+  has_anti_flea       BOOLEAN   NOT NULL,
+  anti_flea_date      TIMESTAMP,
+  uses_medicine       BOOLEAN   NOT NULL,
+  special_condition   BOOLEAN   NOT NULL
 );
 
 -- 4) Vacunas

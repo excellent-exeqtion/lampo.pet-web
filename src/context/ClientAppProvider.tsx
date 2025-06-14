@@ -1,7 +1,6 @@
 // components/layout/ClientAppProvider.tsx
 "use client";
 import React from "react";
-import { AppContextProvider } from "@/context/AppContextProvider";
 import { Bubbles, Loading, SideBar } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
 import { usePathname } from "next/navigation";
@@ -33,9 +32,9 @@ export default function ClientAppProvider({ children }: Props) {
 
     if (isAuthRoute) {
         return (
-            <AppContextProvider>
+            <>
                 {children}
-            </AppContextProvider>
+            </>
         );
     }
 
@@ -43,7 +42,7 @@ export default function ClientAppProvider({ children }: Props) {
 
 
     return (
-        <AppContextProvider>
+        <>
             <div
                 className="container grid"
                 style={{
@@ -67,6 +66,6 @@ export default function ClientAppProvider({ children }: Props) {
                     {children}
                 </main>
             </div>
-        </AppContextProvider>
+        </>
     );
 }

@@ -8,6 +8,12 @@ import { geistMono, geistSans } from "@/styles/geist";
 import { usePathname } from "next/navigation";
 import { AppContextProvider } from "@/context/AppContextProvider";
 import ClientAppProvider from "@/context/ClientAppProvider";
+import dynamic from 'next/dynamic'
+
+const I18nInit = dynamic(
+  () => import('../components/i18n'),
+  { ssr: false }
+)
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -21,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <style>{tooltipStyles}</style>
+        <I18nInit />
         <AppContextProvider>
           {shouldUseClientAppProvider ? (
             <ClientAppProvider>

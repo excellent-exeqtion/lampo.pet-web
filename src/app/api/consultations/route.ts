@@ -40,12 +40,26 @@ export async function POST(req: NextRequest) {
                 }
             }
 
-            const { data, error } = await ConsultationRepository.create(payload, options);
-            if (error || !data) {
+            // *** LA CORRECCIÓN CLAVE ESTÁ AQUÍ ***
+            // Desestructuramos la respuesta del repositorio correctamente.
+            const { data: consultation, error } = await ConsultationRepository.create(payload, options);
+
+            // Verificamos tanto el error como si los datos son nulos.
+            if (error || !consultation) {
                 console.error(`Error creando consulta desde API: ${error?.message || 'No data returned'}`);
                 throw new RepositoryError(`Error creando consulta: ${error?.message || 'No data returned'}`);
             }
-            return NextResponse.json({ success: true, consultation: data }, { status: 201 });
+
+            const {data, error: errorGet } = await ConsultationRepository.findByPetId(payload.pet_id, options);
+
+            // Verificamos tanto el error como si los datos son nulos.
+            if (errorGet || !data) {
+                console.error(`Error trayendo la ultima consulta creada desde API: ${errorGet?.message || 'No data returned'}`);
+                throw new RepositoryError(`Error trayendo la ultima consulta creada: ${errorGet?.message || 'No data returned'}`);
+            }
+
+            // Enviamos el objeto 'consultation' limpio en la respuesta.
+            return NextResponse.json({ success: true, consultation: data[0] }, { status: 201 });
         }
     );
 }
@@ -60,12 +74,12 @@ export async function GET(req: NextRequest) {
         req,
         async () => {
             const petId = getRequiredQueryParam(req, 'petId');
-            const { data, error } = await ConsultationRepository.findByPetId(petId, options);
+            const { data: consultations, error } = await ConsultationRepository.findByPetId(petId, options);
 
             if (error) {
                 throw new RepositoryError(`Error obteniendo consultas para la mascota ${petId}: ${error.message}`);
             }
-            return NextResponse.json({ success: true, consultations: data || [] });
+            return NextResponse.json({ success: true, consultations: consultations || [] });
         }
     );
 }

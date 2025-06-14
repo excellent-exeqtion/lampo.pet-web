@@ -69,6 +69,9 @@ export const ConsultationForm = forwardRef(({ pet, owner, basicData, onSubmit, i
 
     useImperativeHandle(ref, () => ({
         async triggerFileUploads(consultationId: string) {
+            if (!consultationId) {
+                return null; // o muestra un loader
+            }
             if (stagedFiles.length === 0) return;
 
             const uploadPromises = stagedFiles.map(file => {
@@ -92,6 +95,14 @@ export const ConsultationForm = forwardRef(({ pet, owner, basicData, onSubmit, i
             setStagedFiles([]); // Limpiar archivos en espera
         }
     }));
+
+    const handleAddStagedFiles = (newFiles: File[]) => {
+        setStagedFiles(prev => [...prev, ...newFiles]);
+    };
+
+    const handleRemoveStagedFile = (indexToRemove: number) => {
+        setStagedFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    };
 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -188,7 +199,15 @@ export const ConsultationForm = forwardRef(({ pet, owner, basicData, onSubmit, i
 
             <details open={openSection === 'complementaryExams'}>
                 <summary role="button" className="secondary outline" onClick={(e) => handleToggleSection(e, 'complementaryExams')}>8. Exámenes Complementarios</summary>
-                {openSection === 'complementaryExams' && <ComplementaryExamsSection formData={formData} handleChange={handleChange} setStagedFiles={setStagedFiles} />}
+                {openSection === 'complementaryExams' &&
+                    <ComplementaryExamsSection
+                        formData={formData}
+                        handleChange={handleChange}
+                        stagedFiles={stagedFiles}
+                        onAddFiles={handleAddStagedFiles}
+                        onRemoveFile={handleRemoveStagedFile}
+                    />
+                }
             </details>
 
             <details open={openSection === 'diagnosisPlan'}>

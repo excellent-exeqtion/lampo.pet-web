@@ -3,9 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   pageExtensions: [
         "tsx",
-        "page.tsx",
-        "ts",
-        "page.ts"
+        "ts"
     ],
   i18n: {
     defaultLocale: 'es',

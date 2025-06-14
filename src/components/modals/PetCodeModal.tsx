@@ -1,6 +1,6 @@
 // app/components/modals/PetCodeModal.tsx
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { FaShareAlt, FaCopy, FaWhatsapp } from "react-icons/fa";
 import ModalComponent from "../lib/modal";
 import { useStorageContext } from "@/context/StorageProvider";
@@ -52,13 +52,14 @@ export default function PetCodeModal() {
     });
   };
 
-  const handleWhatsAppShare = () => {
+  const handleWhatsAppShare = useCallback(() => {
     const petName = storage.storedPet.name;
     const accessUrl = `${window.location.origin}/vet-access?code=${code}`;
     const message = `Hola, este es el código de acceso para ver la historia clínica de ${petName} en Lampo: *${code}*.\n\nPuedes acceder directamente usando este enlace:\n${accessUrl}`;
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   return (

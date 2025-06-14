@@ -1,6 +1,6 @@
 // src/components/consultations/ConsultationDetailView.tsx
 "use client";
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { ConsultationType, ConsultationFileType } from '@/types/index';
 import { Dates } from '@/utils/index';
 import { FaPaperclip, FaTrash, FaDownload, FaSpinner, FaPlusCircle } from 'react-icons/fa';
@@ -80,7 +80,7 @@ export default function ConsultationDetailView({ consultation, currentUserId, on
         }
     };
 
-    const handleDownloadFile = async (file: ConsultationFileType) => {
+    const handleDownloadFile = useCallback(async (file: ConsultationFileType) => {
         try {
             const response = await fetch(`/api/consultations/${consultation.id}//files/${file.id}`);
             const result = await response.json();
@@ -92,7 +92,8 @@ export default function ConsultationDetailView({ consultation, currentUserId, on
         } catch (err) {
             alert(err instanceof Error ? err.message : "Error al descargar archivo.");
         }
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    },[]);
 
     const handleDeleteFile = async (fileId: string) => {
         if (!confirm("¿Está seguro de que desea eliminar este archivo? Esta acción no se puede deshacer.")) return;

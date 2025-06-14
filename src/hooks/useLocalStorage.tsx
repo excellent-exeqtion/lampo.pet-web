@@ -4,7 +4,7 @@ import CryptoJS from "crypto-js";
 
 /**
  * Hook para manejar un valor en localStorage con encriptación opcional y hash de clave,
- * implementando hidratación para evitar lectura antes del montaje.
+ * implementando hidratación segura para evitar errores de SSR.
  * @param key Clave original para identificar item en storage.
  * @param initialValue Valor inicial si no existe valor en storage.
  * @param options.secret Secreto para encriptar/hashear clave y valor.
@@ -15,45 +15,53 @@ export function useLocalStorage<T>(
   initialValue: T,
   options?: { secret?: string }
 ): [T, (value: T | null) => void] {
-  const secret = options?.secret || (process.env.NEXT_PUBLIC_ENABLE_ENCRYPTION == 'false' ? '' : process.env.NEXT_PUBLIC_STORAGE_SECRET!);
-  // Generar clave de storage hasheada si hay secreto
-  const storageKey = secret
-    ? CryptoJS.SHA256(key + secret).toString()
-    : key;
+  const secret = options?.secret || (process.env.NEXT_PUBLIC_ENABLE_ENCRYPTION === 'false' ? '' : process.env.NEXT_PUBLIC_STORAGE_SECRET!);
 
-  // Estado del valor almacenado
+  const getStorageKey = () => {
+    return secret ? CryptoJS.SHA256(key + secret).toString() : key;
+  };
+
+  // 1. El estado inicial SIEMPRE es el valor por defecto. Nunca leemos de localStorage aquí.
   const [storedValue, setStoredValue] = useState<T>(initialValue);
 
-  // Al hidratar, leer de localStorage
+  // 2. La lectura de localStorage ocurre DESPUÉS del montaje, solo en el cliente.
   useEffect(() => {
+    // Verificar si estamos en el navegador
+    if (typeof window === "undefined") {
+      return;
+    }
+
     try {
+      const storageKey = getStorageKey();
       const item = window.localStorage.getItem(storageKey);
-      if (item === null) {
-        setStoredValue(initialValue);
-      } else {
+
+      if (item !== null) {
         const raw = secret
           ? CryptoJS.AES.decrypt(item, secret).toString(CryptoJS.enc.Utf8)
           : item;
-        setStoredValue(JSON.parse(raw) as T);
+        setStoredValue(JSON.parse(raw));
       }
-    } catch {
-      setStoredValue(initialValue);
+    } catch (error) {
+      console.warn(`Error reading localStorage key “${key}”:`, error);
+      // Mantenemos el valor inicial si hay un error
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageKey, secret]);
+  }, []); // El array de dependencias vacío asegura que esto solo se ejecute una vez en el cliente.
 
-  /**
-   * Setter que guarda en estado y en localStorage (o elimina si value es null).
-   */
+
   const setValue = (value: T | null) => {
+    // Si estamos en el servidor, solo actualizamos el estado en memoria.
     if (typeof window === "undefined") {
-      setStoredValue(value as T);
+      console.warn(`Attempted to set localStorage key “${key}” on the server.`);
+      setStoredValue(value as T); // Actualizar estado para consistencia si es necesario
       return;
     }
+
     try {
+      const storageKey = getStorageKey();
       if (value === null) {
         window.localStorage.removeItem(storageKey);
-        setStoredValue(initialValue);
+        setStoredValue(initialValue); // Volver al valor inicial
       } else {
         const stringValue = JSON.stringify(value);
         const encrypted = secret
@@ -62,8 +70,8 @@ export function useLocalStorage<T>(
         window.localStorage.setItem(storageKey, encrypted);
         setStoredValue(value);
       }
-    } catch {
-      // Ignorar errores de storage
+    } catch (error) {
+      console.warn(`Error setting localStorage key “${key}”:`, error);
     }
   };
 

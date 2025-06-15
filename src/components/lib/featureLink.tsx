@@ -9,10 +9,10 @@ interface FeatureLinkProps {
   title: string;
   desc: string;
   click?: () => void;
-  isComplete?: boolean;
+  isDone?: boolean;
 }
 
-export default function FeatureLink({ icon, href, title, desc, click, isComplete = false }: FeatureLinkProps) {
+export default function FeatureLink({ icon, href, title, desc, click, isDone = false }: FeatureLinkProps) {
   return (
     <li style={{ marginBottom: "1.2rem", position: 'relative' }}>
       <Link
@@ -29,10 +29,10 @@ export default function FeatureLink({ icon, href, title, desc, click, isComplete
           background: "var(--primary-inverse)",
           boxShadow: "0 1px 6px var(--primary-lighttransparent)",
           transition: "background 0.2s",
-          borderLeft: isComplete ? '5px solid var(--primary-green)' : '5px solid transparent'
+          borderLeft: isDone ? '5px solid var(--primary-green)' : '5px solid transparent'
         }}
       >
-        {isComplete && (
+        {isDone && (
           <FaCheckCircle style={{ color: 'var(--primary-green)', position: 'absolute', top: '0.5rem', right: '0.5rem' }} />
         )}
         <span style={{ fontSize: 28, minWidth: 40 }}>{icon}</span>

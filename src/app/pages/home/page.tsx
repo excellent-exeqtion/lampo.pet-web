@@ -13,14 +13,14 @@ import { useRoleContext } from "@/context/RoleProvider";
 import { useUI } from "@/context/UIProvider";
 import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
-import { usePetProfileProgress } from '@/hooks/usePetProfileProgress'; // IMPORTADO
+import { usePetProfileProgress } from '@/hooks/usePetProfileProgress';
 
 export default function HomePage() {
   const { isOwner, isVet, isVetWithSession } = useRoleContext();
   const { setShowVetPetCodeModal, setShowAddPetModal, setShowEditPetModal } = useUI();
   const { storedPet } = useStorageContext();
   const { isLoading: isLoadingSession } = useSessionContext();
-  const progress = usePetProfileProgress(); // USADO
+  const progress = usePetProfileProgress();
 
   if (isLoadingSession) {
     return <Loading />;
@@ -45,7 +45,7 @@ export default function HomePage() {
               href=""
               title="Agregar Mascota"
               desc="Registra una nueva mascota en tu perfil y comienza a gestionar su información clínica desde un solo lugar."
-              isComplete={progress.pet}
+              isDone={progress.petCreated}
             />
           }
           {isOwner &&
@@ -55,6 +55,7 @@ export default function HomePage() {
               href=""
               title="Editar Mascota"
               desc="Actualiza la información de tus mascotas de manera fácil y segura."
+              isDone={progress.profileEdited}
             />
           }
           {isOwner &&
@@ -71,7 +72,7 @@ export default function HomePage() {
               href="/pages/pet/basic-data"
               title="Datos básicos"
               desc="Consulta y edita los datos principales de cada mascota: nombre, raza, edad, propietario y más."
-              isComplete={progress.basicData}
+              isDone={progress.basicData}
             />
           }
           {isOwner &&
@@ -88,7 +89,7 @@ export default function HomePage() {
               href="/pages/pet/vaccines"
               title="Vacunas"
               desc="Lleva el control de las vacunas aplicadas, pendientes y genera recordatorios personalizados."
-              isComplete={progress.vaccines}
+              isDone={progress.vaccines}
             />
           }
           {isOwner &&
@@ -97,7 +98,7 @@ export default function HomePage() {
               href="/pages/pet/surgeries"
               title="Cirugías"
               desc="Registra intervenciones quirúrgicas, fechas, veterinario responsable y notas relevantes."
-              isComplete={progress.surgeries}
+              isDone={progress.surgeries}
             />
           }
           {isOwner &&
@@ -106,7 +107,7 @@ export default function HomePage() {
               href="/pages/pet/medicines"
               title="Medicinas"
               desc="Gestiona tratamientos, dosis, fechas y alertas de administración de medicamentos."
-              isComplete={progress.medicines}
+              isDone={progress.medicines}
             />
           }
           {isOwner &&
@@ -115,7 +116,7 @@ export default function HomePage() {
               href="/pages/pet/conditions"
               title="Condiciones especiales"
               desc="Anota alergias, condiciones crónicas u otros factores a tener en cuenta en el cuidado diario."
-              isComplete={progress.conditions}
+              isDone={progress.conditions}
             />
           }
           {isOwner &&
@@ -124,7 +125,7 @@ export default function HomePage() {
               href="/pages/pet/lab-tests"
               title="Exámenes de laboratorio"
               desc="Carga y consulta resultados de exámenes de laboratorio para mantener el historial clínico completo."
-              isComplete={progress.labTests}
+              isDone={progress.labTests}
             />
           }
           {isVet &&

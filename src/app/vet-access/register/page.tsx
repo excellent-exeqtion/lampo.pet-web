@@ -253,9 +253,12 @@ export default function VetRegisterPage() {
           {loading ? "Registrando..." : "Registrarme"}
         </button>
 
-        <Link href="/login" className="primary">
-          Iniciar sesión
-        </Link>
+        <p style={{ textAlign: "center", padding: 0 }}>
+          ¿Ya tienes cuenta?
+          <Link href="/login" className="primary" style={{marginLeft: '1rem'}}>
+            Iniciar sesión
+          </Link>
+        </p>
       </form>
     </main>
   );

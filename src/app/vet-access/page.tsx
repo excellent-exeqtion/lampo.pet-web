@@ -64,9 +64,12 @@ function VetAccessContent() {
           Registrarme como veterinario
         </Link>
 
-        <Link href="/login" className="primary">
-          Iniciar sesión
-        </Link>
+        <p style={{ textAlign: "center", padding: 0 }}>
+          ¿Ya tienes cuenta?
+          <Link href="/login" className="primary" style={{marginLeft: '1rem'}}>
+            Iniciar sesión
+          </Link>
+        </p>
       </div>
 
       {showVetModal && (

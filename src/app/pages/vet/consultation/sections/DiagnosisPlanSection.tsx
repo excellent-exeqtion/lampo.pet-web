@@ -1,6 +1,7 @@
 // src/components/forms/consultation/sections/DiagnosisPlanSection.tsx
 import React from 'react';
 import type { CreateConsultationPayload } from '@/types/index';
+import { Dates } from '@/utils/index';
 
 interface DiagnosisPlanSectionProps {
     formData: Partial<CreateConsultationPayload>;
@@ -10,7 +11,7 @@ interface DiagnosisPlanSectionProps {
 export function DiagnosisPlanSection({ formData, handleChange }: DiagnosisPlanSectionProps) {
     return (
         <fieldset>
-            <legend>8. Diagnóstico y Plan</legend>
+            <legend>9. Diagnóstico y Plan</legend>
             <label htmlFor="presumptive_diagnosis">
                 Diagnóstico Presuntivo Justificado
                 <textarea
@@ -67,7 +68,7 @@ export function DiagnosisPlanSection({ formData, handleChange }: DiagnosisPlanSe
                 />
             </label>
 
-            <h6 style={{ marginTop: '1rem', color: 'var(--pico-primary)' }}>Próxima Cita (Opcional)</h6>
+            <h6 style={{ marginTop: '1.5rem', marginBottom: '0.5rem', color: 'var(--pico-primary)' }}>Próxima Cita (Opcional)</h6>
             <div className="grid">
                 <label htmlFor="next_consultation_date">
                     Fecha Próxima Consulta
@@ -75,7 +76,7 @@ export function DiagnosisPlanSection({ formData, handleChange }: DiagnosisPlanSe
                         type="date"
                         id="next_consultation_date"
                         name="next_consultation_date"
-                        value={formData.next_consultation_date ? new Date(formData.next_consultation_date).toISOString().split('T')[0] : ''}
+                        value={formData.next_consultation_date ? Dates.format(formData.next_consultation_date) : ''}
                         onChange={handleChange}
                     />
                 </label>

@@ -218,6 +218,9 @@ export interface CalendarEventType {
     pet_name: string;
     pet_id: string;
     description: string;
+    start: Date;
+    end: Date;
+    allDay: boolean;
 }
 
 export interface ConsultationProcedureType {

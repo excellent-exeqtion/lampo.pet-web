@@ -27,21 +27,21 @@ export async function getWithErrorHandling(
         // 4) Falta de configuración en el step -> 500
         if (err instanceof StepStateError) {
             return NextResponse.json(
-                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { success: false, message: `Error interno del servidor` },
                 { status: 500 }
             )
         }
         // 5) Error con el patron repository -> 500
         if (err instanceof RepositoryError) {
             return NextResponse.json(
-                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { success: false, message: `Error interno del servidor` },
                 { status: 500 }
             )
         }
         // 6) Error con la autenticación -> 500
         if (err instanceof AuthExceptionError) {
             return NextResponse.json(
-                { success: false, message: `Error en la autenticación | ${err.message}` },
+                { success: false, message: `Error en la autenticación` },
                 { status: 500 }
             )
         }
@@ -101,21 +101,21 @@ export async function withErrorHandling(
         // 4) Falta de configuración en el step -> 500
         if (err instanceof StepStateError) {
             return NextResponse.json(
-                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { success: false, message: `Error interno del servidor` },
                 { status: 500 }
             )
         }
         // 5) Error con el patron repository -> 500
         if (err instanceof RepositoryError) {
             return NextResponse.json(
-                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { success: false, message: `Error interno del servidor` },
                 { status: 500 }
             )
         }
         // 6) Error con la autenticación -> 500
         if (err instanceof AuthExceptionError) {
             return NextResponse.json(
-                { success: false, message: `Error en la autenticación | ${err.message}` },
+                { success: false, message: `Error en la autenticación` },
                 { status: 500 }
             )
         }
@@ -172,21 +172,21 @@ export async function withValidationAndErrorHandling<T>(
         // 4) Falta de configuración en el step -> 500
         if (err instanceof StepStateError) {
             return NextResponse.json(
-                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { success: false, message: `Error interno del servidor` },
                 { status: 500 }
             )
         }
         // 5) Error con el patron repository -> 500
         if (err instanceof RepositoryError) {
             return NextResponse.json(
-                { success: false, message: `Error interno del servidor | ${err.message}` },
+                { success: false, message: `Error interno del servidor` },
                 { status: 500 }
             )
         }
         // 6) Error con la autenticación -> 500
         if (err instanceof AuthExceptionError) {
             return NextResponse.json(
-                { success: false, message: `Error en la autenticación | ${err.message}` },
+                { success: false, message: `Error en la autenticación` },
                 { status: 500 }
             )
         }

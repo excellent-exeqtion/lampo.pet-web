@@ -1,51 +1,108 @@
-// app/pages/pet/calendar/page.tsx (server component)
+// src/app/pages/owner/calendar/page.tsx
 "use client";
-import { Title } from "@/components/index";
-import { useRoleContext } from "@/context/RoleProvider";
-import React from "react";
-import { FaCalendar } from "react-icons/fa";
+import React, { useEffect, useState } from 'react';
+import { Calendar, momentLocalizer, EventProps } from 'react-big-calendar';
+import moment from 'moment';
+import 'moment/locale/es';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { useSessionContext } from '@/context/SessionProvider';
+import { getFetch } from '@/app/api';
+import { CalendarEventType } from "@/types/index";
+import { Loading, Title, DataNotFound } from '@/components/index';
+import { FaCalendarAlt } from 'react-icons/fa';
+import CalendarEvent from '@/components/calendar/CalendarEvent';
+import CalendarToolbar from '@/components/calendar/CalendarToolbar';
+
+// Configurar moment en español
+moment.locale('es');
+const localizer = momentLocalizer(moment);
+
+const messages = {
+    allDay: 'Todo el día',
+    previous: 'Anterior',
+    next: 'Siguiente',
+    today: 'Hoy',
+    month: 'Mes',
+    week: 'Semana',
+    day: 'Día',
+    agenda: 'Agenda',
+    date: 'Fecha',
+    time: 'Hora',
+    event: 'Evento',
+    noEventsInRange: 'No hay eventos en este rango.',
+    showMore: (total: number) => `+ Ver más (${total})`,
+};
 
 export default function CalendarPage() {
-    const { isVet } = useRoleContext();
+    const { db: session } = useSessionContext();
+    const [events, setEvents] = useState<CalendarEventType[]>([]); // Usamos el nuevo tipo aquí
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    if (isVet) {
-        return <div>Página para Veterinarios en desarrollo.</div>
+    useEffect(() => {
+        if (!session?.user?.id) return;
+
+        const fetchEvents = async () => {
+            try {
+                setLoading(true);
+                const response = await getFetch(`/api/calendar/events?ownerId=${session.user.id}`);
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "Error al cargar los eventos.");
+                }
+
+                // Mapeamos los datos para que sean compatibles con react-big-calendar
+                const formattedEvents: CalendarEventType[] = data.events.map((event: CalendarEventType) => ({
+                    ...event,
+                    start: new Date(event.event_date),
+                    end: new Date(event.event_date),
+                    allDay: true,
+                }));
+
+                setEvents(formattedEvents);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Ocurrió un error inesperado.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchEvents();
+    }, [session]);
+
+    if (loading) {
+        return <Loading />;
     }
-    return (
-        <div style={{ width: "100%" }}>
-            {<Title icon={<FaCalendar />} title="Próximos eventos programados" />}
-            <section style={{ width: "100%", marginBottom: "2rem" }}>
-                {/* <input type="date" value="2025-01-01" /> */}
-            </section>
 
-            <section>
-                <h3>Datos de contacto</h3>
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(120px, auto))",
-                        gap: "0.5rem",
-                        alignItems: "center",
-                        marginBottom: "1rem",
-                        fontSize: "0.8rem"
+    return (
+        <div style={{ height: '85vh', width: '100%' }}>
+            <Title icon={<FaCalendarAlt />} title="Calendario de Mascotas" />
+            {error && <DataNotFound message={error} />}
+
+            {!error && (
+                <Calendar<CalendarEventType>
+                    localizer={localizer}
+                    events={events}
+                    startAccessor="start"
+                    endAccessor="end"
+                    style={{ height: '100%' }}
+                    messages={messages}
+                    eventPropGetter={() => ({
+                        style: {
+                            backgroundColor: 'var(--primary-skin)',
+                            color: 'var(--pico-primary-darker)',
+                            borderRadius: '4px',
+                            border: 'none',
+                        },
+                    })}
+                    components={{
+                        event: (props: EventProps<CalendarEventType>) => <CalendarEvent event={props.event} />,
+                        toolbar: CalendarToolbar,
                     }}
-                >
-                    <select>
-                        <option>Last 12 months</option>
-                        <option>Last 6 months</option>
-                    </select>
-                    <input type="date" defaultValue="2020-08-01" />
-                    <span style={{ textAlign: "center" }}>a</span>
-                    <input type="date" defaultValue="2020-07-07" />
-                    <select>
-                        <option>Previous period</option>
-                    </select>
-                    <select>
-                        <option>Monthly</option>
-                    </select>
-                    <button>Edit charts</button>
-                </div>
-            </section>
+                />
+
+            )}
         </div>
     );
 }

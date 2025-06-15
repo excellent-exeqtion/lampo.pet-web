@@ -1,5 +1,4 @@
 // app/pages/owner/settings/page.tsx
-
 "use client";
 import { CountryCodeInput, Loading, Title } from "@/components/index";
 import { useDeviceDetect } from "@/hooks/useDeviceDetect";
@@ -11,12 +10,13 @@ import { useStorageContext } from "@/context/StorageProvider";
 import { useSessionContext } from "@/context/SessionProvider";
 import { Empty } from "@/data/index";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
+import dynamic from "next/dynamic"; // 1. Importar dynamic
 import { Country, City } from 'country-state-city';
 import type { ICountry, ICity } from 'country-state-city';
 import { v4 as uuidv4 } from 'uuid';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
+// 2. Importar el MapPicker de forma dinámica
 const MapPicker = dynamic(() => import('@/components/forms/MapPicker'), {
   ssr: false,
   loading: () => <p>Cargando mapa...</p>

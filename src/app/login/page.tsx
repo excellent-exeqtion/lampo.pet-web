@@ -11,16 +11,16 @@ import ModalComponent from "@/components/lib/modal";
 import { authClient } from "@/lib/auth";
 import { useSessionContext } from "@/context/SessionProvider";
 import { useTranslation } from "react-i18next";
-import dynamic from "next/dynamic";
+import dynamic from "next/dynamic"; // 1. Importar dynamic
 import { CountryCodeInput } from "@/components/index";
 import { Country, City } from 'country-state-city';
 import type { ICountry, ICity } from 'country-state-city';
 import { v4 as uuidv4 } from 'uuid';
 
-// Importamos el MapPicker de forma dinámica
+// 2. Importar el MapPicker de forma dinámica con SSR deshabilitado
 const MapPicker = dynamic(() => import('@/components/forms/MapPicker'), {
   ssr: false,
-  loading: () => <p>Cargando mapa...</p>
+  loading: () => <p>Cargando mapa...</p> // Un placeholder mientras carga en el cliente
 });
 
 export default function LoginPage() {
@@ -107,7 +107,7 @@ export default function LoginPage() {
 
           const cityName = data.address.city || data.address.town || data.address.village;
           if (cityName) {
-            setOwnerInfo(prev => ({ ...prev, city: cityName  }));
+            setOwnerInfo(prev => ({ ...prev, city: cityName }));
           }
         }
       } catch (e) {

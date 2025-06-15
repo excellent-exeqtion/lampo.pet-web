@@ -30,7 +30,6 @@ export { default as ConsultationPetSummary } from './consultations/ConsultationP
 // forms
 export { default as CountryCodeInput } from "./forms/CountryCodeInput";
 export { default as CountryCitySelector } from "./forms/CountryCitySelector";
-export { default as MapPicker } from "./forms/MapPicker";
 
 //modals
 export { default as AlertModal } from "./modals/AlertModal";

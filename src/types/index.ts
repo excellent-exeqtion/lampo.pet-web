@@ -4,7 +4,7 @@ export interface PetType {
     id: string;
     name: string;
     image?: string | null;
-    birth_date?: Date | null;
+    birth_date?: Date | null; 
     owner_id: string;
 }
 export interface PetCodeType {
@@ -66,6 +66,8 @@ export interface VaccineDataType {
     date?: Date;
     batch: string;
     brand: string;
+    frequency?: string | null;
+    next_dose_date?: Date | null;
 }
 export interface SurgeryDataType {
     id: string;
@@ -94,6 +96,17 @@ export interface LabTestDataType {
     type: string;
     date?: Date;
     result?: string;
+    next_test_date?: Date | null;
+}
+export interface PetTreatmentType {
+    id: string;
+    pet_id: string;
+    type: 'antipulgas' | 'desparasitacion' | 'bano_medicado' | 'corte_unas';
+    product_name?: string | null;
+    date: Date;
+    frequency?: string | null;
+    next_dose_date?: Date | null;
+    notes?: string | null;
 }
 export interface VeterinaryAccessType {
     id: string;
@@ -292,6 +305,10 @@ export interface ConsultationType {
     evolution_notes?: string | null; // Evolución durante la consulta o plan de seguimiento inmediato
     general_observations?: string | null; // Observaciones generales, recomendaciones de egreso, etc.
     signature_confirmation?: string | null; // Campo para que el vet confirme digitalmente (texto)
+    
+    // Nuevos campos para el calendario
+    next_consultation_date?: Date | null;
+    next_consultation_reason?: string | null;
 
 
     // Relaciones (pobladas al hacer fetch si se usa SELECT anidado)

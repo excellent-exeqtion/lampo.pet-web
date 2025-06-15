@@ -66,6 +66,31 @@ export function DiagnosisPlanSection({ formData, handleChange }: DiagnosisPlanSe
                     rows={3}
                 />
             </label>
+
+            <h6 style={{ marginTop: '1rem', color: 'var(--pico-primary)' }}>Próxima Cita (Opcional)</h6>
+            <div className="grid">
+                <label htmlFor="next_consultation_date">
+                    Fecha Próxima Consulta
+                    <input
+                        type="date"
+                        id="next_consultation_date"
+                        name="next_consultation_date"
+                        value={formData.next_consultation_date ? new Date(formData.next_consultation_date).toISOString().split('T')[0] : ''}
+                        onChange={handleChange}
+                    />
+                </label>
+                <label htmlFor="next_consultation_reason">
+                    Motivo Próxima Consulta
+                    <input
+                        type="text"
+                        id="next_consultation_reason"
+                        name="next_consultation_reason"
+                        value={formData.next_consultation_reason || ''}
+                        onChange={handleChange}
+                        placeholder="Ej: Retirar puntos, control"
+                    />
+                </label>
+            </div>
         </fieldset>
     );
 }
